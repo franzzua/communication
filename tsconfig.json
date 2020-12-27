@@ -1,0 +1,23 @@
+{
+  "compilerOptions": {
+    "module": "commonjs",
+    "target": "es2015",
+    "sourceMap": true,
+    "baseUrl": "./",
+    "experimentalDecorators": true,
+    "outDir": "./dist/esm",
+    "emitDecoratorMetadata": true,
+    "declarationDir": "./dist/typings",
+    "declaration": true,
+    "types": ["node"],
+    "paths": {
+      "@model": [        "./model"      ],
+      "@infr/*": [        "./infr/*"      ],
+      "@services": [        "./services"      ]
+    }
+  },
+  "exclude": [
+    "node_modules",
+    "dist"
+  ]
+}
