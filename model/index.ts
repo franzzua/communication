@@ -1,5 +1,5 @@
 export * from "./context";
-export {Communication} from "./communication";
+export {Storage} from "./storage";
 export {Message} from "./message";
 export {Sorting} from "./sorting";
 export {AccessRule} from "./accessRule";

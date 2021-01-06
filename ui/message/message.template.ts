@@ -1,7 +1,13 @@
 import {IEventHandler} from "@hypertype/ui";
 import {Message} from "@model";
 
+
 export const Template = (html, state: IState, events: IEventHandler<IEvents>) => {
+    const keyboardAction = (e: KeyboardEvent) =>
+        e.altKey || e.ctrlKey || e.shiftKey ||
+            e.key.toLowerCase() != 'enter' ||
+            e;
+
     // if (state.path.indexOf(state.context.Id) < state.path.length - 1)
     //     return html`[[circular]]`;
     // if (!state.context)
@@ -11,12 +17,12 @@ export const Template = (html, state: IState, events: IEventHandler<IEvents>) =>
     // const isCollapsed = state.state.includes('collapsed');
     return html`
             <div class="${`context-inner ${state.state.join(' ')}`}">
-                <div class="body">
-                    <ctx-text-content msg=${state.message} active=${state.isSelected} />
-                    <span class="arrow"></span>
+                <div class="body" onkeydown=${events.action(e => e)}>
+                    <ctx-text-content message=${state.message} active=${state.isSelected} />
                 </div>
                 ${state.message.SubContext ? html('context')`
-                    <ctx-context uri=${state.message.SubContext.URI}></ctx-context> 
+                    <span class="arrow"></span>
+                    <ctx-context context=${state.message.SubContext}></ctx-context> 
                 ` : ''}
             </div>
     `;
@@ -29,6 +35,6 @@ export interface IState {
 }
 
 export interface IEvents {
-
+    action(e: Event);
 }
     

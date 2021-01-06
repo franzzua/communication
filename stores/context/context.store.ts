@@ -1,5 +1,5 @@
 import {ActionsCreator, ObservableStore, Reducer, RootStore} from "@hypertype/app";
-import {Communication, Context} from "@model";
+import {Storage, Context} from "@model";
 import {filter, Fn, Injectable, map, Observable, shareReplay} from "@hypertype/core";
 import {DomainEvent, DomainEventHandler, EventBus} from "@services";
 
@@ -39,7 +39,7 @@ export class ContextActions extends ActionsCreator<Context> {
 export class ContextReducer {
     private state: State = {
         Contexts: new Map<string, Context>(),
-        Communications: new Map<string, Communication>()
+        Storages: new Map<string, Storage>()
     };
 
     private Handler: DomainEventHandler = {
@@ -80,5 +80,5 @@ export class ContextReducer {
 
 export type State = {
     Contexts: Map<string, Context>;
-    Communications: Map<string, Communication>;
+    Storages: Map<string, Storage>;
 }

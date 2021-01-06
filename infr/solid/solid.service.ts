@@ -7,24 +7,9 @@ import {SolidRepository} from "@infr/solid/solid.repository";
 export class SolidService {
 
 
-    private repository = new SolidRepository();
-
-    constructor(private eventBus: EventBus) {
-
+    constructor(private eventBus: EventBus,
+                private repository: SolidRepository) {
     }
 
-    public async Init(session: ISession) {
-        await useSession(session);
-        const subscription = this.Actions$.subscribe();
-        const collection = await this.repository.Load(session);
-
-    }
-
-    private Handler: DomainEventHandler = {
-        AttachContext: event => this.repository.AttachContext(event.Message, event.Context),
-        AddMessage: event => this.repository.AddMessage(event.Message),
-        CreateContext: event => this.repository.CreateContext(event.Context)
-    }
-
-    public Actions$ = this.eventBus.Subscribe(this.Handler);
+    public Actions$ = this.eventBus.Subscribe(this.repository);
 }

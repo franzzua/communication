@@ -1,7 +1,8 @@
 import {Component, HyperComponent, property} from "@hypertype/ui";
-import {combineLatest, filter, Fn, Injectable, map, Observable, switchMap, tap,} from "@hypertype/core";
+import {combineLatest, filter, Fn, Injectable, map, merge, Observable, switchMap, tap,} from "@hypertype/core";
 import {Context} from "@model";
-import {ContextStore} from "../../stores/context/context.store";
+import {StateService} from "@services";
+import {BaseContextComponent} from "../BaseContextComponent";
 
 @Injectable(true)
 @Component({
@@ -17,28 +18,19 @@ import {ContextStore} from "../../stores/context/context.store";
     },
     style: require('./context.style.less')
 })
-export class ContextComponent extends HyperComponent<IState> {
+export class ContextComponent extends BaseContextComponent<IState> {
 
-    constructor(private store: ContextStore) {
-        super();
+    constructor(state: StateService) {
+        super(state);
     }
 
-    @property()
-    public uri$: Observable<string>;
-
-    private context$: Observable<Context> = this.uri$.pipe(
-        switchMap(x => this.store.getContext$(x)),
-        filter(Fn.Ib),
-    );
-
-    public State$ = combineLatest([
-        this.context$
-    ]).pipe(
+    public State$ = combineLatest([this.Context$]).pipe(
         map(([context]) => ({
             context,
             isSelected: false
         })),
-        filter(Fn.Ib)
+        tap(console.log),
+        filter(Fn.Ib),
     );
 }
 

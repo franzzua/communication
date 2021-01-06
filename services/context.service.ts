@@ -1,6 +1,6 @@
 import * as h from "@hypertype/core";
 import {Injectable} from "@hypertype/core";
-import {Communication, Context, Sorting} from "@model";
+import {Storage, Context, Sorting} from "@model";
 import {EventBus} from "./event.bus";
 import {as} from "rdf-namespaces";
 
@@ -11,7 +11,7 @@ export class ContextService {
 
     }
 
-    public async Create(communication: Communication): Promise<Context> {
+    public async Create(Storage: Storage): Promise<Context> {
         return new Context();
     }
 

@@ -3,6 +3,7 @@ import {
     filter,
     Injectable,
     map,
+    first,
     mapTo,
     merge,
     Observable,
@@ -31,13 +32,13 @@ export class TextContentComponent extends HyperComponent<string, IEvents> {
         super();
     }
 
-    @property('msg')
-    private msg$: Observable<Message>;
-    private msg: Message;
+    @property()
+    private message$!: Observable<Message>;
+    private message!: Message;
 
 
     @property()
-    private active$: Observable<boolean>;
+    private active$!: Observable<boolean>;
 
     private lastTextEdited;
 
@@ -45,12 +46,11 @@ export class TextContentComponent extends HyperComponent<string, IEvents> {
         input: async text => {
             this.lastTextEdited = text;
 
-            await this.eventBus.Notify('UpdateContent', {
-                Message: this.msg,
-                Content: text
-            });
+            await this.eventBus.Notify('OnUpdateContent', this.message, text);
         },
         focus: async () => {
+            const element: HTMLElement = await this.Element$.pipe(first()).toPromise();
+            element.dispatchEvent(new FocusEvent('focus'));
             // this.cursor.SetPath(this.path);
         }
     }
@@ -58,9 +58,10 @@ export class TextContentComponent extends HyperComponent<string, IEvents> {
     public State$ = of(null);
 
     public Actions$ = merge(
-        this.msg$.pipe(
+        this.message$.pipe(
             // switchMap(c => c.State$),
             map(message => message?.Content),
+            // tap(console.log),
             // игнорим если отсюда пришел контент
             filter(x => x != this.lastTextEdited),
             distinctUntilChanged(),

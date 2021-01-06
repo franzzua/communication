@@ -1,120 +1,53 @@
-import {ContentType, Doc, XmlElement, XmlFragment} from "yjs";
-import {WebrtcProvider} from 'y-webrtc/src/y-webrtc.js';
+import {Doc} from "yjs";
 import {Context, Message} from "@model";
-import {NotifyDelegate} from "@services";
-import {utc} from "@hypertype/core";
+import {DomainEventsListener, EventBus, LogService, StateService} from "@services";
+import {WebrtcProvider} from "y-webrtc";
+import {Injectable} from "@hypertype/core";
+import {ContextSync} from "./context.sync";
 
-export class YjsRepository {
-    private yDoc = new Doc();
-    private fragment: XmlFragment;
-    private ContextMap = new Map<string, { XmlElement: XmlElement; Context: Context }>();
-    private MessageMap = new Map<Message, XmlElement>();
+@Injectable()
+export class YjsRepository implements DomainEventsListener {
+    private ObserverMap = new Map<string, ContextSync>();
+    private notify: DomainEventsListener;
 
-    constructor(private notify: NotifyDelegate) {
-        const provider = new WebrtcProvider('some-room', this.yDoc, {
-            signaling: [
-                'ws://localhost:4444'
-            ]
-        } as any);
-        provider.connect();
-        this.fragment = this.yDoc.getXmlFragment('root');
-        this.yDoc.on('update', (update, origin) => {
-            // console.log(encodeStateAsUpdate(this.yDoc, update));
-            // applyUpdate(this.yDoc, update);
-        })
-        this.fragment.observeDeep((events, transaction) => {
-            console.log(this.fragment.toJSON());
-            for (let event of events) {
-                if (event.transaction.local)
-                    continue;
-                for (let added of event.changes.added) {
-                    const element = ((added.content as ContentType).type as XmlElement);
-                    switch (element.nodeName) {
-                        case 'context':
-                            this.onNewContext(element);
-                            break;
-                        case 'message':
-                            this.onNewMessage(element);
-                            break;
-                    }
-                }
-                for (let [key, change] of event.changes.keys) {
-                    const element = event.target as XmlElement;
-                    const existed = Array.from(this.MessageMap).find(([message, x]) => x == element)[0];
-                    switch (key) {
-                        case 'content':
-                            this.notify('UpdateContent', {
-                                Message: existed,
-                                Content: element.getAttribute('content')
-                            });
-                    }
-                }
-            }
-        })
+    constructor(protected eventBus: EventBus,
+                protected logService: LogService,
+                protected stateService: StateService) {
+        this.notify = eventBus.getNotificator(this);
     }
 
-    private onNewContext(element: XmlElement) {
-        console.log('new context');
-        const context = {
-            URI: element.getAttribute('uri'),
-            Messages: []
-        };
-        this.ContextMap.set(context.URI, {Context: context, XmlElement: element});
-        // console.log(added, context);
-        this.notify('CreateContext', {
-            Context: context
-        });
-        if (element.firstChild != null) {
-            element.querySelectorAll('message').forEach(messageElement => {
-                this.onNewMessage(messageElement as XmlElement);
-            });
-        }
+
+    private Listen(contextURI: string) {
+        const observer = new ContextSync(contextURI);
+        // this.Connect(contextURI, observer.Doc);
+        this.ObserverMap.set(contextURI, observer);
+        console.log('listen', contextURI);
+        return observer;
     }
 
-    private onNewMessage(element: XmlElement) {
-        console.log('new message');
-        const contextURI = (element.parent as XmlElement).getAttribute('uri');
-        const context = this.ContextMap.get(contextURI).Context;
 
-        const message = {
-            CreatedAt: utc(element.getAttribute('createdAt')),
-            Content: element.getAttribute('content'),
-            Context: context
-        } as Message;
-        this.MessageMap.set(message, element);
-        // console.log(added, context);
-        this.notify('AddMessage', {
-            Message: message
-        });
+    async OnAttachContext(context: Context, to: Message) {
     }
 
-    async AttachContext(message: Message, context: Context) {
+    async OnAddMessage(message: Message) {
+        this.logService.Info({Domain: 'yjs', Phase: 'add-message'});
+        const observer = this.ObserverMap.get(message.Context.URI) ?? this.Listen(message.Context.URI);
+        observer.Load(message.Context);
+        await observer.AddMessage(message);
     }
 
-    async AddMessage(message: Message) {
-        const element = this.ContextMap.get(message.Context.URI).XmlElement;
-        const newElement = new XmlElement('message');
-        this.yDoc.transact(() => {
-            newElement.setAttribute('createdAt', message.CreatedAt.toISO());
-            newElement.setAttribute('content', message.Content);
-            element.insert(0, [newElement]);
-        });
-        this.MessageMap.set(message, newElement);
+    async OnCreateContext(context: Context) {
+        const observer = this.ObserverMap.get(context.URI) ?? this.Listen(context.URI);
+        await observer.AddContext(context);
     }
 
-    async CreateContext(context: Context) {
-        const element = new XmlElement('context');
-        this.yDoc.transact(() => {
-            element.setAttribute('uri', context.URI);
-            this.fragment.insert(0, [element]);
-        });
-        this.ContextMap.set(context.URI, {Context: context, XmlElement: element});
+    async OnUpdateContent(message: Message, content) {
+        const observer = this.ObserverMap.get(message.Context.URI) ?? this.Listen(message.Context.URI);
+        observer.Load(message.Context);
+        await observer.UpdateContent(message, content);
     }
 
-    async UpdateContent(message: Message, content: any) {
-        const element = this.MessageMap.get(message);
-        this.yDoc.transact(() => {
-            element.setAttribute('content', content);
-        });
+    async OnContextChanged(contextURI) {
+        const observer = this.ObserverMap.get(contextURI) ?? this.Listen(contextURI);
     }
 }

@@ -43,6 +43,7 @@ export class KeyboardHandler {
                 // event.preventDefault();
                 // event.shiftKey ? this.hierarchy.MoveLeft() : this.hierarchy.MoveRight(false);
                 break;
+
             case 'Enter':
                 if (!event.shiftKey) {
                     await this.messageService.Create();

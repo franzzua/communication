@@ -3,13 +3,25 @@ import {ContextComponent} from "./context/context.component";
 import {KeyboardHandler} from "./handlers/keyboard.handler";
 import {MessageComponent} from "./message/message.component";
 import {TextContentComponent} from "./message/text-content.component";
-import {CommunicationComponent} from "./communication/communication.component";
+import {ContextStore} from "../stores/context/context.store";
+import { StateLogger } from "@hypertype/infr";
+import {ManagementComponent} from "./management/management.component";
+import {StorageComponent} from "./storage/storage.component";
+import {AddStorageComponent} from "./add-storage/add-storage.component";
+import {TreeComponent} from "./tree/tree.component";
+import {TreeKeyboardAspect} from "./tree/treeKeyboardAspect";
 
 export const UIContainer = Container.withProviders(
     ContextComponent,
     MessageComponent,
-    CommunicationComponent,
+    StorageComponent,
     TextContentComponent,
-    KeyboardHandler
+    KeyboardHandler,
+    ContextStore,
+    AddStorageComponent,
+    StateLogger,
+    ManagementComponent,
+    TreeComponent,
+    TreeKeyboardAspect,
 );
 

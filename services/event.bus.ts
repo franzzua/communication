@@ -1,72 +1,82 @@
 import * as h from "@hypertype/core";
 import {delayAsync, Injectable, Observable, Subject, utc} from "@hypertype/core";
-import {Context, Message, Sorting} from "@model";
+import {Context, Message, Storage} from "@model";
+import {IAccountInfo} from "./account.manager";
 
 @Injectable()
 export class EventBus {
 
-    constructor() {
-        // @ts-ignore
-        window.EventBus = this;
-    }
-
     private _eventSubject = new Subject<DomainEvent>();
     public EventStream$: Observable<DomainEvent> = this._eventSubject.asObservable().pipe(
-        h.shareReplay({
-            bufferSize: 1,
-            windowTime: 1000,
-            refCount: true,
-        })
+        h.shareReplay(1)
     );
 
-    public Notify: NotifyDelegate = <TKey extends keyof DomainEvents, TData extends  DomainEvents[TKey]>(type: TKey, data: TData) => {
+    public Notificator = this.getNotificator();
+
+    public getNotificator(listener?: DomainEventsListener): DomainEventsListener{
+        return new Proxy({},{
+            get: (target: {}, p: PropertyKey, receiver: any) => {
+                return (...args) => {
+                    this._eventSubject.next({
+                        type: p as any,
+                        payload: args,
+                        source: listener
+                    })
+                }
+            }
+        }) as any;
+    }
+
+    public Notify: Notify2Delegate = (type, ...args) => {
         this._eventSubject.next({
             type,
-            payload: data
+            payload: args
         });
     }
 
-    public Subscribe(handler: DomainEventHandler, source: any = null) {
+
+    public Subscribe(listener: DomainEventsListener) {
         return this.EventStream$.pipe(
-            h.filter(x => x.payload.source != source),
-            h.filter(x => x.type in handler),
-            h.mergeMap(x => handler[x.type](x.payload) ?? Promise.resolve()),
+            // h.tap(x => console.log(x, listener)),
+            h.filter(x => x.source != listener),
+            h.filter(x => x.type in listener),
+            h.mergeMap(x => (listener[x.type] as any)(...x.payload) ?? Promise.resolve()),
         );
     }
 
-    public async Init() {
-        await delayAsync(100);
-        const context = {
-            URI: 'root',
-            Messages: [],
-        };
-        this.Notify('CreateContext', {
-            Context: context
-        });
-        this.Notify('AddMessage', {
-            Message: {
-                Content: '1',
-                CreatedAt: utc(),
-                Context: context,
-                Author: null
-            }
-        });
-        this.Notify('AddMessage', {
-            Message: {
-                Content: '2',
-                CreatedAt: utc(),
-                Context: context,
-                Author: null
-            },
-        });
-    }
 }
 
-export type NotifyDelegate = <TKey  extends keyof DomainEvents>(type: TKey, data: DomainEvents[TKey]) => void;
+export type NotifyDelegate = <TKey extends keyof DomainEvents>(type: TKey, data: DomainEvents[TKey] & {
+    source?: any
+}) => void;
+
+
+export type Notify2Delegate = <TKey extends keyof DomainEventsListener>(type: TKey, ...args: Parameters<DomainEventsListener[TKey]>) => void;
 
 export type DomainEvent = {
-    type: keyof DomainEvents,
-    payload: any
+    type: keyof DomainEventsListener,
+    payload: any[],
+    source?: any
+}
+
+export interface DomainEventsListener {
+    OnLoadContext?(uri: string);
+
+    OnCreateContext?(context: Context);
+
+    OnAttachContext?(context: Context, to: Message);
+
+    OnUpdateContent?(message: Message, content: any);
+
+    OnAddMessage?(message: Message);
+
+    OnDeleteMessage?(message: Message);
+
+    OnContextChanged?(uri: string): void;
+
+    OnNewAccount?(info: IAccountInfo): void;
+
+    OnNewStorage?(storage: Storage): void;
 }
 
 export type DomainEvents = {
@@ -86,6 +96,9 @@ export type DomainEvents = {
     },
     AddMessage: {
         Message: Message;
+    },
+    ContextChangedMessage: {
+        ContextURI: string;
     }
 };
 

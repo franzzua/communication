@@ -5,19 +5,27 @@
     "sourceMap": true,
     "baseUrl": "./",
     "experimentalDecorators": true,
+    "allowJs": true,
     "outDir": "./dist/esm",
     "emitDecoratorMetadata": true,
     "declarationDir": "./dist/typings",
     "declaration": true,
     "types": ["node"],
+    "lib": [
+      "ESNext",
+      "DOM"
+    ],
     "paths": {
       "@model": [        "./model"      ],
       "@infr/*": [        "./infr/*"      ],
-      "@services": [        "./services"      ]
+      "@services": [        "./services"      ],
+
     }
   },
   "exclude": [
     "node_modules",
+    "specs",
+    "**/*.spec.ts",
     "dist"
   ]
 }

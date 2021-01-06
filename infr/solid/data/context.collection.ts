@@ -6,10 +6,6 @@ import {ContextDocument} from "@infr/solid/data/context.document";
 @Injectable()
 export class ContextCollection extends Collection {
 
-    constructor(session: ISession) {
-        super(`${new URL(session.webId).origin}/context`);
-    }
-
     @documentSet(ContextDocument)
     public Contexts: DocumentSet<ContextDocument>;
 }
