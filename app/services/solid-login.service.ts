@@ -20,7 +20,7 @@ export class SolidLoginService implements IAccountProvider {
     }
 
     public async Login(): Promise<IAccountInfo> {
-        const session = await solid.login('https://solidcommunity.net/');
+        const session = await solid.login(`${location.origin}/pod/`);
         return this.toAccountInfo(session);
     }
 

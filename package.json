@@ -4,10 +4,14 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "build:watch": "hypertype server --watch",
-    "build:run": "hypertype server --watch --run",
+    "build:watch": "hypertype client --watch",
+    "build:run": "hypertype client --watch --run",
+    "build:server": "hypertype server --watch",
+    "build": "hypertype client --prod && hypertype server --prod",
     "server": "http-server ./dist -p 8080",
-    "signal": "y-webrtc-signaling"
+    "server:watch": "nodemon ./dist/server.js",
+    "signal": "y-webrtc-signaling",
+    "start": "npm run build && node dist/server.js"
   },
   "author": "",
   "license": "ISC",
@@ -17,9 +21,12 @@
     "@hypertype/infr": "^3.5.2",
     "@hypertype/ui": "^3.5.2",
     "@types/luxon": "^1.25.0",
+    "handlebars": "^4.7.6",
     "luxon": "^1.25.0",
+    "pod-server": "^0.3.4",
     "rdf-namespaces": "^1.9.2",
     "solid-auth-client": "^2.5.4",
+    "solid-server": "^5.6.0",
     "solidocity": "^1.2.1",
     "y-webrtc": "^10.1.7",
     "yjs": "^13.4.9"
@@ -36,12 +43,17 @@
     "ws": "^7.4.1"
   },
   "hypertype": {
-    "server": {
+    "client": {
       "type": "server",
       "index": "./entry/index.ts",
       "html": "./entry/index.html",
       "port": 3001,
-      "publicPath": "/"
+      "publicPath": "/context"
+    },
+    "server": {
+      "type": "node",
+      "index": "./server/index.ts",
+      "target": "server.js"
     }
   }
 }

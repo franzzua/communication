@@ -9,7 +9,7 @@ export class ContextSync {
     protected Connect(room: string, doc: Doc) {
         return new WebrtcProvider(room, doc, {
             signaling: [
-                'ws://localhost:4444'
+                'ws://localhost:3000'
             ]
         } as any);
     }
