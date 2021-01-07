@@ -7,7 +7,7 @@
     "build:watch": "hypertype client --watch",
     "build:run": "hypertype client --watch --run",
     "build:server": "hypertype server --watch",
-    "build": "hypertype client --prod && hypertype server --prod",
+    "build": "hypertype client && hypertype server --prod",
     "server": "http-server ./dist -p 8080",
     "server:watch": "nodemon ./dist/server.js",
     "signal": "y-webrtc-signaling",
