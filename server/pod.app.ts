@@ -7,6 +7,6 @@ export const podApp = createApp({
     dbPath: './.work/.db',
     strictOrigin: false,
     port: 3000,
-    serverUri: 'http://localhost:3000',
+    serverUri: process.env.SERVER || 'http://localhost:3000',
 });
 
