@@ -9,9 +9,9 @@ module.exports = {
         "solid-server": "solid-server",
         "express": "express",
     },
-    resolve: {
-        alias: {
-            "solidocity": path.resolve(__dirname, "../solidocity/dist/worker.js")
-        }
-    }
+    // resolve: {
+    //     alias: {
+    //         "solidocity": path.resolve(__dirname, "../solidocity/dist/worker.js")
+    //     }
+    // }
 }
