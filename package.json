@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "build:watch": "hypertype client --watch",
+    "build:client": "hypertype client --watch",
     "build:run": "hypertype client --watch --run",
     "build:server": "hypertype server --watch",
     "build": "hypertype client && hypertype server --prod",

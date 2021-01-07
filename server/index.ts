@@ -14,6 +14,8 @@ app.use('/.well-known', express.static('./well-known'));
 
 const server = app.listen(3000)
 useSignalling(server);
+
+console.log('listening at 80')
 // const {Server} = require("pod-server");
 //
 // console.log('fuck.');
