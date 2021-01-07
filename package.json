@@ -11,7 +11,7 @@
     "server": "http-server ./dist -p 8080",
     "server:watch": "nodemon ./dist/server.js",
     "signal": "y-webrtc-signaling",
-    "start": "npm run build && node dist/server.js"
+    "start": "node dist/server.js"
   },
   "author": "",
   "license": "ISC",
