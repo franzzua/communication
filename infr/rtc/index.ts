@@ -1,1 +1,1 @@
-export {YjsService} from "./yjs.service"
+export * from "./context.sync";

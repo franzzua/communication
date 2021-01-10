@@ -1,5 +1,5 @@
 {
-  "name": "Storage",
+  "name": "communication",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
@@ -17,11 +17,12 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@inrupt/solid-client-authn-browser": "^1.3.0",
     "express": "4.17.1",
-    "solid-server": "5.6.0",
     "lib0": "0.2.35",
-    "ws": "7.4.2",
-    "rdf-namespaces": "1.9.2"
+    "rdf-namespaces": "1.9.2",
+    "solid-server": "5.6.0",
+    "ws": "7.4.2"
   },
   "devDependencies": {
     "@hypertype/app": "^3.5.2",
@@ -34,12 +35,11 @@
     "@hypertype/tools": "^3.5.2",
     "@types/node": "^14.14.14",
     "babel-jest": "^26.6.3",
-    "http-server": "^0.12.3",
     "jest": "^26.6.3",
     "ts-jest": "^26.4.4",
     "ttypescript": "1.5.12",
     "typescript": "4.1.3",
-    "solidocity": "^1.2.2",
+    "solidocity": "^1.2.6",
     "y-webrtc": "^10.1.7",
     "yjs": "^13.4.9"
   },

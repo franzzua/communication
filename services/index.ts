@@ -4,6 +4,5 @@ export * from "./context.service";
 export * from "./message.service";
 export * from "./state.service";
 export * from "./log.service";
-export * from "./domain.service";
 export * from "./action.service";
 export * from "./account.manager";

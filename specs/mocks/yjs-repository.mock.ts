@@ -1,40 +1,40 @@
 import {delayAsync, Injectable} from "@hypertype/core";
-import {YjsRepository} from "@infr/rtc/yjsRepository";
 import {applyUpdate, Doc, encodeStateAsUpdate} from "yjs";
 import {EventBus, StateService} from "@services";
 import {LogService} from "../../services/log.service";
 import {publicAccess} from "rdf-namespaces/dist/schema";
+import {YjsConnector} from "@infr/rtc";
 
 let instanceCounter = 0;
 
 @Injectable()
-export class YjsRepositoryMock extends YjsRepository {
+export class YjsConnectorMock  extends YjsConnector{
 
     public static roomMap = new Map<string, Doc[]>();
     private instance: number = instanceCounter++;
 
-    constructor(eventBus: EventBus, logService: LogService, stateService: StateService) {
-        super(eventBus, logService, stateService);
+    constructor() {
+        super();
     }
 
-    protected async Connect(room: string, doc: Doc) {
+    public async Connect(room: string, doc: Doc) {
         await delayAsync(10);
 
         doc.on('update', async update => {
-            const otherDocs = YjsRepositoryMock.roomMap.get(room);
+            const otherDocs = YjsConnectorMock.roomMap.get(room);
             for (const otherDoc of otherDocs) {
                 if (otherDoc == doc)
                     continue;
 
                 await delayAsync(10);
                 applyUpdate(otherDoc, update, doc.clientID);
-                this.logService.Info({Domain: 'yjs-mock', Phase: `update ${otherDoc.clientID} from ${doc.clientID}`});
+                // this.logService.Info({Domain: 'yjs-mock', Phase: `update ${otherDoc.clientID} from ${doc.clientID}`});
             }
         });
 
 
-        if (YjsRepositoryMock.roomMap.has(room)) {
-            const otherDocs = YjsRepositoryMock.roomMap.get(room);
+        if (YjsConnectorMock.roomMap.has(room)) {
+            const otherDocs = YjsConnectorMock.roomMap.get(room);
             for (const otherDoc of otherDocs) {
                 const s1 = encodeStateAsUpdate(doc);
                 const s2 = encodeStateAsUpdate(otherDoc);
@@ -42,16 +42,10 @@ export class YjsRepositoryMock extends YjsRepository {
                 applyUpdate(otherDoc, s1, doc.clientID);
             }
 
-            YjsRepositoryMock.roomMap.get(room).push(doc);
+            YjsConnectorMock.roomMap.get(room).push(doc);
         } else {
-            YjsRepositoryMock.roomMap.set(room, [doc]);
+            YjsConnectorMock.roomMap.set(room, [doc]);
         }
-        // const provider = new WebrtcProvider(room, doc, {
-        //     signaling: [
-        //         'ws://localhost:4444'
-        //     ]
-        // } as any);
-
 
     }
 

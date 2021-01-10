@@ -17,8 +17,10 @@ module.exports = {
             tsconfig: './specs/tsconfig.json'
         }
     },
+    transformIgnorePatterns: [],
     moduleNameMapper: {
         ...pathsToModuleNameMapper(compilerOptions.paths, {prefix: '<rootDir>/'}),
-        '^solidocity': '<rootDir>/node_modules/solidocity/dist/node.js'
+        '^solidocity': '<rootDir>/node_modules/solidocity/dist/node.js',
+        '^@hypertype\/infr':'<rootDir>/node_modules/@hypertype/infr/dist/index.js',
     }
 };

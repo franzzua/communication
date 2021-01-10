@@ -17,7 +17,7 @@ export class BaseContextComponent<TState = {}, TEvents = any> extends HyperCompo
 
     private contextURI$ = this.context$.pipe(
         filter(Fn.Ib),
-        map(c => c.URI),
+        map(c => c.id),
         filter(Fn.Ib),
         tap(console.log),
     );

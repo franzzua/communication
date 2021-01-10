@@ -3,7 +3,7 @@ import {KeyboardAspect} from "./keyboardAspect";
 import {TreeComponent} from "./tree.component";
 import {ActionService, EventBus, StateService} from "@services";
 import {Injectable, utc} from "@hypertype/core";
-import { Message } from "@model";
+import {Context, Message} from "@model";
 
 @Injectable()
 export class TreeKeyboardAspect extends KeyboardAspect<TreeComponent> {
@@ -15,18 +15,29 @@ export class TreeKeyboardAspect extends KeyboardAspect<TreeComponent> {
 
     async Enter(event: KeyboardEvent, state: IState) : Promise<IState>{
         const message = state.Items[state.SelectedIndex].Message;
-        if (message.Action) {
-            this.actionService.Invoke(message.Action)
+        if (message.Action != null) {
+            this.actionService.Invoke(message.Action, message);
+            return state;
         }
-        if (Message.isLast(message)){
+        if (message.SubContext == null){
+            const newContext = {
+                id: `${+utc()}`,
+                Messages: [],
+                Storage: message.Context.Storage,
+            } as Context;
+            this.eventBus.Notificator.OnCreateContext(newContext);
+            this.eventBus.Notificator.OnAttachContext(newContext.id, message);
+            message.SubContext = newContext;
+        }
+        if (message.SubContext != null){
             const newMessage = {
                 Content: '',
-                Context: message.Context,
+                Context: message.SubContext,
                 CreatedAt: utc(),
             };
             this.eventBus.Notificator.OnAddMessage(newMessage);
             return {
-                SelectedIndex: state.SelectedIndex + 1,
+                SelectedIndex: state.SelectedIndex + message.SubContext.Messages.length + 1,
                 Items: [
                     ...state.Items.slice(0, state.SelectedIndex + 1),
                     {Message: newMessage, Level: state.Items[state.SelectedIndex].Level},
@@ -52,10 +63,9 @@ export class TreeKeyboardAspect extends KeyboardAspect<TreeComponent> {
         };
     }
 
-    async Delete(event: KeyboardEvent, state: IState): Promise<IState> {
+    async ShiftDelete(event: KeyboardEvent, state: IState): Promise<IState> {
         const message = state.Items[state.SelectedIndex].Message;
-        if (event.shiftKey)
-            this.eventBus.Notificator.OnDeleteMessage(message);
+        this.eventBus.Notificator.OnDeleteMessage(message);
         return {
             Items: [
                 ...state.Items.slice(0, state.SelectedIndex),

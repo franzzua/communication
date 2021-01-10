@@ -9,12 +9,15 @@ export class KeyboardAspect<TComponent extends HyperComponent = HyperComponent> 
         const keyboardEvents$ = element$.pipe(
             h.switchMap(element => h.fromEvent(element, 'keydown')),
             h.mergeMap(async (event: KeyboardEvent) => {
-                if (this[event.key])
+
+                const modifiers = ['Alt', 'Ctrl', 'Shift'].filter(x => event[x.toLowerCase() + 'Key']);
+                const modKey = modifiers.join('') + event.key;
+                if (this[modKey])
                     event.preventDefault();
                 const state = await result$.pipe(h.first()).toPromise();
-                if (!this[event.key])
+                if (!this[modKey])
                     return state;
-                return await this[event.key](event, state);
+                return await this[modKey](event, state);
             })
         )
         const result$ = h.merge(

@@ -7,9 +7,9 @@ export class ActionService {
 
     private Map = new Map<string, Action>();
 
-    public Invoke(action: string) {
+    public Invoke(action: string, ...args) {
         if (this.Map.has(action)) {
-            this.Map.get(action)();
+            this.Map.get(action)(...args);
         }
     }
 
@@ -18,7 +18,7 @@ export class ActionService {
     }
 }
 
-export type AsyncAction = () => Promise<void>;
-export type SyncAction = () => void;
+export type AsyncAction = (...args) => Promise<void>;
+export type SyncAction = (...args) => void;
 
 export type Action = SyncAction | AsyncAction;

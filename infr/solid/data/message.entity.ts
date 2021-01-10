@@ -15,7 +15,7 @@ export class MessageEntity extends Entity {
     @field(Schema.author, {type: "ref"})
     public Author: Reference;
 
-    @field(Schema.children, {type: "ref", isArray: true, isOrdered: true})
-    public Context: Reference;
+    @field(Schema.children, {type: "ref"})
+    public SubContext: Reference;
 
 }

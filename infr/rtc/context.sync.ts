@@ -4,18 +4,20 @@ import {utc} from "@hypertype/core";
 import {EventBus} from "../../services";
 import {WebrtcProvider} from "y-webrtc";
 
-export class ContextSync {
-
-    protected Connect(room: string, doc: Doc) {
-        return new WebrtcProvider(room, doc, {
+export class YjsConnector {
+    public Connect(room: string, doc: Doc){
+        const provider = new WebrtcProvider(room, doc, {
             signaling: [
-                location.origin.replace(/^http/,'ws')
+                location.origin.replace(/^http/, 'ws')
             ]
         } as any);
+        provider.connect();
     }
+}
+
+export class ContextSync {
 
     public Doc = new Doc();
-    private Provider = this.Connect(this.uri, this.Doc);
     private Fragment = this.Doc.getXmlFragment('main');
     private MessageMap = new Map<string, XmlElement>();
     private MessageBackMap = new Map<string, Message>();
@@ -23,8 +25,7 @@ export class ContextSync {
 
     public EventBus = new EventBus();
 
-    constructor(private uri: string) {
-        console.log('start sync', uri);
+    constructor(public uri: string) {
         this.Fragment.observeDeep((events, transaction) => {
             for (let event of events) {
                 // @ts-ignore
@@ -32,7 +33,6 @@ export class ContextSync {
 
                 if (event.transaction.local)
                     continue;
-                console.log('event', event);
                 for (let added of event.changes.added) {
                     const element = ((added.content as ContentType).type as XmlElement);
                     switch (element.nodeName) {
@@ -68,20 +68,23 @@ export class ContextSync {
                         console.warn('update failed', element);
                         return;
                     }
+                    const content = element.getAttribute(key);
                     switch (key) {
                         case 'content':
-                            const content = element.getAttribute('content');
                             this.EventBus.Notificator.OnUpdateContent(existed, content);
+                        case 'sub-context':
+                            this.EventBus.Notificator.OnAttachContext(content, existed);
                     }
                 }
             }
         });
     }
+
     //
     private onNewContext(element: XmlElement) {
-        console.log('new context from yjs ');
         const context = {
             URI: element.getAttribute('uri'),
+            id: element.getAttribute('id'),
             Messages: []
         };
         // console.log(added, context);
@@ -95,7 +98,6 @@ export class ContextSync {
     }
 
     private onNewMessage(element: XmlElement) {
-        console.log('new message from yjs');
         const createdAt = element.getAttribute('createdAt');
         const message = {
             CreatedAt: utc(createdAt),
@@ -114,13 +116,14 @@ export class ContextSync {
         const contextElement = new XmlElement('context');
         this.Doc.transact(() => {
             contextElement.setAttribute('uri', context.URI);
+            contextElement.setAttribute('id', context.id);
             this.Fragment.insert(0, [contextElement]);
         });
         this.context = context;
     }
 
     AddMessage(message: Message) {
-        if (!message.URI && !message.id){
+        if (!message.URI && !message.id) {
             message.id = `${+utc()}.${this.Doc.clientID}`;
         }
         if (this.MessageMap.has(message.id))
@@ -129,6 +132,8 @@ export class ContextSync {
         this.Doc.transact(() => {
             newElement.setAttribute('createdAt', message.CreatedAt.toISO());
             newElement.setAttribute('content', message.Content);
+            if (message.SubContext)
+                newElement.setAttribute('sub-context', message.SubContext.URI);
             newElement.setAttribute('uri', message.URI);
             newElement.setAttribute('id', message.id);
             this.Fragment.push([newElement]);
@@ -137,6 +142,9 @@ export class ContextSync {
         this.MessageBackMap.set(message.id, message);
     }
 
+    public OnAttachContext(contextURI: string, to: Message) {
+        this.MessageMap.get(to.id).setAttribute('sub-context', contextURI);
+    }
 
     UpdateContent(message: Message, content: any) {
         const element = this.MessageMap.get(message.id);
@@ -150,7 +158,7 @@ export class ContextSync {
     Load(context: Context) {
         this.isMaster = true;
         this.Doc.transact(() => {
-            if (!this.Fragment.firstChild){
+            if (!this.Fragment.firstChild) {
                 this.AddContext(context);
             }
             for (let message of context.Messages) {
@@ -168,8 +176,8 @@ export class ContextSync {
     DeleteMessage(message: Message) {
         const element = this.MessageMap.get(message.id);
         this.Doc.transact(() => {
-            for (let index = 0; index < this.Fragment.length; index++){
-                if (this.Fragment.get(index) == element){
+            for (let index = 0; index < this.Fragment.length; index++) {
+                if (this.Fragment.get(index) == element) {
                     this.Fragment.delete(index);
                     return;
                 }

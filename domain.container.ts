@@ -4,28 +4,26 @@ import {
     ActionService,
     StorageService,
     ContextService,
-    DomainService,
     EventBus,
     LogService,
     MessageService,
     StateService
 } from "@services";
-import {YjsRepository} from "@infr/rtc/yjsRepository";
 import {SolidRepository} from "@infr/solid";
 import {ManagementService} from "./services/management.service";
 import {PersistanceService} from "@infr/persistance.service";
+import {YjsConnector} from "@infr/rtc";
 
 
 export const DomainContainer = Container.withProviders(
+    YjsConnector,
     StorageService,
     ContextService,
     AccountManager,
-    DomainService,
     LogService,
     EventBus,
     ManagementService,
     PersistanceService,
-    YjsRepository,
     SolidRepository,
     MessageService,
     StateService,

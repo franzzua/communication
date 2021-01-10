@@ -22,6 +22,7 @@ export class ManagementService{
                     Content: x,
                     Action: `accounts.${x}.add`,
                     SubContext: {
+                        id: 'Management.Accounts',
                         Messages: accounts
                             .filter(a => a.type == x)
                             .map(a => ({
@@ -42,29 +43,37 @@ export class ManagementService{
         this.Accounts$, this.Storages$, this.stateService.State$
     ]).pipe(
         map(([accounts, storages, state]) => ({
+            id: 'Root',
             Messages: [{
                 id: 'Management',
                 Content: 'Management',
+                Action: '',
                 SubContext: {
+                    id: 'Management',
                     Messages: [
                         {
                             id: 'Management.Accounts',
                             Content: 'Accounts',
+                            Action: '',
                             SubContext: accounts
                         },
                         {
                             id: 'Management.Storages',
                             Content: 'Storages',
+                            Action: '',
                             SubContext: {
+                                id: 'Management.Storages',
                                 Messages: storages.map(s => ({
                                     id: `storage.${s.URI}`,
                                     Content: s.URI,
+                                    Action: 'message.add',
                                     SubContext: state.get(s.Root.URI)
                                 }))
                             }
                         },
                         {
                             id: 'Management.Settings',
+                            Action: '',
                             Content: 'Settings'
                         }
                     ]

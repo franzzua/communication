@@ -21,12 +21,24 @@ export class TreeComponent extends BaseContextComponent<IState, IEvents> {
     }
 
     private Items$ = this.Context$.pipe(
-        h.map(context => this.flatMap(context))
+        h.map(context => {
+            this.contexts.clear();
+            return this.flatMap(context);
+        })
     );
+
+    private contexts = new Map<string, Context>();
 
     private flatMap(context: Context, level = 0): Item[] {
         if (!context)
             return [];
+        if (this.contexts.has(context.id)){
+            return [{
+                Message: {Content: 'Circular'},
+                Level: level
+            }];
+        }
+        this.contexts.set(context.id, context);
         const result = context.Messages.flatMap(msg => ([
             {Message: {...msg}, Level: level},
             ...this.flatMap(msg.SubContext, level + 1)

@@ -22,10 +22,10 @@ export class StorageService {
     public Storages$: Observable<Storage[]> = this._storageSubject$.asObservable();
 
     async AddStorage(storage: Storage){
-        this.logService.Info({
-            Domain: 'Storage',
-            Phase: 'Add',
-        })
+        // this.logService.Info({
+        //     Domain: 'Storage',
+        //     Phase: 'Add',
+        // })
         this._storageSubject$.next([...this._storageSubject$.value, storage]);
     }
 }

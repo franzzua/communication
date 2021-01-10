@@ -1,6 +1,6 @@
 import {SolidRepository} from "@infr/solid";
 import {Context, Message} from "@model";
-import {EventBus, StateService, StorageService} from "@services";
+import {StateService, StorageService} from "@services";
 import {Injectable} from "@hypertype/core";
 
 @Injectable()
@@ -8,10 +8,9 @@ export class SolidRepositoryMock extends SolidRepository {
 
     public static instances: SolidRepositoryMock[] = [];
 
-    constructor(eventBus: EventBus,
-                stateService: StateService,
+    constructor(stateService: StateService,
                 storageService: StorageService) {
-        super(eventBus, stateService, storageService);
+        super(stateService, storageService);
         SolidRepositoryMock.instances.push(this);
     }
 
@@ -20,17 +19,24 @@ export class SolidRepositoryMock extends SolidRepository {
         return null;
     }
 
-    async OnAttachContext(message: Message, context: Context) {
+    async OnAttachContext(contextURI: string, message: Message) {
     }
 
     async OnAddMessage(message: Message) {
+        return message;
+    }
+
+    async OnUpdateContent(message: Message, content: any){
+
     }
 
     async OnCreateContext(context: Context) {
         SolidRepositoryMock.instances
-            .forEach(x => x == this || x.onNewContext({
+            .filter(x => x != this)
+            .forEach(x => x.onNewContext({
                 URI: context.URI,
                 Messages: []
             }));
+        return context;
     }
 }

@@ -40,7 +40,7 @@ export class EventBus {
             // h.tap(x => console.log(x, listener)),
             h.filter(x => x.source != listener),
             h.filter(x => x.type in listener),
-            h.mergeMap(x => (listener[x.type] as any)(...x.payload) ?? Promise.resolve()),
+            h.concatMap(x => (listener[x.type] as any)(...x.payload) ?? Promise.resolve()),
         );
     }
 
@@ -64,7 +64,7 @@ export interface DomainEventsListener {
 
     OnCreateContext?(context: Context);
 
-    OnAttachContext?(context: Context, to: Message);
+    OnAttachContext?(contextURI: string, to: Message);
 
     OnUpdateContent?(message: Message, content: any);
 

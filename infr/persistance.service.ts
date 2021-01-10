@@ -1,5 +1,5 @@
 import {Context, Message} from "@model";
-import {ContextSync} from "./rtc/context.sync";
+import {ContextSync, YjsConnector} from "./rtc/context.sync";
 import {SolidRepository} from "./solid";
 import {DomainEventsListener, EventBus, IAccountInfo, StateService} from "../services";
 import {Injectable, merge} from "@hypertype/core";
@@ -12,6 +12,7 @@ export class PersistanceService implements DomainEventsListener {
 
     constructor(private solid: SolidRepository,
                 private eventBus: EventBus,
+                private yjsConnector: YjsConnector,
                 private state: StateService) {
     }
 
@@ -19,6 +20,7 @@ export class PersistanceService implements DomainEventsListener {
         if (this.SyncMap.has(uri))
             return this.SyncMap.get(uri);
         const sync = new ContextSync(uri);
+        this.yjsConnector.Connect(uri, sync.Doc);
         sync.EventBus.Subscribe({
             OnUpdateContent: async (message: Message, content: any) => {
                 await this.Notificator.OnUpdateContent(message, content);
@@ -77,6 +79,20 @@ export class PersistanceService implements DomainEventsListener {
         if (sync.IsMaster) {
             await this.solid.OnDeleteMessage(message);
         }
+    }
+
+    public async OnCreateContext(context: Context) {
+        await this.solid.OnCreateContext(context);
+        const sync =  this.GetSyncContext(context.URI);
+        sync.Load(context);
+    }
+
+
+    public async OnAttachContext(contextURI: string, to: Message) {
+        await this.solid.OnAttachContext(contextURI, to);
+        const sync =  this.GetSyncContext(to.Context.URI);
+        sync.Load(to.Context);
+        sync.OnAttachContext(contextURI, to);
     }
 
     public async OnNewAccount(info: IAccountInfo) {
