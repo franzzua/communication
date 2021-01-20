@@ -11,7 +11,7 @@ module.exports = {
     },
     resolve: {
         alias: {
-            "solidocity": path.resolve(__dirname, "../solidocity"),
+            // "solidocity": path.resolve(__dirname, "../solidocity"),
             // "node-fetch": path.resolve(__dirname,"../solidocity/polyfills/global.js"),
             // 'solid-auth-client': `${__dirname}/node_modules/solid-auth-client/browser/index.js`,
             // 'solid-file-client': path.resolve(__dirname,"../solidocity/node_modules/solid-file-client/dist/window/solid-file-client.bundle.js"),
