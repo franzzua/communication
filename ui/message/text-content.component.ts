@@ -39,6 +39,7 @@ export class TextContentComponent extends HyperComponent<string, IEvents> {
 
     @property()
     private active$!: Observable<boolean>;
+    private active!: boolean;
 
     private lastTextEdited;
 
@@ -50,7 +51,8 @@ export class TextContentComponent extends HyperComponent<string, IEvents> {
         },
         focus: async () => {
             const element: HTMLElement = await this.Element$.pipe(first()).toPromise();
-            element.dispatchEvent(new FocusEvent('focus'));
+            if(!this.active)
+                element.dispatchEvent(new FocusEvent('focus'));
             // this.cursor.SetPath(this.path);
         }
     }
@@ -75,7 +77,6 @@ export class TextContentComponent extends HyperComponent<string, IEvents> {
             filter(x => x == true),
             withLatestFrom(this.select<HTMLElement>('[contenteditable]')),
             tap(([_, element]) => {
-
                 element.focus()
             })
         )

@@ -9,7 +9,7 @@ import {ManagementComponent} from "./management/management.component";
 import {StorageComponent} from "./storage/storage.component";
 import {AddStorageComponent} from "./add-storage/add-storage.component";
 import {TreeComponent} from "./tree/tree.component";
-import {TreeKeyboardAspect} from "./tree/treeKeyboardAspect";
+import {TreeKeyboardReducer} from "./tree/tree.keyboard.reducer";
 
 export const UIContainer = Container.withProviders(
     ContextComponent,
@@ -22,6 +22,6 @@ export const UIContainer = Container.withProviders(
     StateLogger,
     ManagementComponent,
     TreeComponent,
-    TreeKeyboardAspect,
+    TreeKeyboardReducer,
 );
 

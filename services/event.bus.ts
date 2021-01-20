@@ -1,5 +1,5 @@
 import * as h from "@hypertype/core";
-import {delayAsync, Injectable, Observable, Subject, utc} from "@hypertype/core";
+import {delayAsync, first, Injectable, Observable, Subject, utc} from "@hypertype/core";
 import {Context, Message, Storage} from "@model";
 import {IAccountInfo} from "./account.manager";
 
@@ -13,15 +13,15 @@ export class EventBus {
 
     public Notificator = this.getNotificator();
 
-    public getNotificator(listener?: DomainEventsListener): DomainEventsListener{
+    public getNotificator(listener?: any): DomainEventsListener{
         return new Proxy({},{
             get: (target: {}, p: PropertyKey, receiver: any) => {
-                return (...args) => {
+                return async (...args) => {
                     this._eventSubject.next({
                         type: p as any,
                         payload: args,
                         source: listener
-                    })
+                    });
                 }
             }
         }) as any;
@@ -35,14 +35,16 @@ export class EventBus {
     }
 
 
-    public Subscribe(listener: DomainEventsListener) {
+    public Subscribe(listener: any) {
         return this.EventStream$.pipe(
             // h.tap(x => console.log(x, listener)),
-            h.filter(x => x.source != listener),
+            h.filter(x => listener == null || x.source != listener),
             h.filter(x => x.type in listener),
             h.concatMap(x => (listener[x.type] as any)(...x.payload) ?? Promise.resolve()),
         );
     }
+
+    private MainSubscription$ = this.Subscribe(null)
 
 }
 

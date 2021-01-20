@@ -112,4 +112,7 @@ export class PersistanceService implements DomainEventsListener {
         this.eventBus.Subscribe(this)
     );
 
+    public async Load(uri: string) {
+        await this.solid.Load(uri);
+    }
 }

@@ -6,8 +6,8 @@ import {Storage} from "./storage";
 export class Context {
     public id?: string;
     public URI?: string;
-    public readonly Messages: Array<Message> = [];
-    public readonly Access?: Array<AccessRule> = [];
+    public Messages: Array<Message> = [];
+    public Access?: Array<AccessRule> = [];
     public Sorting?: Sorting;
     public Permutation?: any;
     public Storage?: Storage;

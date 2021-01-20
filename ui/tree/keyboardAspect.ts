@@ -2,29 +2,45 @@ import {HyperComponent} from "@hypertype/ui";
 import * as h from "@hypertype/core";
 import {Observable} from "@hypertype/core";
 
-export class KeyboardAspect<TComponent extends HyperComponent = HyperComponent> {
+export class KeyboardAspect {
 
-    public ApplyAspect$(state$: TComponent["State$"],
-                        element$: Observable<HTMLElement>) {
-        const keyboardEvents$ = element$.pipe(
-            h.switchMap(element => h.fromEvent(element, 'keydown')),
-            h.mergeMap(async (event: KeyboardEvent) => {
+    public static GetEvents$<TComponent extends HyperComponent>(element$: Observable<HTMLElement>) {
+        return h.merge(
+            element$.pipe(
+                h.switchMap(element => h.fromEvent(element, 'keydown')),
+                h.mergeMap(async (event: KeyboardEvent) => {
 
-                const modifiers = ['Alt', 'Ctrl', 'Shift'].filter(x => event[x.toLowerCase() + 'Key']);
-                const modKey = modifiers.join('') + event.key;
-                if (this[modKey])
-                    event.preventDefault();
-                const state = await result$.pipe(h.first()).toPromise();
-                if (!this[modKey])
-                    return state;
-                return await this[modKey](event, state);
-            })
+                    const modifiers = ['Alt', 'Ctrl', 'Shift'].filter(x => event[x.toLowerCase() + 'Key']);
+                    const modKey = modifiers.join('') + event.key;
+                    return {
+                        event, modKey
+                    };
+                })
+            ),
+            element$.pipe(
+                h.switchMap(element => h.fromEvent(element, 'copy')),
+                h.mergeMap(async (event: ClipboardEvent) => {
+                    return {
+                        event, modKey: 'Copy'
+                    };
+                })
+            ),
+            element$.pipe(
+                h.switchMap(element => h.fromEvent(element, 'paste')),
+                h.mergeMap(async (event: ClipboardEvent) => {
+                    return {
+                        event, modKey: 'Paste'
+                    };
+                })
+            ),
+            h.fromEvent(navigator.clipboard, 'paste').pipe(
+                h.mergeMap(async (event: ClipboardEvent) => {
+                    return {
+                        event, modKey: 'Paste'
+                    };
+                })
+            ),
         )
-        const result$ = h.merge(
-            state$,
-            keyboardEvents$
-        );
-        return result$;
     }
 
 }

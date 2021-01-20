@@ -22,8 +22,8 @@ export class SolidRepository implements DomainEventsListener {
     }
 
     private StorageMap = new Map<string, ContextCollection>();
-    private ContextMap = new Map<string, ContextDocument>();
-    private MessageMap = new Map<string, MessageEntity>();
+    // private ContextMap = new Map<string, ContextDocument>();
+    // private MessageMap = new Map<string, MessageEntity>();
 
     private ChangedDocs = new Set<ContextDocument>();
 
@@ -32,77 +32,53 @@ export class SolidRepository implements DomainEventsListener {
         await collection.Unsubscribe();
     }
 
-    public async LoadStorage(storage: Storage, clean = false) {
-        const collection = new ContextCollection(storage.URI);
+    public async LoadStorage(storage: Storage, clean = false): Promise<Storage> {
+        if (ContextCollection.Map.has(storage.URI))
+            return ContextCollection.Map.get(storage.URI).Storage;
+        const collection = new ContextCollection(storage);
         if (clean){
             await collection.Init();
             await collection.Remove();
         }
         await collection.Init();
-        const contexts = [];
-        if (collection.Contexts.Documents.length == 0) {
-            await collection.Contexts.Create('root.ttl');
+        for (let linkedStorage of collection.LinkedStorages) {
+            await this.LoadStorage(linkedStorage, clean);
         }
-        for (const x of collection.Contexts.Documents) {
-            await x.Init();
-            x.on('update', ({reference}) => {
-                this.notificator.OnContextChanged(reference);
-            })
-            const context = new Context();
-            context.Storage = storage;
-            context.URI = x.URI;
-            context.id = x.URI;
-            this.ContextMap.set(context.id, x);
-            contexts.push(context);
-            if (context.URI == `${storage.URI}/root.ttl`) {
-                storage.Root = context;
-            }
-        }
-        for (const x of collection.Contexts.Documents) {
-            for (const messageEntity of x.Messages.Items) {
-                const message = new Message();
-                message.CreatedAt = utc(messageEntity.Time);
-                message.Content = messageEntity.Content;
-                message.Context = contexts.find(y => y.URI == x.URI);
-                message.Context.Messages.push(message);
-                if (messageEntity.SubContext) {
-                    message.SubContext = contexts.find(y => y.URI == messageEntity.SubContext);
-                }
-                message.URI = messageEntity.Id;
-                message.id = messageEntity.Id;
-                this.MessageMap.set(message.id, messageEntity);
-            }
-        }
+        await collection.Link();
         this.StorageMap.set(storage.URI, collection);
+        await this.stateService.Load(storage.Root);
+        await this.storageService.AddStorage(storage);
+        return  storage;
     }
 
     public async CreateDefaultStorage(session, clean = false) {
         const storage = new Storage();
         storage.URI = `${new URL(session.webId).origin}/context`;
         await this.LoadStorage(storage, clean);
-        await this.stateService.Load(storage.Root);
         return storage;
     }
 
     async OnAttachContext(contextURI: string, message: Message) {
-        if (this.ContextMap.has(contextURI))
-            contextURI = this.ContextMap.get(contextURI).URI;
-        const messageEntity = this.MessageMap.get(message.id);
+        if (ContextDocument.Map.has(contextURI))
+            contextURI = ContextDocument.Map.get(contextURI).URI;
+        const contextDocument = ContextDocument.Map.get(message.Context.URI);
+        const messageEntity = contextDocument.Messages.get(message.URI)
         messageEntity.SubContext = contextURI;
+        this.ChangedDocs.add(messageEntity.Document as ContextDocument);
         this.SaveDocs();
     }
 
     async OnAddMessage(message: Message) {
         if (message.URI)
             return;
-        const contextDocument = this.ContextMap.get(message.Context.id);
+        const contextDocument = ContextDocument.Map.get(message.Context.id);
         await contextDocument.Loading;
         const messageEntity = contextDocument.Messages.Add();
         // messageEntity.Author = message.Author.URI;
         messageEntity.Content = message.Content;
+        messageEntity.SubContext = message.SubContext?.URI;
         messageEntity.Time = message.CreatedAt.toJSDate();
         message.URI = messageEntity.Id;
-        this.MessageMap.set(message.id, messageEntity);
         this.ChangedDocs.add(contextDocument);
         this.SaveDocs();
         return message;
@@ -130,15 +106,15 @@ export class SolidRepository implements DomainEventsListener {
     async OnDeleteMessage(message: Message) {
         if (!message.URI)
             return;
-        const contextDocument = this.ContextMap.get(message.Context.id);
-        contextDocument.Messages.Remove(this.MessageMap.get(message.id));
+        const contextDocument = ContextDocument.Map.get(message.Context.id);
+        contextDocument.Messages.Remove(contextDocument.Messages.get(message.URI));
         this.ChangedDocs.add(contextDocument);
         this.SaveDocs();
     }
 
     async OnUpdateContent(message: Message, content: any) {
-        const contextDocument = this.ContextMap.get(message.Context.id);
-        const messageEntity = this.MessageMap.get(message.id);
+        const contextDocument = ContextDocument.Map.get(message.Context.id);
+        const messageEntity =contextDocument.Messages.get(message.URI);
         messageEntity.Content = content;
         this.ChangedDocs.add(contextDocument);
         this.SaveDocs();
@@ -148,7 +124,7 @@ export class SolidRepository implements DomainEventsListener {
         const collection = this.StorageMap.get(context.Storage.URI);
         const contextDocument = await collection.Contexts.Create(`${context.id || +utc()}.ttl`);
         context.URI = contextDocument.URI;
-        this.ContextMap.set(context.id, contextDocument);
+        ContextDocument.Map.set(context.id, contextDocument);
         return context;
     }
 
@@ -162,12 +138,25 @@ export class SolidRepository implements DomainEventsListener {
         const session = account.session as ISession;
         await useSession(session);
         const storage = await this.CreateDefaultStorage(session, clean);
-        await this.storageService.AddStorage(storage);
         return storage;
     }
 
     async Clean() {
 
+    }
+
+    async Load(uri: string) {
+        if (ContextDocument.Map.has(uri))
+            return;
+        const collectionURI = uri.substr(0, uri.lastIndexOf('/'));
+        if (this.StorageMap.has(collectionURI))
+            return;
+        const storage = await this.LoadStorage({
+            URI: collectionURI,
+            Root: null,
+            Type: 'solid'
+        });
+        await this.storageService.AddStorage(storage);
     }
 }
 

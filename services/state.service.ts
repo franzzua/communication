@@ -52,12 +52,12 @@ export class StateService implements DomainEventsListener{
         // this.eventBus.Notify('OnCreateContext', context);
     }
 
-    async OnAttachContext(contextURI: string, to: Message) {
+    async OnAttachContext(contextId: string, to: Message) {
         const context = this.State.get(to.Context.id);
         const existed = context.Messages.find(Message.equals(to));
         if (!existed)
             throw new Error("Attach context to not loaded message");
-        const subContext = this.State.get(contextURI);
+        const subContext = this.State.get(contextId);
         if (!subContext)
             throw new Error("Attach not loaded context to message");
         existed.SubContext = subContext;
@@ -72,7 +72,6 @@ export class StateService implements DomainEventsListener{
             context.Messages[index] = message;
         } else {
             context.Messages.push(message);
-
         }
         this._subject$.next(this.State);
         // this.eventBus.Notify('OnAddMessage', message);

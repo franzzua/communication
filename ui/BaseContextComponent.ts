@@ -1,11 +1,11 @@
 import {HyperComponent, property} from "@hypertype/ui";
-import {filter, Fn, map, merge, Observable, switchMap, tap} from "@hypertype/core";
+import {filter, Fn, map, merge, Observable, shareReplay, switchMap, tap} from "@hypertype/core";
 import {Context} from "@model";
 import {StateService} from "@services";
 
-export class BaseContextComponent<TState = {}, TEvents = any> extends HyperComponent<TState, TEvents> {
+export abstract class BaseContextComponent<TState = {}, TEvents = any> extends HyperComponent<TState, TEvents> {
 
-    constructor(protected stateService: StateService) {
+    protected constructor(protected stateService: StateService) {
         super();
     }
 
@@ -19,7 +19,7 @@ export class BaseContextComponent<TState = {}, TEvents = any> extends HyperCompo
         filter(Fn.Ib),
         map(c => c.id),
         filter(Fn.Ib),
-        tap(console.log),
+        // tap(console.log),
     );
 
     private contextByURI$: Observable<Context> = merge(this.uri$, this.contextURI$).pipe(
@@ -29,5 +29,7 @@ export class BaseContextComponent<TState = {}, TEvents = any> extends HyperCompo
 
     protected Context$ = merge(this.contextByURI$, this.context$).pipe(
         filter(Fn.Ib),
+        shareReplay(1),
     );
+
 }
