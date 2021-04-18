@@ -1,13 +1,24 @@
 const path = require('path')
-
+const webpack = require(    'webpack');
 module.exports = {
-    node: false,
+    node: {
+        process: true,
+        os: true
+    },
     target: 'web',
     externals: {
         'perf_hooks': 'perf_hooks',
         'crypto': 'crypto',
         "solid-server": "solid-server",
-        "express": "express",
+        "express": "express"
+    },
+    module: {
+        rules: [
+            {
+                test: /\.svg$/,
+                loader: 'string-loader',
+            },
+        ]
     },
     resolve: {
         alias: {

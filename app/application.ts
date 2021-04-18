@@ -1,5 +1,5 @@
 import {Application as BaseApplication, ApplicationBuilder} from "@hypertype/app";
-import {DomainContainer} from "../domain.container";
+import {AppContainer} from "../app-container";
 import {UIContainer} from "../ui/container";
 import {Routes} from "./routes";
 import {AppRootComponent} from "./app-root.component";
@@ -9,9 +9,14 @@ import {PanelService} from "./services/panel.service";
 import {SolidLoginService} from "./services/solid-login.service";
 import {SolidStorageActions} from "./services/solid-storage-actions.service";
 import {PersistanceService} from "@infr/persistance.service";
+import {SettingsComponent} from "./pages/settings/settings.component";
+import {PanelComponent} from "./panels/panel.component";
+import {LocalRepository} from "@infr/local/local.repository";
 
 UIContainer.provide([
-    AppRootComponent
+    AppRootComponent,
+    SettingsComponent,
+    PanelComponent
 ]);
 
 @Injectable()
@@ -21,6 +26,7 @@ export class Application {
         private persistance: PersistanceService,
         private actionService: ActionService,
         private accountManager: AccountManager,
+        private localRepository: LocalRepository,
         private base: BaseApplication) {
 
     }
@@ -32,7 +38,7 @@ export class Application {
                 options: null,
                 routes: Routes
             })
-            .withInfrustructure(DomainContainer)
+            .withInfrustructure(AppContainer)
             .withUI(UIContainer)
             .withUI(Container.withProviders(
                 PanelService,
@@ -51,7 +57,7 @@ export class Application {
     }
 
     private async registerAccounts() {
-        await this.accountManager.Register(this.base.get<SolidLoginService>(SolidLoginService));
+        // await this.accountManager.Register(this.base.get<SolidLoginService>(SolidLoginService));
     }
 
     private registerActions() {

@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
     "module": "commonjs",
-    "target": "es2015",
+    "target": "ES2019",
     "sourceMap": true,
     "baseUrl": "./",
     "experimentalDecorators": true,
@@ -12,7 +12,7 @@
     "declarationDir": "./dist/typings",
     "declaration": true,
     "esModuleInterop": true,
-    "types": ["node"],
+    "types": ["node", "db.js"],
     "lib": [
       "ESNext",
       "DOM"
@@ -20,7 +20,9 @@
     "paths": {
       "@model": [        "./model"      ],
       "@infr/*": [        "./infr/*"      ],
-      "@services": [        "./services"      ]
+      "@services": [        "./services"      ],
+      "@domain/*": [        "./domain/*"      ],
+      "@domain": [        "./domain"      ]
     }
   },
   "exclude": [

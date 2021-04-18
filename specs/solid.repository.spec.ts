@@ -1,6 +1,6 @@
 import './polyfills';
 import {suite, test, timeout, expect} from '@hypertype/tools/test';
-import {DomainContainer} from "../domain.container";
+import {AppContainer} from "../app-container";
 import {SolidRepository} from "@infr/solid";
 import {SolidLoginMock} from "./mocks/solidLoginMock";
 import {StateService} from "@services";
@@ -9,7 +9,7 @@ import {utc} from '@hypertype/core';
 
 @suite()
 export class SolidRepositorySpec {
-    private static container = DomainContainer;
+    private static container = AppContainer;
     private static solid = SolidRepositorySpec.container.get<SolidRepository>(SolidRepository);
     private static state = SolidRepositorySpec.container.get<StateService>(StateService);
     private static solidLogin = new SolidLoginMock();

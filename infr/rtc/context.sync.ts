@@ -85,7 +85,8 @@ export class ContextSync {
         const context = {
             URI: element.getAttribute('uri'),
             id: element.getAttribute('id'),
-            Messages: []
+            Messages: [],
+            Parents: [],
         };
         // console.log(added, context);
         this.context = context;

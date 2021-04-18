@@ -8,13 +8,13 @@ import {PanelService} from "./services/panel.service";
 @Component({
     name: 'app-root',
     template(html, state: State) {
-        const route = Routes.find(route => route.name == state.Router.name);
+        const route = Routes.find(route => route.name == state.Router?.name);
         return html`
     <aside class="top" empty=${!state.Panels.Top}>
         ${state.Panels.Top ?? ''}
     </aside>
-    ${route?.template(html('route'), state.Router.params) ?? html`unknown route ${state.Router.name}`}
-    <ctx-management></ctx-management>
+    ${route?.template(html('route'), state.Router?.params) ?? html('route')`unknown route ${state.Router?.name}`}
+    <ctx-panel></ctx-panel>
     <aside class="bottom" empty=${!state.Panels.Bottom}>
         ${state.Panels.Bottom ?? ''}
     </aside>

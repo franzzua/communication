@@ -2,7 +2,6 @@ import * as h from "@hypertype/core";
 import {Injectable} from "@hypertype/core";
 import {Storage, Context, Sorting} from "@model";
 import {EventBus} from "./event.bus";
-import {as} from "rdf-namespaces";
 
 @Injectable()
 export class ContextService {

@@ -1,0 +1,16 @@
+@import "settings.icon.less";
+
+ctx-panel {
+  .panel{
+    bottom: 0;
+    position: absolute;
+    width: 100vw;
+    height: 70vh;
+    transition: height .3s ease-out;
+    background: #555;
+
+    &.closed{
+      height: 0;
+    }
+  }
+}

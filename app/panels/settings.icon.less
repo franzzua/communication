@@ -1,0 +1,38 @@
+.settings-icon{
+  width: 80px;
+  fill: #555;
+  height: 80px;
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+  cursor: pointer;
+  -webkit-filter: drop-shadow( 3px 3px 2px #3333);
+  filter: drop-shadow( 3px 3px 2px #3333);
+  overflow: visible;
+
+  transition: .1s;
+
+  .outer{
+    transform-origin: center center;
+    transform: rotate(0deg);
+    will-change: transform;
+    transition: transform 1s;
+  }
+
+  &:hover{
+    -webkit-filter: drop-shadow( 3px 3px 2px #2226);
+    filter: drop-shadow( 3px 3px 2px #2226);
+  }
+
+  &:active .inner{
+    fill: #5556;
+    -webkit-filter: drop-shadow( 3px 3px 2px #0006);
+    filter: drop-shadow( 3px 3px 2px #0006);
+  }
+  &.opened{
+    fill: #777;
+    transform: rotate(180deg);;
+    -webkit-filter: drop-shadow( 3px 3px 2px #4442);
+    filter: drop-shadow( 3px 3px 2px #4442);
+  }
+}

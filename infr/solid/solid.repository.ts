@@ -5,8 +5,7 @@ import {MessageEntity} from "@infr/solid/data/message.entity";
 import {ContextDocument} from "@infr/solid/data/context.document";
 import {DomainEventsListener, EventBus, IAccountInfo, StateService, StorageService} from "@services";
 import type {ISession} from "solidocity";
-import {useSession} from "solidocity";
-
+import {Profile} from "solidocity";
 
 @Injectable()
 export class SolidRepository implements DomainEventsListener {
@@ -52,8 +51,10 @@ export class SolidRepository implements DomainEventsListener {
     }
 
     public async CreateDefaultStorage(session, clean = false) {
+        const profile = new Profile(session.webId);
+        await profile.Init();
         const storage = new Storage();
-        storage.URI = `${new URL(session.webId).origin}/context`;
+        storage.URI = `${profile.Me.Storage}context`;
         await this.LoadStorage(storage, clean);
         return storage;
     }
@@ -136,7 +137,6 @@ export class SolidRepository implements DomainEventsListener {
         if (account.type != 'solid')
             return;
         const session = account.session as ISession;
-        await useSession(session);
         const storage = await this.CreateDefaultStorage(session, clean);
         return storage;
     }

@@ -1,6 +1,5 @@
 import {Injectable} from "@hypertype/core";
 import {DomainEventHandler, EventBus} from "@services";
-import {ISession, useSession} from "solidocity";
 import {SolidRepository} from "@infr/solid/solid.repository";
 
 @Injectable()

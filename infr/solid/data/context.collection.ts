@@ -17,9 +17,7 @@ export class ContextCollection extends Collection {
     }
 
     @documentSet(ContextDocument)
-    public Contexts: Omit<DocumentSet<ContextDocument>, "documentsMap"> & {
-        documentsMap: Map<string, ContextDocument>
-    };
+    public Contexts: DocumentSet<ContextDocument>;
 
     public static Map = new Map<string, ContextCollection>();
     public LinkedStorages: Storage[] = [];

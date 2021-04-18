@@ -9,23 +9,21 @@ import {
     MessageService,
     StateService
 } from "@services";
-import {SolidRepository} from "@infr/solid";
 import {ManagementService} from "./services/management.service";
-import {PersistanceService} from "@infr/persistance.service";
-import {YjsConnector} from "@infr/rtc";
+import {DomainContainer} from "@domain";
+import {InfrContainer} from "@infr/infr.container";
 
-
-export const DomainContainer = Container.withProviders(
-    YjsConnector,
+export const AppContainer = Container.withProviders(
     StorageService,
     ContextService,
     AccountManager,
     LogService,
     EventBus,
     ManagementService,
-    PersistanceService,
-    SolidRepository,
     MessageService,
     StateService,
     ActionService,
-)
+);
+
+AppContainer.provide(DomainContainer);
+AppContainer.provide(InfrContainer);

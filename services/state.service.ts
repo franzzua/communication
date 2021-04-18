@@ -32,9 +32,9 @@ export class StateService implements DomainEventsListener{
     public State = new Map<string, Context>();
 
     async Load(context: Context, notify = true) {
-        if (this.State.has(context.id))
+        if (this.State.has(context.URI))
             return;
-        this.State.set(context.id, context);
+        this.State.set(context.URI, context);
         for (const m of context.Messages) {
             if (m.SubContext)
                 await this.Load(m.SubContext, false);
@@ -42,10 +42,10 @@ export class StateService implements DomainEventsListener{
         notify && this._subject$.next(this.State);
     }
 
-    async OnCreateContext(context) {
+    async OnCreateContext(context: Context) {
         // if (context.URI && this.State.has(context.URI))/**/
         //     return;
-        this.State.set(context.id, {
+        this.State.set(context.URI, {
             ...context
         });
         this._subject$.next(this.State);
@@ -110,12 +110,12 @@ export class StateService implements DomainEventsListener{
 
     public Actions$ = this.eventBus.Subscribe(this);
 
-    public getContext$(id: string): Observable<Context> {
+    public getContext$(uri: string): Observable<Context> {
         return this.State$.pipe(
-            map(x => x.get(id)),
+            tap(x => console.log(x, uri)),
+            map(x => x.get(uri)),
         );
     }
-
 
     public async Init() {
         await delayAsync(100);

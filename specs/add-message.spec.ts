@@ -49,9 +49,9 @@ export class AddMessageSpec {
         const {instance1, instance2} = await this.GetInstances();
         expect(instance1.state).not.equals(instance2.state);
         const {context, message} = this.getState();
-        await instance1.eventBus.Notificator.OnCreateContext(context)
-        await instance1.eventBus.Notificator.OnAddMessage(message)
-        await this.checkExist(instance2, message)
+        await instance1.eventBus.Notificator.OnCreateContext(context);
+        await instance1.eventBus.Notificator.OnAddMessage(message);
+        await this.checkExist(instance2, message);
     }
 
     @test()
@@ -59,10 +59,10 @@ export class AddMessageSpec {
         const {instance1, instance2} = await this.GetInstances();
         expect(instance1.state).not.equals(instance2.state);
         const {context, message} = this.getState();
-        await instance1.eventBus.Notificator.OnCreateContext(context)
+        await instance1.eventBus.Notificator.OnCreateContext(context);
         await delayAsync(400);
-        await instance1.eventBus.Notificator.OnAddMessage(message)
-        await this.checkExist(instance2, message)
+        await instance1.eventBus.Notificator.OnAddMessage(message);
+        await this.checkExist(instance2, message);
         await delayAsync(400);
         const message3 = {
             ...message,
@@ -70,7 +70,7 @@ export class AddMessageSpec {
             Content: '2',
             CreatedAt: utc(),
         } as Message;
-        await instance2.eventBus.Notificator.OnAddMessage(message3)
+        await instance2.eventBus.Notificator.OnAddMessage(message3);
         await this.checkExist(instance1, message3);
     }
 
