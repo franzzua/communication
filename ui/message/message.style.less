@@ -37,9 +37,25 @@ ctx-message {
     display: none;
   }
 
-  [contenteditable]:focus{
+  [contenteditable].focus {
     border: none;
     outline: none;
+
+    //&:after{
+    //  content: '|';
+    //  color: #FFF;
+    //  width: 3px;
+    //  display: inline;
+    //  height: 1.4em;
+    //  animation: blink infinite 1.4s ease-in;
+    //
+    //  @keyframes blink{
+    //    to {
+    //      color: #444;
+    //    }
+    //  }
+    //
+    //}
   }
 
   .editor{
@@ -52,6 +68,8 @@ ctx-message {
     max-width: 100%;
     display: inline-block;
     flex: 1;
+    min-width: 1em;
+    width: 100%;
   }
 
   > .selected{

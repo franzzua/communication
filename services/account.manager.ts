@@ -16,10 +16,7 @@ export class AccountManager {
     public Providers$: Observable<string[]> = this.providerSubject$.asObservable();
 
     public async Register(provider: IAccountProvider) {
-        const result = await provider.Check();
-        if (result){
-            await this.addAccount(result);
-        }
+        provider.Check().then(res => res && this.addAccount(res));
         this.actionService.Register(`accounts.${provider.type}.add`, async () => {
             const result = await provider.Login();
             if (result){

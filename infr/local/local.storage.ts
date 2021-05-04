@@ -1,11 +1,8 @@
-import { utc } from "@hypertype/core";
-import {AccessRule, Context, Message, Sorting, User} from "@model";
-import {open, delete as deleteDB} from "db.js";
-import {DateTime} from "luxon";
-import {ContextJSON, MessageJSON} from "@domain/contracts/json";
+import {delete as deleteDB, open} from "db.js";
+import {ContextJSON, MessageJSON, StorageJSON} from "@domain/contracts/json";
 
-export class LocalStorage{
-    constructor(private URI: string) {
+export class LocalStorage {
+    constructor(public URI: string, private version: number = 1) {
 
     }
 
@@ -21,26 +18,29 @@ export class LocalStorage{
     public async Init(){
         this.db = await open({
             server: this.URI.substr('local://'.length),
-            version: 3,
+            version: this.version,
             schema: {
                 contexts: {
                     key: {keyPath: 'id', autoIncrement: true},
                 },
                 messages: {
                     key: {keyPath: 'id', autoIncrement: true},
-                },
+                }
             }
         }) as any;
     }
 
-    public async Load(){
+    public async Load(): Promise<StorageJSON>{
         const contextEntities = await this.db.contexts.query().all().execute();
         const messageEntities = await this.db.messages.query().all().execute();
         const contextMap = new Map<number, ContextJSON>(contextEntities.map(x => [x.id, ({
             Permutation: x.Permutation,
             Sorting: x.Sorting,
             // Access: x.Access,
+            UpdatedAt: x.UpdatedAt,
             MessageURIs: [],
+            IsRoot: x.IsRoot,
+            StorageURI: this.URI,
             ParentsURIs: [],
             URI: this.id2URI(x.id),
         } as ContextJSON)]));
@@ -54,15 +54,22 @@ export class LocalStorage{
                 Content: x.Content,
                 Description: x.Description,
                 AuthorURI: x.AuthorURI,
-                CreatedAt: x.CreatedAt ? utc(x.CreatedAt) : undefined,
+                CreatedAt: x.CreatedAt,
+                UpdatedAt: x.UpdatedAt,
                 Action: x.Action,
                 ContextURI: context?.URI,
                 SubContextURI: subContext?.URI,
+                StorageURI: this.URI,
                 URI: uri,
             } as MessageJSON);
         })
         const contexts = [...contextMap.values()];
-        return {messages, contexts};
+        return {
+            Type: 'local',
+            URI: this.URI,
+            Contexts: contexts,
+            Messages: messages
+        };
     }
 
     public async AddContext(context: ContextJSON): Promise<string> {
@@ -85,6 +92,12 @@ export class LocalStorage{
         return this.msgId2URI(entity.id);
     }
 
+
+    public async UpdateContext(ctx: ContextJSON): Promise<void> {
+        const entity = this.contextToEntity(ctx);
+        await this.db.contexts.update(entity);
+    }
+
     public async Clear(){
         await deleteDB(this.URI);
     }
@@ -99,7 +112,8 @@ export class LocalStorage{
             Content: message.Content,
             Description: message.Description,
             AuthorURI: message.AuthorURI,
-            CreatedAt: message.CreatedAt?.toISO(),
+            CreatedAt: message.CreatedAt,
+            UpdatedAt: message.UpdatedAt,
             Action: message.Action,
             ContextId: this.uri2id(message.ContextURI),
             SubContextId: this.uri2id(message.SubContextURI),
@@ -111,16 +125,34 @@ export class LocalStorage{
             // Access: context.Access,
             id: this.uri2id(context.URI),
             Sorting: context.Sorting,
-            Permutation: context.Permutation
+            Permutation: context.Permutation,
+            UpdatedAt: context.UpdatedAt,
+            IsRoot: context.IsRoot,
         }
+    }
+
+    public async RemoveMessage(msg: MessageJSON): Promise<void> {
+        await this.db.messages.remove(this.uri2id(msg.URI));
+    }
+
+    public static async getAllDatabases(): Promise<LocalStorage[]> {
+        // @ts-ignore
+        const databases = await indexedDB.databases();
+        const storages = databases.map(d => new LocalStorage(`local://${d.name}`, d.version));
+        for (let storage of storages) {
+            await storage.Init();
+        }
+        return  storages;
     }
 }
 
 type ContextEntity = {
     id: number,
     // Access: Array<AccessRule>,
-    Sorting: Sorting,
+    Sorting: string,
+    UpdatedAt?: string;
     Permutation?: any,
+    IsRoot: boolean,
 };
 type MessageEntity ={
     Content: string;
@@ -128,6 +160,7 @@ type MessageEntity ={
     AuthorURI?: string;
     CreatedAt?: string;
     Action?: string;
+    UpdatedAt?: string;
     ContextId: number;
     SubContextId: number;
     id: number;

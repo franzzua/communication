@@ -28,7 +28,7 @@ export class MessageComponent extends HyperComponent<IState, IEvents> {
                 this.actionService.Invoke(this.message.Action);
                 event.preventDefault();
             } else if (this.message.SubContext) {
-                await this.stateService.OnAddMessage({
+                await this.stateService.AddMessage({
                     Context: this.message.SubContext,
                     Content: '',
                     CreatedAt: utc()
@@ -43,8 +43,7 @@ export class MessageComponent extends HyperComponent<IState, IEvents> {
         map(message => ({
             message,
             state: [],
-            isSelected: false
+            isSelected: true
         }))
     );
 }
-    

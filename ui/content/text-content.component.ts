@@ -14,6 +14,7 @@ import {
 import {Component, HyperComponent, IEventHandler, property} from "@hypertype/ui";
 import {Message} from "@model";
 import {EventBus, MessageService} from "@services";
+import {award} from "rdf-namespaces/dist/schema";
 
 @Injectable(true)
 @Component({
@@ -24,18 +25,13 @@ import {EventBus, MessageService} from "@services";
              onfocus=${events.focus(x => void 0)}>
         </div>
     `,
-    style: `ctx-text-content { cursor: text; flex: 1; }`
+    style: require('./text-content.style.less')
 })
 export class TextContentComponent extends HyperComponent<string, IEvents> {
 
-    constructor(private eventBus: EventBus) {
-        super();
-    }
-
     @property()
-    private message$!: Observable<Message>;
-    private message!: Message;
-
+    private content$!: Observable<string>;
+    private content!: string;
 
     @property()
     private active$!: Observable<boolean>;
@@ -46,8 +42,14 @@ export class TextContentComponent extends HyperComponent<string, IEvents> {
     public Events: IEvents = {
         input: async text => {
             this.lastTextEdited = text;
-
-            await this.eventBus.Notify('OnUpdateContent', this.message, text);
+            const element =  await this.Element$.pipe(first()).toPromise();
+            element.dispatchEvent(new CustomEvent('change', {
+                bubbles: true,
+                cancelable: true,
+                composed: true,
+                detail: text
+            }));
+            // await this.eventBus.Notify('OnUpdateContent', this.message, text);
         },
         focus: async () => {
             const element: HTMLElement = await this.Element$.pipe(first()).toPromise();
@@ -57,27 +59,41 @@ export class TextContentComponent extends HyperComponent<string, IEvents> {
         }
     }
 
+    private contentEditable$: Observable<HTMLDivElement> = this.select('[contenteditable]');
+
     public State$ = of(null);
 
     public Actions$ = merge(
-        this.message$.pipe(
+        this.content$.pipe(
             // switchMap(c => c.State$),
-            map(message => message?.Content),
-            // tap(console.log),
             // игнорим если отсюда пришел контент
             filter(x => x != this.lastTextEdited),
             distinctUntilChanged(),
-            withLatestFrom(this.select<HTMLElement>('[contenteditable]')),
+            withLatestFrom(this.contentEditable$),
             tap(([text, element]) => {
-                element.innerHTML = text;
+                element.textContent = text;
             })
         ),
         this.active$.pipe(
             distinctUntilChanged(),
-            filter(x => x == true),
-            withLatestFrom(this.select<HTMLElement>('[contenteditable]')),
-            tap(([_, element]) => {
-                element.focus()
+            withLatestFrom(this.contentEditable$),
+            tap(async ([isActive, div]) => {
+                const textNode = div.firstChild as Text;
+                if (!isActive) {
+                    div.classList.remove('focus');
+                    return;
+                }
+                div.focus();
+                div.classList.add('focus');
+                await new Promise(x => setTimeout(x, 0));
+                const selection = window.getSelection();
+                if (selection.containsNode(textNode))
+                    return;
+                const range = document.createRange();
+                range.setStart(textNode,textNode.textContent.length);
+                range.setEnd(textNode,textNode.textContent.length);
+                selection.removeAllRanges();
+                selection.addRange(range);
             })
         )
     ).pipe(mapTo(null))

@@ -7,6 +7,7 @@ import {IStorageActions} from "../contracts/actions";
 import {IRepository} from "../contracts/repository";
 import {ContextJSON, StorageJSON} from "@domain/contracts/json";
 import {MessageModel} from "@domain/model/message-model";
+import {ulid} from "ulid";
 
 export abstract class StorageModel extends Model<StorageJSON, IStorageActions>  implements IStorageActions{
     public domain: DomainModel;
@@ -14,7 +15,7 @@ export abstract class StorageModel extends Model<StorageJSON, IStorageActions>  
     public Contexts = new Map<string, ContextModel>();
     public Messages = new Map<string, MessageModel>();
 
-    public State: Storage;
+    public State: Storage = {URI: undefined, id: undefined, Root: undefined, Type: undefined, Trash: []};
 
     public get URI(): string {return  this.State.URI; }
 
@@ -24,10 +25,10 @@ export abstract class StorageModel extends Model<StorageJSON, IStorageActions>  
 
     FromJSON(state: StorageJSON, domain?: DomainModel): any {
         this.domain ??= domain;
-        this.State = {
-            ...state,
-            Root: null
-        };
+        Object.assign(this.State, {
+            URI: state.URI,
+            Type: state.Type
+        });
     }
 
     ToJSON(): StorageJSON {
@@ -39,29 +40,36 @@ export abstract class StorageModel extends Model<StorageJSON, IStorageActions>  
     }
 
     public async Load(): Promise<void> {
-        const {messages, contexts} = await this.repository.Init(this.ToJSON());
-        for (let context of contexts) {
-            const model = this.factory.GetOrCreateContext(context, this);
-            this.Contexts.set(model.URI, model);
-        }
-        for (let message of messages) {
+        const json = await this.repository.Init(this.ToJSON());
+        await this.Init(json);
+    }
+
+    protected async Init(json: StorageJSON){
+        for (let message of json.Messages) {
             const model = this.factory.GetOrCreateMessage(message, this);
             this.Messages.set(model.URI, model);
         }
-        this.Root = [...this.Contexts.values()].find(x => x.Parents.length == 0);
+        for (let context of json.Contexts) {
+            const model = this.factory.GetOrCreateContext(context, this);
+            this.Contexts.set(model.URI, model);
+        }
+        this.Root = [...this.Contexts.values()].find(x => x.State.IsRoot);
         if (!this.Root){
-            this.Root = await this.CreateContext({
+            const uri  = await this.CreateContext({
                 ParentsURIs:[],
                 MessageURIs:[],
                 URI: undefined,
+                IsRoot: true,
+                id: ulid(),
                 Permutation: null,
-                Sorting: Sorting.Time,
+                Sorting: Sorting[Sorting.Time] as string,
                 StorageURI: this.URI
             });
+            this.Root = this.Contexts.get(uri);
         }
     }
 
-    public async CreateContext(context: ContextJSON): Promise<ContextModel> {
+    public async CreateContext(context: ContextJSON): Promise<string> {
         const state = await this.repository.CreateContext({
             ...context,
             StorageURI: this.URI
@@ -70,15 +78,18 @@ export abstract class StorageModel extends Model<StorageJSON, IStorageActions>  
         for (let parentURI of context.ParentsURIs) {
             const message = this.factory.GetMessage(parentURI);
             message.SubContext = result;
-            result.Parents.unshift(message);
+            result.Parents.push(message);
         }
         this.Contexts.set(result.URI, result);
-        return result;
-
+        return  result.URI;
     }
 
     public async Remove(): Promise<void> {
         this.repository.Clear();
     }
+    public async Clear(): Promise<void> {
+        this.repository.Clear();
+    }
+
 }
 

@@ -1,8 +1,82 @@
 ctx-tree {
-  display: block;
+  display: flex;
+  flex-flow: column nowrap;
+  height: 100%;
+  .items{
+    flex: 1;
+    overflow: hidden auto;
+    padding: 0 3em;
+  }
+
   [item]{
-    margin-left: calc(var(--level) * 20);
+    margin-left: calc(var(--level) * 20 - 40px);
     display: flex;
     flex-flow: row nowrap;
+    line-height: 1.6em;
+
+    &.level-1{
+      font-size: 2em;
+      position: relative;
+      margin-left: 0;
+      padding-bottom: .3em;
+      &:before{
+        content: '##';
+        color: #888;
+        width: 3rem;
+        text-align: right;
+        display: inline-block;
+        margin-left: -3rem;
+        padding-right: 1rem;
+        box-sizing: border-box;
+      }
+    }
+    &.level-2{
+      position: relative;
+      font-size: 1.41em;
+      padding-top: .6em;
+      padding-bottom: .3em;
+      margin-left: 0;
+      &:before{
+        content: '###';
+        color: #888;
+        width: 3rem;
+        margin-left: -3rem;
+        text-align: right;
+        display: inline-block;
+        padding-right: 1rem;
+        box-sizing: border-box;
+      }
+    }
+
+    &.level-3{
+      font-size: 1em;
+      margin-left: 0;
+      line-height: 1.4em;
+      padding-top: .8em;
+      padding-bottom: .4em;
+    }
+
+    &.li {
+      font-size: 0.9em;
+      &:before{
+        content: '• ';
+        display: inline-block;
+        width: 1em;
+      }
+    }
+    &.li.level-5:before{
+      content: '-';
+    }
+  }
+
+
+  @media screen and (min-width: 600px){
+    margin: 0 auto;
+    width: 1000px;
+    max-width: calc(100vw - 2em);
+  }
+  @media screen and (max-width: 600px){
+    margin: 10px;
   }
 }
+

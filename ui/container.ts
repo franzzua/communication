@@ -2,14 +2,15 @@ import {Container} from "@hypertype/core";
 import {ContextComponent} from "./context/context.component";
 import {KeyboardHandler} from "./handlers/keyboard.handler";
 import {MessageComponent} from "./message/message.component";
-import {TextContentComponent} from "./message/text-content.component";
-import {ContextStore} from "../stores/context/context.store";
+import {TextContentComponent} from "./content/text-content.component";
 import { StateLogger } from "@hypertype/infr";
 import {ManagementComponent} from "./management/management.component";
 import {StorageComponent} from "./storage/storage.component";
 import {AddStorageComponent} from "./add-storage/add-storage.component";
 import {TreeComponent} from "./tree/tree.component";
-import {TreeKeyboardReducer} from "./tree/tree.keyboard.reducer";
+import {TreeStore} from "./tree/tree-store.service";
+import {MobileToolbarComponent} from "./mobile-toolbar/mobile-toolbar.component";
+import {StateService} from "@services";
 
 export const UIContainer = Container.withProviders(
     ContextComponent,
@@ -17,11 +18,12 @@ export const UIContainer = Container.withProviders(
     StorageComponent,
     TextContentComponent,
     KeyboardHandler,
-    ContextStore,
     AddStorageComponent,
     StateLogger,
     ManagementComponent,
     TreeComponent,
-    TreeKeyboardReducer,
+    StateService,
+    TreeStore,
+    MobileToolbarComponent
 );
 

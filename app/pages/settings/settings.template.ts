@@ -1,6 +1,6 @@
 import {IEventHandler, wire} from "@hypertype/ui";
-import {addUser} from "../../../icons/user.add";
 import {IAccountInfo, IAccountProvider} from "@services";
+import {Icons} from "../../../icons/Icons";
 
 export const Template = (html, state: IState, events: IEventHandler<IEvents>) => html`
     ${state.providers.map(provider => html(`provider.${provider}`)`
@@ -8,17 +8,17 @@ export const Template = (html, state: IState, events: IEventHandler<IEvents>) =>
                     onmouseup=${events.addAccount(e => e.target.data)}
                     data=${provider}
                     >
-                    <svg class="add-user-icon"
-                         viewBox="0 0 64 64">
-                        ${ addUser(html) }
-                    </svg>
+                    ${ Icons.addUser(html, {}, [], {}) }
                     <span>Add ${provider} account</span>
             </button>
     `)}
     ${state.accounts.map(account => html(`account.${account.title}`)`
-        <button>
-            ${`logout from ${account.title}`}
-        </button>
+        <section>
+            <header>${account.title}</header>
+            
+            <button>logout</button>
+            <button data=${account} onclick=${events.clear(x => x.target.data)}>clear</button>
+        </section>
     `)}
 `;
 
@@ -29,4 +29,5 @@ export interface IState {
 
 export interface IEvents {
     addAccount(provider);
+    clear(account: IAccountInfo);
 }

@@ -7,6 +7,7 @@ import {LocalStorageModel} from "./local-storage.model";
 import {IFactory} from "./i-factory";
 import {MessageModel} from "@domain/model/message-model";
 import {ContextJSON, MessageJSON, StorageJSON} from "@domain/contracts/json";
+import {SolidStorageModel} from "@domain/model/solid-storage-model.service";
 
 @Injectable()
 export class Factory extends IFactory {
@@ -36,6 +37,10 @@ export class Factory extends IFactory {
         switch (state.Type) {
             case 'local':
                 storage = this.container.get<LocalStorageModel>(LocalStorageModel);
+                break;
+            case 'solid':
+                storage = this.container.get<SolidStorageModel>(SolidStorageModel);
+                break;
         }
         storage.FromJSON(state, domain);
         this.StorageMap.set(state.URI, storage);

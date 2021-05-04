@@ -2,11 +2,50 @@ import {Injectable} from "@hypertype/core";
 import {ActionService} from "@services";
 import {IAccountInfo, IAccountProvider} from "../../services/account.manager";
 import {Profile, useFetch} from "solidocity";
-import {login, handleIncomingRedirect, getDefaultSession, onSessionRestore, Session} from "@inrupt/solid-client-authn-browser";
+import * as fetcher from "solid-auth-fetcher"
+import * as inrupt from "@inrupt/solid-client-authn-browser";
 import decode from "jose/lib/jwt/decode";
 
-onSessionRestore(console.log);
-
+const auth = {
+    login: idp => fetcher.login({
+        oidcIssuer: idp,
+        redirect: window.location.href,
+    }),
+    getSession: async () => {
+        await fetcher.handleRedirect(location.href);
+        const session = await fetcher.getSession();
+        if (!session || !session.loggedIn)
+            return null;
+        useFetch(session.fetch);
+        console.log(session);
+        return {
+            title: session.webId,
+            type: 'solid',
+            session: session
+        }
+        const tokens: {
+            accessToken;
+            clientId;
+            webId;
+            refreshToken;
+            redirectUri;
+            issuer;
+            idToken;
+            clientSecret;
+            codeVerifier;
+        } = JSON.parse(localStorage.getItem('solidAuthFetcherUser:global'));
+        const id: {
+            exp; webid; iat; aud; iss; jti; kid; sub;
+        } = decode(tokens.idToken);
+        return {
+            title: id.webid,
+            type: 'solid',
+            session: {
+                webId: id.webid
+            }
+        };
+    }
+}
 
 @Injectable()
 export class SolidLoginService implements IAccountProvider {
@@ -24,16 +63,12 @@ export class SolidLoginService implements IAccountProvider {
         }
     }
 
-   private idp = 'https://broker.pod.inrupt.com';
-
+   // private idp = 'https://broker.pod.inrupt.com';
+    private idp = 'https://solidcommunity.net/';
     // private session: Session;
 
     public async Login(): Promise<IAccountInfo> {
-        await login({
-            oidcIssuer: this.idp,
-            redirectUrl: window.location.href,
-           // clientId: '1a86fd20-6234-419a-8c45-31b9268c4150'
-        });
+        await auth.login(this.idp);
         return null;
         // const session = new Session();
         // await session.login({
@@ -49,49 +84,8 @@ export class SolidLoginService implements IAccountProvider {
 
     type: string = 'solid';
 
-    public async Check(): Promise<IAccountInfo> {
-        try{
-           // await handleRedirect(window.location.href);
-            const session = new Session({}, localStorage.sessionId ?? undefined);
-            const result = await session.handleIncomingRedirect({
-                restorePreviousSession: true,
-                url: window.location.href,
-            });
-            console.log(result);
-            if (session?.info?.isLoggedIn){
-                localStorage.sessionId = session.info.sessionId;
-                // const tokens: {
-                //     accessToken;
-                //     clientId;
-                //     webId;
-                //     refreshToken;
-                //     redirectUri;
-                //     issuer;
-                //     idToken;
-                //     clientSecret;
-                //     codeVerifier;
-                // } = JSON.parse(localStorage.getItem('solidAuthFetcherUser:global'));
-                // const id: {
-                //     exp; webid; iat; aud; iss; jti; kid; sub;
-                // } = decode(tokens.idToken);
-                useFetch(session.fetch);
-                // console.log(id);
-                // if (id.exp * 1000 < +new Date()){
-                //     debugger;
-                //     return null;
-                // }
-                return {
-                    title: session.info.webId,
-                    type: this.type,
-                    session: {
-                        webId: session.info.webId
-                    }
-                };
-            }
-            return null;
-        }catch (e){
-            console.error(e);
-        }
+    public Check(): Promise<IAccountInfo> {
+        return auth.getSession();
     }
 
     public async CreateDefaultStorage(account: IAccountInfo) {

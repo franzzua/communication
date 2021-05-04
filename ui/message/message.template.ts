@@ -17,8 +17,8 @@ export const Template = (html, state: IState, events: IEventHandler<IEvents>) =>
     // const isCollapsed = state.state.includes('collapsed');
     return html`
             <div class="${`context-inner ${state.state.join(' ')}`}">
-                <div class="body" onkeydown=${events.action(e => e)}>
-                    <ctx-text-content message=${state.message} active=${state.isSelected} />
+                <div class="body">
+                    <ctx-text-content message=${state.message} active=${state.isSelected}/>
                 </div>
                 ${state.message.SubContext ? html('context')`
                     <span class="arrow"></span>
@@ -37,4 +37,3 @@ export interface IState {
 export interface IEvents {
     action(e: Event);
 }
-    

@@ -7,11 +7,12 @@ import {
     EventBus,
     LogService,
     MessageService,
-    StateService
+    StateService, ProxyProvider
 } from "@services";
 import {ManagementService} from "./services/management.service";
-import {DomainContainer} from "@domain";
+import {ProxyDomainContainer} from "@hypertype/domain";
 import {InfrContainer} from "@infr/infr.container";
+import {DomainContainer} from "@domain";
 
 export const AppContainer = Container.withProviders(
     StorageService,
@@ -21,9 +22,10 @@ export const AppContainer = Container.withProviders(
     EventBus,
     ManagementService,
     MessageService,
-    StateService,
     ActionService,
+    ProxyProvider,
 );
 
 AppContainer.provide(DomainContainer);
+AppContainer.provide(ProxyDomainContainer.withSimple(true));
 AppContainer.provide(InfrContainer);

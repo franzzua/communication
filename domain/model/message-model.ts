@@ -6,56 +6,15 @@ import { MessageJSON } from "@domain/contracts/json";
 import {StorageModel} from "@domain/model/storage-model";
 import {IFactory} from "@domain/model/i-factory";
 import {IRepository} from "@domain/contracts/repository";
+import {IMessageActions} from "@domain/contracts/actions";
 
 @Injectable(true)
-export class MessageModel extends Model<MessageJSON, any> {
+export class MessageModel extends Model<MessageJSON, IMessageActions> implements IMessageActions {
 
-    //region public Context: Context
-    private _Context: ContextModel;
-    public get Context(): ContextModel {
-        return this._Context;
-    }
+    public Context: ContextModel;
+    public SubContext: ContextModel | null;
 
-    public set Context(value: ContextModel) {
-        if (value == null && this._Context == null || value === this._Context){
-            return;
-        }
-        if (value == null && this._Context != null){
-            // @ts-ignore
-            this._Context.Messages.remove(this);
-            this.State.Context = null;
-        }else{
-            // @ts-ignore
-            value.Messages.unshift(this);
-            this.State.Context = value.State;
-        }
-        this._Context = value;
-    }
-    //endregion
-    //region public SubContext: SubContext
-    private _SubContext: ContextModel | null;
-    public get SubContext(): ContextModel | null {
-        return this._SubContext;
-    }
-
-    public set SubContext(value: ContextModel | null) {
-        if (value == null && this._SubContext == null || value === this._SubContext){
-            return;
-        }
-        if (value == null && this._SubContext != null){
-            // @ts-ignore
-            this._SubContext.Parents.remove(this);
-            this.State.SubContext = null;
-        }else{
-            // @ts-ignore
-            value.Parents.unshift(this);
-            this.State.SubContext = value.State;
-        }
-        this._SubContext = value;
-    }
-    //endregion
-
-    public readonly State: Message = {} as any;
+    public State: Omit<MessageJSON, keyof {"ContextURI", "SubContextURI", "Storage"}>;
     public Storage: StorageModel;
     public get URI(): string {return  this.State.URI; }
 
@@ -64,28 +23,12 @@ export class MessageModel extends Model<MessageJSON, any> {
     }
 
     public FromJSON(state: MessageJSON): any {
-        Object.assign(this.State, {
-            Content: state.Content,
-            Description: state.Description,
-            // Author: {URI: state.AuthorURI},
-            CreatedAt: state.CreatedAt,
-            Action: state.Action,
-            URI: state.URI,
-        });
-        this.Context = this.factory.GetContext(state.ContextURI);
-        if (state.SubContextURI) {
-            this.SubContext = this.factory.GetContext(state.SubContextURI);
-        }
+        this.State = state;
     }
 
     public ToJSON(): MessageJSON {
         return {
-            Content: this.State.Content,
-            Description: this.State.Description,
-            AuthorURI: this.State.Author?.URI,
-            CreatedAt: this.State.CreatedAt,
-            Action: this.State.Action,
-            URI: this.State.URI,
+            ...this.State,
             StorageURI: this.Storage.State.URI,
             ContextURI: this.Context?.URI,
             SubContextURI: this.SubContext?.URI
@@ -98,6 +41,7 @@ export class MessageModel extends Model<MessageJSON, any> {
             Content: text
         });
         this.State.Content = text;
+        this.Storage.Update();
     }
 
 
@@ -108,6 +52,28 @@ export class MessageModel extends Model<MessageJSON, any> {
             SubContextURI: uri
         });
         this.SubContext = this.factory.GetContext(uri);
+        this.SubContext.Parents.unshift(this);
+    }
+
+    public async Move(fromURI, toURI, toIndex: number){
+        const oldContext = this.Context;
+        if (oldContext)
+            oldContext.Messages.remove(this)
+        this.Context = this.Storage.Contexts.get(toURI);
+        this.Context.Messages.splice(toIndex, 0, this);
+        await Promise.all([
+            this.Storage.repository.UpdateMessage(this.ToJSON()),
+            this.Storage.repository.UpdateContext(this.Context.ToJSON()),
+            oldContext ? this.Storage.repository.UpdateContext(oldContext.ToJSON()): Promise.resolve(),
+        ]);
+    }
+
+    public async Reorder(newOrder: number): Promise<void>{
+        if (!this.Context)
+            return ;
+        this.Context.Messages.remove(this);
+        this.Context.Messages.splice(newOrder, 0, this);
+        await this.Storage.repository.UpdateContext(this.Context.ToJSON());
     }
 }
 

@@ -7,11 +7,12 @@ export class Message {
     public Description?: string;
     public Author?: User;
     public CreatedAt?: DateTime;
+    public UpdatedAt?: DateTime;
     public Context?: Context;
     public SubContext?: Context;
     public Action?: string;
-    public URI?: string;
-    public id?: string;
+    public URI: string;
+    public id: string;
 
     static isLast(message: Message) {
         return message.Context.Messages[message.Context.Messages.length - 1].URI == message.URI;

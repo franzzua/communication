@@ -5,20 +5,24 @@ export class MessageJSON{
     public ContextURI?: string;
     public SubContextURI?: string;
     public StorageURI?: string;
-
+    public id?: string;
     public Content: string;
     public Description?: string;
     public AuthorURI?: string;
-    public CreatedAt?: DateTime;
+    public CreatedAt?: string;
+    public UpdatedAt?: string;
     public Action?: string;
     public URI?: string;
 }
 
 export class ContextJSON {
     public URI?: string;
+    public IsRoot?: boolean;
+    public id?: string;
     // public Access?: Array<AccessRule> = [];
-    public Sorting?: Sorting;
-    public Permutation?: any;
+    public Sorting?: string;
+    public Permutation?: string;
+    public UpdatedAt?: string;
     public StorageURI?: string;
     public MessageURIs: string[];
     public ParentsURIs: string[];
@@ -29,4 +33,8 @@ export class StorageJSON {
     public URI: string;
     public Contexts: ContextJSON[];
     public Messages: MessageJSON[];
+}
+
+export class DomainJSON{
+    public Storages: StorageJSON[];
 }

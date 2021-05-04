@@ -1,7 +1,10 @@
-import {Document, document, entitySet, EntitySet} from "solidocity";
+import {Document, document, entity, Entity, entitySet, EntitySet, field} from "solidocity";
 import {MessageEntity} from "./message.entity";
 import {Context, Storage} from "@model";
 import {ContextCollection} from "@infr/solid/data/context.collection";
+import {ContextJSON} from "@domain";
+import {DateTime} from "luxon";
+import {Schema} from "./schema";
 
 @document()
 export class ContextDocument extends Document {
@@ -14,18 +17,23 @@ export class ContextDocument extends Document {
     @entitySet(MessageEntity, {isArray: true})
     public Messages: EntitySet<MessageEntity>;
 
+    // @entitySet(MessageEntity, {isArray: false})
+    // public Context = new ContextEntity();
+
     public static Map = new Map<string, ContextDocument>();
 
-    private _context: Context;
     public Collection: ContextCollection;
-    public get Context(): Context{
-        if (!this._context){
-            this._context = new Context();
-            this._context.URI = this.URI;
-            this._context.id = this.URI;
-            this._context.Storage = this.Collection.Storage;
+
+    public ToJSON(): ContextJSON{
+        return {
+            MessageURIs: this.Messages.Items.map(x => x.Id),
+            URI: this.URI,
+            Permutation: null,
+            Sorting: null,
+            StorageURI: this.Collection.folderURI,
+            ParentsURIs: [],
+            IsRoot: this.URI.endsWith('root.ttl')
         }
-        return this._context;
     }
 
     public async Init(){
@@ -36,9 +44,12 @@ export class ContextDocument extends Document {
         })
     }
 
-    async Link() {
-        this.Context.Messages = this.Messages.Items.map(x => x.Message);
-        this.Context.Messages.forEach(m => m.Context = this.Context);
-    }
+}
+
+export class ContextEntity extends Entity{
+
+    @field(Schema.updatedAt, {type: "Date"})
+    public UpdatedAt: DateTime;
+
 }
 

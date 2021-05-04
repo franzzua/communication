@@ -11,7 +11,7 @@ export class KeyboardAspect {
                 h.mergeMap(async (event: KeyboardEvent) => {
 
                     const modifiers = ['Alt', 'Ctrl', 'Shift'].filter(x => event[x.toLowerCase() + 'Key']);
-                    const modKey = modifiers.join('') + event.key;
+                    const modKey = modifiers.join('') + event.code;
                     return {
                         event, modKey
                     };

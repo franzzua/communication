@@ -8,25 +8,29 @@ import {Container, Injectable, merge} from "@hypertype/core";
 import {PanelService} from "./services/panel.service";
 import {SolidLoginService} from "./services/solid-login.service";
 import {SolidStorageActions} from "./services/solid-storage-actions.service";
-import {PersistanceService} from "@infr/persistance.service";
 import {SettingsComponent} from "./pages/settings/settings.component";
 import {PanelComponent} from "./panels/panel.component";
-import {LocalRepository} from "@infr/local/local.repository";
+import {DomainProxy} from "@domain";
+import {CrdtComponent} from "../crdt/ui/crdt/crdt.component";
+import {ConcordComponent} from "../crdt/ui/concord/concord.component";
 
 UIContainer.provide([
     AppRootComponent,
     SettingsComponent,
-    PanelComponent
+    PanelComponent,
+    CrdtComponent,
+    ConcordComponent,
 ]);
 
 @Injectable()
 export class Application {
     constructor(
         private stateService: StateService,
-        private persistance: PersistanceService,
+        // private persistance: PersistanceService,
         private actionService: ActionService,
         private accountManager: AccountManager,
-        private localRepository: LocalRepository,
+        // private localRepository: LocalRepository,
+        private domainProxy: DomainProxy,
         private base: BaseApplication) {
 
     }
@@ -57,7 +61,7 @@ export class Application {
     }
 
     private async registerAccounts() {
-        // await this.accountManager.Register(this.base.get<SolidLoginService>(SolidLoginService));
+        await this.accountManager.Register(this.base.get<SolidLoginService>(SolidLoginService));
     }
 
     private registerActions() {
@@ -67,7 +71,6 @@ export class Application {
     }
 
     public Actions$ =  merge(
-        this.persistance.Actions$,
-        this.stateService.Actions$
+        // this.persistance.Actions$,
     );
 }

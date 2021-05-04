@@ -6,3 +6,8 @@ export * from "./state.service";
 export * from "./log.service";
 export * from "./action.service";
 export * from "./account.manager";
+export {ProxyProvider} from "./proxy-provider.service";
+export {ItemStore} from "./stores/item-store";
+export {StorageStore} from "./stores/storage-store";
+export {MessageStore} from "./stores/message-store";
+export {ContextStore} from "./stores/context-store";

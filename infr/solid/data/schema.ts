@@ -5,6 +5,6 @@ export const Schema = {
     content: `${uri}#content`,
     children: `${uri}#children`,
     date: `${uri}#date`,
-    author: `${uri}#author`
-
+    author: `${uri}#author`,
+    updatedAt: `${uri}#updatedAt`,
 }

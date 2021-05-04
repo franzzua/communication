@@ -1,20 +1,16 @@
 import {Injectable, switchThrottle, utc} from "@hypertype/core";
 import {ContextCollection} from "./data/context.collection";
-import {Context, Message, Storage} from "@model";
-import {MessageEntity} from "@infr/solid/data/message.entity";
 import {ContextDocument} from "@infr/solid/data/context.document";
-import {DomainEventsListener, EventBus, IAccountInfo, StateService, StorageService} from "@services";
-import type {ISession} from "solidocity";
+import {EventBus} from "@services";
 import {Profile} from "solidocity";
+import {ContextJSON, DomainProxy, IRepository, MessageJSON, StorageJSON} from "@domain";
 
 @Injectable()
-export class SolidRepository implements DomainEventsListener {
+export class SolidRepository implements IRepository {
 
     public EventBus = new EventBus();
-    private notificator: DomainEventsListener = this.EventBus.Notificator;
 
-    constructor(private stateService: StateService,
-                private storageService: StorageService) {
+    constructor() {
         window.addEventListener('beforeunload', () => {
             this.SaveDocsNow()
         })
@@ -31,54 +27,51 @@ export class SolidRepository implements DomainEventsListener {
         await collection.Unsubscribe();
     }
 
-    public async LoadStorage(storage: Storage, clean = false): Promise<Storage> {
+    public async Init(storage: StorageJSON, clean = false): Promise<StorageJSON> {
         if (ContextCollection.Map.has(storage.URI))
-            return ContextCollection.Map.get(storage.URI).Storage;
-        const collection = new ContextCollection(storage);
+            return ContextCollection.Map.get(storage.URI).ToJSON();
+        const collection = new ContextCollection(storage.URI);
         if (clean){
             await collection.Init();
             await collection.Remove();
         }
-        await collection.Init();
-        for (let linkedStorage of collection.LinkedStorages) {
-            await this.LoadStorage(linkedStorage, clean);
+        try {
+            await collection.Init();
+            for (let linkedStorage of collection.LinkedStorages) {
+                await this.Init(linkedStorage, clean);
+            }
+        }catch (e){
+
         }
-        await collection.Link();
         this.StorageMap.set(storage.URI, collection);
-        await this.stateService.Load(storage.Root);
-        await this.storageService.AddStorage(storage);
-        return  storage;
+        // await this.stateService.Load(storage.Root);
+        return  collection.ToJSON();
     }
 
     public async CreateDefaultStorage(session, clean = false) {
         const profile = new Profile(session.webId);
         await profile.Init();
-        const storage = new Storage();
-        storage.URI = `${profile.Me.Storage}context`;
-        await this.LoadStorage(storage, clean);
+        const storage = {
+            URI: `${profile.Me.Storage}context`,
+            Type: 'solid',
+            Contexts: [], Messages: []
+        } as StorageJSON;
+        await this.Init(storage, clean);
         return storage;
     }
 
-    async OnAttachContext(contextURI: string, message: Message) {
-        if (ContextDocument.Map.has(contextURI))
-            contextURI = ContextDocument.Map.get(contextURI).URI;
-        const contextDocument = ContextDocument.Map.get(message.Context.URI);
-        const messageEntity = contextDocument.Messages.get(message.URI)
-        messageEntity.SubContext = contextURI;
-        this.ChangedDocs.add(messageEntity.Document as ContextDocument);
-        this.SaveDocs();
+    public UpdateContext(ctx: ContextJSON): Promise<void> {
+        return Promise.resolve(undefined);
     }
 
-    async OnAddMessage(message: Message) {
-        if (message.URI)
-            return;
-        const contextDocument = ContextDocument.Map.get(message.Context.id);
+    async AddMessage(message: MessageJSON) {
+        const contextDocument = ContextDocument.Map.get(message.ContextURI);
         await contextDocument.Loading;
         const messageEntity = contextDocument.Messages.Add();
         // messageEntity.Author = message.Author.URI;
         messageEntity.Content = message.Content;
-        messageEntity.SubContext = message.SubContext?.URI;
-        messageEntity.Time = message.CreatedAt.toJSDate();
+        messageEntity.SubContext = message.SubContextURI;
+        messageEntity.Time = utc(message.CreatedAt).toJSDate();
         message.URI = messageEntity.Id;
         this.ChangedDocs.add(contextDocument);
         this.SaveDocs();
@@ -100,63 +93,39 @@ export class SolidRepository implements DomainEventsListener {
         this.ChangedDocs.clear();
     }
 
-    async MoveMessage({Message, NewContext}) {
-
-    }
-
-    async OnDeleteMessage(message: Message) {
+    async RemoveMessage(message: MessageJSON) {
         if (!message.URI)
             return;
-        const contextDocument = ContextDocument.Map.get(message.Context.id);
+        const contextDocument = ContextDocument.Map.get(message.ContextURI);
         contextDocument.Messages.Remove(contextDocument.Messages.get(message.URI));
         this.ChangedDocs.add(contextDocument);
         this.SaveDocs();
     }
 
-    async OnUpdateContent(message: Message, content: any) {
-        const contextDocument = ContextDocument.Map.get(message.Context.id);
+    async UpdateMessage(message: MessageJSON) {
+        const contextDocument = ContextDocument.Map.get(message.ContextURI);
         const messageEntity =contextDocument.Messages.get(message.URI);
-        messageEntity.Content = content;
+        messageEntity.Content = message.Content;
+        messageEntity.SubContext = message.SubContextURI;
         this.ChangedDocs.add(contextDocument);
         this.SaveDocs();
     }
 
-    async OnCreateContext(context: Context) {
-        const collection = this.StorageMap.get(context.Storage.URI);
-        const contextDocument = await collection.Contexts.Create(`${context.id || +utc()}.ttl`);
+    async CreateContext(context: ContextJSON) {
+        const collection = this.StorageMap.get(context.StorageURI);
+        const contextDocument = await collection.Contexts.Create(`${+utc()}.ttl`);
         context.URI = contextDocument.URI;
-        ContextDocument.Map.set(context.id, contextDocument);
+        ContextDocument.Map.set(context.URI, contextDocument);
         return context;
     }
 
-    async onNewContext(context: Context) {
-        this.notificator.OnContextChanged(context.URI);
+    public async Clear() {
+        for (let value of this.StorageMap.values()) {
+            await value.Remove(true);
+        }
+        this.StorageMap.clear();
     }
 
-    async OnNewAccount(account: IAccountInfo, clean = false) {
-        if (account.type != 'solid')
-            return;
-        const session = account.session as ISession;
-        const storage = await this.CreateDefaultStorage(session, clean);
-        return storage;
-    }
 
-    async Clean() {
-
-    }
-
-    async Load(uri: string) {
-        if (ContextDocument.Map.has(uri))
-            return;
-        const collectionURI = uri.substr(0, uri.lastIndexOf('/'));
-        if (this.StorageMap.has(collectionURI))
-            return;
-        const storage = await this.LoadStorage({
-            URI: collectionURI,
-            Root: null,
-            Type: 'solid'
-        });
-        await this.storageService.AddStorage(storage);
-    }
 }
 

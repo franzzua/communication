@@ -11,27 +11,41 @@ import {Context} from "@model";
 export class AddStorageComponent extends HyperComponent<IState, IEvents> {
 
     public MessagesContext: Context = {
+        URI: 'root://add-storage',
+        id:  'root://add-storage',
         Messages: [
             {
+                URI: undefined,
+                id: undefined,
                 Content: 'Solid',
                 Description: 'your personal Storage and identity storage',
                 Action: 'Storage.join.solid'
             },
             {
+                URI: undefined,
+                id: undefined,
                 Content: 'Google Drive',
                 Description: 'Storage storage managed by Google',
                 Action: 'Storage.join.google-drive'
             },
             {
+                URI: undefined,
+                id: undefined,
                 Content: 'Gmail',
             },
             {
+                URI: undefined,
+                id: undefined,
                 Content: 'Slack',
             },
             {
+                URI: undefined,
+                id: undefined,
                 Content: 'Jira',
             },
             {
+                URI: undefined,
+                id: undefined,
                 Content: 'Telegram',
             }
         ]
@@ -55,4 +69,3 @@ export class AddStorageComponent extends HyperComponent<IState, IEvents> {
         }
     }
 }
-    
