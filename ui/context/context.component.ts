@@ -50,7 +50,8 @@ export class ContextComponent extends BaseContextComponent<IState> {
                 Context: await this.Context$.pipe(first()).toPromise(),
                 Content: text,
                 id: `message.${Id()}`,
-                URI: undefined
+                URI: undefined,
+                Order: 0
             })
         }
     };

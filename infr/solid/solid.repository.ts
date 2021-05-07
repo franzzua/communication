@@ -1,4 +1,4 @@
-import {Injectable, switchThrottle, utc} from "@hypertype/core";
+import {Injectable, Observable, Subject, switchThrottle, utc} from "@hypertype/core";
 import {ContextCollection} from "./data/context.collection";
 import {ContextDocument} from "@infr/solid/data/context.document";
 import {EventBus} from "@services";
@@ -7,6 +7,12 @@ import {ContextJSON, DomainProxy, IRepository, MessageJSON, StorageJSON} from "@
 
 @Injectable()
 export class SolidRepository implements IRepository {
+    public async Load(storageURI: string): Promise<StorageJSON> {
+        const collection = this.StorageMap.get(storageURI);
+        if (!collection)
+            throw new Error(`storage not loaded yet`);
+        return collection.ToJSON();
+    }
 
     public EventBus = new EventBus();
 
@@ -27,9 +33,9 @@ export class SolidRepository implements IRepository {
         await collection.Unsubscribe();
     }
 
-    public async Init(storage: StorageJSON, clean = false): Promise<StorageJSON> {
+    public async Subscribe(storage: StorageJSON, clean = false): Promise<void> {
         if (ContextCollection.Map.has(storage.URI))
-            return ContextCollection.Map.get(storage.URI).ToJSON();
+            return;
         const collection = new ContextCollection(storage.URI);
         if (clean){
             await collection.Init();
@@ -38,14 +44,14 @@ export class SolidRepository implements IRepository {
         try {
             await collection.Init();
             for (let linkedStorage of collection.LinkedStorages) {
-                await this.Init(linkedStorage, clean);
+                await this.Subscribe(linkedStorage, clean);
             }
         }catch (e){
 
         }
         this.StorageMap.set(storage.URI, collection);
         // await this.stateService.Load(storage.Root);
-        return  collection.ToJSON();
+        this._onNewStateSubject$.next(collection.ToJSON());
     }
 
     public async CreateDefaultStorage(session, clean = false) {
@@ -56,26 +62,76 @@ export class SolidRepository implements IRepository {
             Type: 'solid',
             Contexts: [], Messages: []
         } as StorageJSON;
-        await this.Init(storage, clean);
+        await this.Subscribe(storage, clean);
         return storage;
+    }
+
+
+    public Contexts = {
+        Create: async (context: ContextJSON) =>{
+            const collection = this.StorageMap.get(context.StorageURI);
+            const contextDocument = await collection.Contexts.Create(`${+utc()}.ttl`);
+            contextDocument.Context.CreatedAt = utc(context.CreatedAt).toJSDate();
+            contextDocument.Context.UpdatedAt = utc(context.UpdatedAt).toJSDate();
+            context.URI = contextDocument.URI;
+            ContextDocument.Map.set(context.URI, contextDocument);
+        },
+        Update: async (changes: Partial<ContextJSON>) =>{
+            const contextDocument = ContextDocument.Map.get(changes.URI);
+            if ('UpdatedAt' in changes)
+                contextDocument.Context.UpdatedAt = utc(changes.UpdatedAt).toJSDate();
+            if ('CreatedAt' in changes)
+                contextDocument.Context.CreatedAt = utc(changes.CreatedAt).toJSDate();
+            if ('Permutation' in changes)
+                contextDocument.Context.Permutation = changes.Permutation;
+            this.SaveDocs();
+        },
+        Delete: async (context: ContextJSON) =>{
+            const contextDocument = ContextDocument.Map.get(context.URI);
+            await contextDocument.Remove();
+        }
+    }
+
+    public Messages = {
+        Create: async (message: MessageJSON) => {
+            const contextDocument = ContextDocument.Map.get(message.ContextURI);
+            await contextDocument.Loading;
+            const messageEntity = contextDocument.Messages.Add();
+            // messageEntity.Author = message.Author.URI;
+            messageEntity.Content = message.Content;
+            messageEntity.SubContext = message.SubContextURI;
+            messageEntity.CreatedAt = utc(message.CreatedAt).toJSDate();
+            messageEntity.UpdatedAt = utc(message.UpdatedAt).toJSDate();
+            message.URI = messageEntity.Id;
+            this.ChangedDocs.add(contextDocument);
+            this.SaveDocs();
+        },
+        Update: async (changes: Partial<MessageJSON>) => {
+            const contextDocument = ContextDocument.Map.get(changes.ContextURI);
+            const messageEntity =contextDocument.Messages.get(changes.URI);
+            if ('Content' in changes)
+                messageEntity.Content = changes.Content;
+            if ('SubContextURI' in changes)
+                messageEntity.SubContext = changes.SubContextURI;
+            if ('UpdatedAt' in changes)
+                messageEntity.UpdatedAt = utc(changes.UpdatedAt).toJSDate();
+            if ('Order' in changes)
+                messageEntity.Order = changes.Order;
+            this.ChangedDocs.add(contextDocument);
+            this.SaveDocs();
+        },
+        Delete: async (message: MessageJSON) => {
+            if (!message.URI)
+                return;
+            const contextDocument = ContextDocument.Map.get(message.ContextURI);
+            contextDocument.Messages.Remove(contextDocument.Messages.get(message.URI));
+            this.ChangedDocs.add(contextDocument);
+            this.SaveDocs();
+        }
     }
 
     public UpdateContext(ctx: ContextJSON): Promise<void> {
         return Promise.resolve(undefined);
-    }
-
-    async AddMessage(message: MessageJSON) {
-        const contextDocument = ContextDocument.Map.get(message.ContextURI);
-        await contextDocument.Loading;
-        const messageEntity = contextDocument.Messages.Add();
-        // messageEntity.Author = message.Author.URI;
-        messageEntity.Content = message.Content;
-        messageEntity.SubContext = message.SubContextURI;
-        messageEntity.Time = utc(message.CreatedAt).toJSDate();
-        message.URI = messageEntity.Id;
-        this.ChangedDocs.add(contextDocument);
-        this.SaveDocs();
-        return message;
     }
 
     @switchThrottle(1000, {leading: false, trailing: true})
@@ -93,32 +149,6 @@ export class SolidRepository implements IRepository {
         this.ChangedDocs.clear();
     }
 
-    async RemoveMessage(message: MessageJSON) {
-        if (!message.URI)
-            return;
-        const contextDocument = ContextDocument.Map.get(message.ContextURI);
-        contextDocument.Messages.Remove(contextDocument.Messages.get(message.URI));
-        this.ChangedDocs.add(contextDocument);
-        this.SaveDocs();
-    }
-
-    async UpdateMessage(message: MessageJSON) {
-        const contextDocument = ContextDocument.Map.get(message.ContextURI);
-        const messageEntity =contextDocument.Messages.get(message.URI);
-        messageEntity.Content = message.Content;
-        messageEntity.SubContext = message.SubContextURI;
-        this.ChangedDocs.add(contextDocument);
-        this.SaveDocs();
-    }
-
-    async CreateContext(context: ContextJSON) {
-        const collection = this.StorageMap.get(context.StorageURI);
-        const contextDocument = await collection.Contexts.Create(`${+utc()}.ttl`);
-        context.URI = contextDocument.URI;
-        ContextDocument.Map.set(context.URI, contextDocument);
-        return context;
-    }
-
     public async Clear() {
         for (let value of this.StorageMap.values()) {
             await value.Remove(true);
@@ -126,6 +156,7 @@ export class SolidRepository implements IRepository {
         this.StorageMap.clear();
     }
 
-
+    private _onNewStateSubject$ = new Subject<StorageJSON>();
+    public State$ = this._onNewStateSubject$.asObservable();
 }
 

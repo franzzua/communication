@@ -1,79 +1,83 @@
 import {ContextModel} from "@domain/model/context-model";
-import { Model } from "@hypertype/domain";
-import { Message } from "@model";
-import {Injectable} from "@hypertype/core";
+import {Injectable, utc} from "@hypertype/core";
 import { MessageJSON } from "@domain/contracts/json";
 import {StorageModel} from "@domain/model/storage-model";
 import {IFactory} from "@domain/model/i-factory";
-import {IRepository} from "@domain/contracts/repository";
 import {IMessageActions} from "@domain/contracts/actions";
+import { Message} from "@model";
 
 @Injectable(true)
-export class MessageModel extends Model<MessageJSON, IMessageActions> implements IMessageActions {
+export class MessageModel implements IMessageActions {
+    //
+    // public Context: ContextModel;
+    // public SubContext: ContextModel | null;
 
-    public Context: ContextModel;
-    public SubContext: ContextModel | null;
-
-    public State: Omit<MessageJSON, keyof {"ContextURI", "SubContextURI", "Storage"}>;
-    public Storage: StorageModel;
-    public get URI(): string {return  this.State.URI; }
-
-    constructor(protected factory: IFactory) {
-        super();
+    public get Context(){
+        return this.factory.GetContext(this.State.Context.URI);
+    }
+    public get SubContext(){
+        return this.factory.GetContext(this.State.SubContext?.URI);
     }
 
-    public FromJSON(state: MessageJSON): any {
-        this.State = state;
+    public get URI(): string {return  this.State.URI; }
+
+    constructor(private readonly factory: IFactory,
+                public readonly Storage: StorageModel,
+                public readonly State: Message) {
+
+    }
+
+    public Update(json: MessageJSON){
+        Object.assign(this.State, Message.FromJSON(json));
+
     }
 
     public ToJSON(): MessageJSON {
-        return {
-            ...this.State,
-            StorageURI: this.Storage.State.URI,
-            ContextURI: this.Context?.URI,
-            SubContextURI: this.SubContext?.URI
-        };
+        return Message.ToJSON(this.State);
     }
 
     public async UpdateText(text: string): Promise<void> {
-        await this.Storage.repository.UpdateMessage({
-            ...this.ToJSON(),
-            Content: text
-        });
+        this.State.UpdatedAt = utc();
         this.State.Content = text;
+        await this.Storage.repository.Messages.Update(this.ToJSON());
         this.Storage.Update();
     }
 
 
     public async Attach(uri: string): Promise<void> {
-        await this.Storage.repository.UpdateMessage({
-            ...this.ToJSON(),
-            StorageURI: this.Storage.URI,
-            SubContextURI: uri
-        });
-        this.SubContext = this.factory.GetContext(uri);
-        this.SubContext.Parents.unshift(this);
+        this.State.UpdatedAt = utc();
+        this.State.SubContext = this.factory.GetContext(uri)?.State;
+        this.State.SubContext.Parents.unshift(this.State);
+        await this.Storage.repository.Messages.Update(this.ToJSON());
     }
 
     public async Move(fromURI, toURI, toIndex: number){
         const oldContext = this.Context;
         if (oldContext)
-            oldContext.Messages.remove(this)
-        this.Context = this.Storage.Contexts.get(toURI);
-        this.Context.Messages.splice(toIndex, 0, this);
-        await Promise.all([
-            this.Storage.repository.UpdateMessage(this.ToJSON()),
-            this.Storage.repository.UpdateContext(this.Context.ToJSON()),
-            oldContext ? this.Storage.repository.UpdateContext(oldContext.ToJSON()): Promise.resolve(),
-        ]);
+            oldContext.State.Messages.remove(this.State)
+        this.State.Context = this.Storage.Contexts.get(toURI).State;
+        this.State.Context.Messages.push(this.State);
+        await this.Reorder(toIndex);
     }
 
     public async Reorder(newOrder: number): Promise<void>{
         if (!this.Context)
             return ;
-        this.Context.Messages.remove(this);
-        this.Context.Messages.splice(newOrder, 0, this);
-        await this.Storage.repository.UpdateContext(this.Context.ToJSON());
+        this.State.Context.Messages.remove(this.State);
+        if (this.State.Context.Messages.length == 0){
+            this.State.Order = 0;
+        } else if (newOrder == 0){
+            this.State.Order = Math.min(...this.State.Context.Messages.map(x => x.Order)) - 1;
+        } else if (newOrder >= this.State.Context.Messages.length){
+            this.State.Order = Math.max(...this.State.Context.Messages.map(x => x.Order)) + 1;
+        } else {
+            const prev = this.State.Context.Messages[newOrder - 1].Order;
+            const next = this.State.Context.Messages[newOrder].Order;
+            this.State.Order = (next > prev + 1) ? prev + 1 : (next + prev)/2;
+        }
+        this.State.Context.Messages.splice(newOrder, 0, this.State);
+        this.State.UpdatedAt = utc();
+        await this.Storage.repository.Messages.Update(this.ToJSON());
     }
 }
 

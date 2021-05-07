@@ -1,5 +1,6 @@
 export * from "./context";
 export {Storage} from "./storage";
+export {DomainState} from "./storage";
 export {Message} from "./message";
 export {Sorting} from "./sorting";
 export {AccessRule} from "./accessRule";

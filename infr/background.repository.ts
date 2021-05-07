@@ -1,107 +1,118 @@
 import {ContextJSON, IRepository, MessageJSON, StorageJSON} from "@domain";
-import {PromiseQueue} from "@infr/promise-queue";
-import {diff} from "lib0";
+import {tap, utc} from "@hypertype/core";
+import { merge } from "@hypertype/core";
+import {Change, ChangesStorage} from "@infr/changes/changes-storage";
+import {LocalRepository} from "@infr/local/local.repository";
+import {ulid} from "ulid";
+import {CRD} from "@domain/sync/item-sync";
+import {mergeChanges, mergeStorages} from "@infr/changes/merge";
+import { concatMap } from "@hypertype/core";
 
 
 export class BackgroundRepository implements IRepository{
-    private queue = new PromiseQueue(this.main);
+    private changes = new ChangesStorage();
+    private local = new LocalRepository()
 
-    constructor(private main: IRepository,
-                private back: IRepository) {
+    constructor(private main: IRepository & {isOffline: boolean}) {
+        this.changes.Init().catch(console.error);
     }
 
-    public async AddMessage(message: MessageJSON): Promise<MessageJSON> {
-        const backResult = await this.back.AddMessage( message);
-        this.queue.add('AddMessage', message)
-            .then(message => console.warn(message))
-            .catch(err => console.log(err));
-        return backResult;
+
+    private cacheToLocal<TJson extends MessageJSON | ContextJSON>(local: CRD<TJson>, type: 'Contexts' | 'Messages'): CRD<TJson> {
+        return {
+            Create: (item: TJson) => Promise.all([
+                local.Create(item),
+                this.changes.Add({
+                    Action: 'Create',
+                    Entity: item,
+                    Type: type,
+                    ulid: ulid()
+                })
+            ]),
+            Update: (changes: Partial<TJson>) => Promise.all([
+                local.Update(changes),
+                this.changes.Add({
+                    Action: 'Update',
+                    Type: type,
+                    Entity: changes,
+                    ulid: ulid()
+                })
+            ]),
+            Delete: (item: TJson)=> Promise.all([
+                local.Delete(item),
+                this.changes.Add({
+                    Action: 'Delete',
+                    Type: type,
+                    Entity: item,
+                    ulid: ulid()
+                })
+            ])
+        }
     }
+
+    public Contexts = this.cacheToLocal(this.local.Contexts, 'Contexts');
+    public Messages = this.cacheToLocal(this.local.Messages, 'Messages');
 
     public async Clear(): Promise<void> {
         await Promise.all([
-            this.back.Clear(),
+            this.local.Clear(),
             this.main.Clear()
         ])
     }
 
-    public async CreateContext(context: ContextJSON): Promise<ContextJSON> {
-        const backResult = await this.back.CreateContext(context);
-        this.queue.add('CreateContext', context)
-            .then(message => console.warn(message))
-            .catch(err => console.log(err));
-        return backResult;
+
+    public async Load(storageURI: string): Promise<StorageJSON> {
+        this.main.Load(storageURI).catch(console.error);
+        return this.local.Load(storageURI);
     }
 
-    public async Init(storage: StorageJSON): Promise<StorageJSON> {
-        const backResult = await this.back.Init(storage);
-        this.queue.Init( storage)
-            .then(result => {
-                const messageMerge = mergeArrays(
-                    new Map(backResult.Messages.map(x => [x.URI, x])),
-                    new Map(result.Messages.map(x => [x.URI, x])),
-                );
-                messageMerge.added.forEach(x => this.back.AddMessage(x));
-                messageMerge.removed.forEach(x => this.back.RemoveMessage(x));
-                messageMerge.changes.forEach((x,y) => this.back.UpdateMessage(y));
+    private async Merge(remote: StorageJSON){
 
+        const local = await this.local.Load(remote.URI);
 
-                const contextMerge = mergeArrays(
-                    new Map(backResult.Contexts.map(x => [x.URI, x])),
-                    new Map(result.Contexts.map(x => [x.URI, x])),
-                );
-                contextMerge.added.forEach(x => this.back.CreateContext(x));
-                // contextMerge.removed.forEach(x => this.back.RemoveContext(x));
-                contextMerge.changes.forEach((x,y) => this.back.UpdateContext(y));
-            })
-            .catch(err => console.log(err));
-        return backResult;
+        const localChanges = await this.changes.GetAll();
+        for (let change of localChanges) {
+            await this.changes.Remove(change.ulid);
+        }
+        const remoteChanges = mergeStorages(local, remote);
+
+        console.group('merge')
+        console.log('local');
+        console.table(localChanges);
+        console.log('remote')
+        console.table(remoteChanges);
+        mergeChanges(localChanges, remoteChanges);
+        console.log('local');
+        console.table(localChanges);
+        console.log('remote')
+        console.table(remoteChanges);
+        console.groupEnd();
+        for (let change of localChanges) {
+            await this.main[change.Type][change.Action](change.Entity as any);
+        }
+
+        for (let change of remoteChanges) {
+            await this.local[change.Type][change.Action](change.Entity as any);
+        }
+
+        const result = await this.local.Load(remote.URI);
+        console.groupCollapsed('merge');
+        console.table(result.Messages);
+        console.table(result.Contexts);
+        console.groupEnd();
+        return result;
     }
 
-    public async RemoveMessage(msg: MessageJSON): Promise<void> {
-        await this.back.RemoveMessage(msg);
-        await this.queue.add('RemoveMessage', msg)
-            .catch(err => console.log(err));
-    }
 
-    public async UpdateContext(ctx: ContextJSON): Promise<void> {
-        await this.back.UpdateContext(ctx);
-        this.queue.add('UpdateContext', ctx)
-            .catch(err => console.log(err));
-    }
+    private OnMainNewState$ = this.main.State$.pipe(
+    );
 
-    public async UpdateMessage(msg: MessageJSON): Promise<void> {
-        await this.back.UpdateMessage(msg);
-        this.queue.add('UpdateMessage', msg)
-            .catch(err => console.log(err));
-
-    }
+    public State$ = merge(
+        this.main.State$.pipe(
+            concatMap(state => this.Merge(state))
+        ),
+        this.local.State$
+    );
 
 }
 
-function mergeArrays<TItem>(from: Map<any, TItem>, to: Map<any, TItem>){
-    const removed: TItem[] = [];
-    const changes = new Map<TItem, Partial<TItem>>();
-    for (let [key, value] of from) {
-        if (!to.has(key)) {
-            removed.push(value);
-            continue;
-        }
-        const existed = to.get(key);
-        to.delete(key);
-        const change: Partial<TItem> = {};
-        let changed = false;
-        const keys = new Set([...Object.getOwnPropertyNames(value), ...Object.getOwnPropertyNames(existed)]);
-        for (let key of keys){
-            if (existed[key] != value[key]) {
-                changed = true;
-                change[key] = existed[key];
-            }
-        }
-        if (changed){
-            changes.set(existed, change);
-        }
-    }
-    const added: TItem[] = [...to.values()];
-    return {removed, added, changes};
-}

@@ -1,18 +1,21 @@
 import {Doc, XmlElement} from "yjs";
 import {ContextJSON, IRepository, MessageJSON, StorageJSON} from "@domain";
 import * as h from "@hypertype/core";
-import {Subject} from "@hypertype/core";
+import {Observable, Subject} from "@hypertype/core";
 import {ItemSync} from "@domain/sync/item-sync";
 
 
 
-export class StorageSync implements IRepository{
+export class StorageSync {
+    public RemoveContext(context: ContextJSON): Promise<void> {
+        return Promise.resolve(undefined);
+    }
     public doc = new Doc();
     // private messages = this.doc.getXmlFragment('contexts');
     // private contexts = this.doc.getXmlFragment('messages');
 
-    public contexts = new ItemSync<ContextJSON>( this.doc.getXmlFragment('contexts'), 'context');
-    public messages = new ItemSync<MessageJSON>( this.doc.getXmlFragment('messages'), 'message');
+    public Contexts = new ItemSync<ContextJSON>( this.doc.getXmlFragment('contexts'), 'context');
+    public Messages = new ItemSync<MessageJSON>( this.doc.getXmlFragment('messages'), 'message');
 
     public URI: string;
     public Type: string;
@@ -29,8 +32,8 @@ export class StorageSync implements IRepository{
 
 
     public Changes$: h.Observable<{ Action, Args }> = h.merge(
-        this.contexts.Changes$.pipe(h.map(x => ({...x, Action: `Context.${x.Action}`}))),
-        this.messages.Changes$.pipe(h.map(x => ({...x, Action: `Context.${x.Action}`}))),
+        this.Contexts.Changes$.pipe(h.map(x => ({...x, Action: `Context.${x.Action}`}))),
+        this.Messages.Changes$.pipe(h.map(x => ({...x, Action: `Context.${x.Action}`}))),
     ).pipe(
         h.shareReplay(1)
     );
@@ -42,44 +45,48 @@ export class StorageSync implements IRepository{
         h.shareReplay(1)
     );
 
-    public async AddMessage(message: MessageJSON): Promise<MessageJSON> {
-        this.messages.Create(message);
-        return message;
+    public async AddMessage(message: MessageJSON): Promise<void> {
+        this.Messages.Create(message);
     }
 
     public async Clear(): Promise<void> {
     }
 
-    public async CreateContext(context: ContextJSON): Promise<ContextJSON> {
-        this.contexts.Create(context);
-        return context;
+    public async CreateContext(context: ContextJSON): Promise<void> {
+        this.Contexts.Create(context);
     }
 
-    public Init(storage: StorageJSON): Promise<StorageJSON> {
+    public Subscribe(storage: StorageJSON): Promise<void> {
         return Promise.resolve(undefined);
     }
 
     public async RemoveMessage(msg: MessageJSON): Promise<void> {
-        this.messages.Delete(msg.id);
+        this.Messages.Delete(msg);
     }
 
     public async UpdateContext(ctx: ContextJSON): Promise<void> {
-        this.contexts.Update(ctx.id, ctx);
+        this.Contexts.Update(ctx);
     }
 
     public async UpdateMessage(msg: MessageJSON): Promise<void> {
-        this.messages.Update(msg.id, msg);
+        this.Messages.Update(msg);
     }
 
     public toState(): StorageJSON {
-        const contexts = this.contexts.ToJSON();
-        const messages = this.messages.ToJSON();
+        const contexts = this.Contexts.ToJSON();
+        const messages = this.Messages.ToJSON();
         return  {
             URI: this.URI,
             Type: this.Type,
             Contexts: contexts,
             Messages: messages
         }
+    }
+
+    public OnNewState$: Observable<StorageJSON>;
+
+    public Load(storage: string): Promise<StorageJSON> {
+        return Promise.resolve(undefined);
     }
 }
 

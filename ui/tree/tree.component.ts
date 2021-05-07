@@ -2,7 +2,7 @@ import {Component, HyperComponent, property} from "@hypertype/ui";
 import {IEvents, IState, Template} from "./tree.template";
 import {StateService} from "@services";
 import * as h from "@hypertype/core";
-import {Injectable, Observable} from "@hypertype/core";
+import {Injectable, Observable, tap} from "@hypertype/core";
 import {keyMap, TreeStore} from "./tree-store.service";
 import {KeyboardAspect} from "./keyboardAspect";
 import {TreeItem} from "../../presentors/tree.presentor";
@@ -32,7 +32,7 @@ export class TreeComponent extends HyperComponent<IState, IEvents> {
         this.StorageURI$,
         this.stateService.State$
     ]).pipe(
-        h.map(([uri, state])=> state.Storages.get(uri)?.Root),
+        h.map(([uri, state])=> state?.Root),
         h.filter(x => x != null)
     );
 
@@ -68,6 +68,7 @@ export class TreeComponent extends HyperComponent<IState, IEvents> {
             Selected: null,
             ItemsMap: new Map<string, TreeItem>()
         } as IState),
+        h.tap(x => console.table(x.Items)),
         h.shareReplay(1),
     )
 

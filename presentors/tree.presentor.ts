@@ -18,7 +18,6 @@ export class TreePresenter{
         // }
         // this.contexts.set(context.id, context);
         const result = context.Messages
-            // .orderBy(x => +x.CreatedAt)
             .flatMap((msg, index) => {
                 const level = path.length;
                 const newPath = [...path, msg.id];

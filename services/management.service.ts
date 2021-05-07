@@ -67,7 +67,7 @@ export class ManagementService{
                                     id: `storage.${s.URI}`,
                                     Content: s.URI,
                                     Action: 'message.add',
-                                    SubContext: state.Contexts.get(s.Root.URI)
+                                    SubContext: state.Root
                                 }))
                             }
                         },

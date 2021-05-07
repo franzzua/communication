@@ -20,17 +20,15 @@ export class Factory extends IFactory {
         super();
     }
 
-    public GetOrCreateMessage(state: MessageJSON, storage: StorageModel): MessageModel {
+    public GetOrCreateMessage(state: Message, storage: StorageModel): MessageModel {
         if (this.MessageMap.has(state.URI))
-            return this.MessageMap.get(state.URI);
-        const message = this.container.get<MessageModel>(MessageModel);
-        message.Storage = storage;
-        message.FromJSON(state);
+            return  this.MessageMap.get(state.URI);
+        const message = new MessageModel(this, storage, state);
         this.MessageMap.set(state.URI, message);
         return message;
     }
 
-    public GetOrCreateStorage(state: StorageJSON, domain: DomainModel): StorageModel {
+    public GetOrCreateStorage(state: Storage, domain: DomainModel): StorageModel {
         if (this.StorageMap.has(state.URI))
             return this.StorageMap.get(state.URI);
         let storage: StorageModel;
@@ -47,11 +45,10 @@ export class Factory extends IFactory {
         return storage;
     }
 
-    public GetOrCreateContext(state: ContextJSON, storage: StorageModel): ContextModel {
+    public GetOrCreateContext(state: Context, storage: StorageModel): ContextModel {
         if (this.ContextMap.has(state.URI))
             return this.ContextMap.get(state.URI);
-        const context = this.container.get<ContextModel>(ContextModel);
-        context.FromJSON(state, storage);
+        const context = new ContextModel(this, storage, state);
         this.ContextMap.set(state.URI, context);
         return context;
     }

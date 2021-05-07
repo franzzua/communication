@@ -1,4 +1,4 @@
-import {Injectable} from "@hypertype/core";
+import {Injectable, Observable, of, Subject} from "@hypertype/core";
 import {LocalStorage} from "@infr/local/local.storage";
 import {IRepository} from "../../domain/contracts/repository";
 import {ContextJSON, MessageJSON, StorageJSON} from "@domain/contracts/json";
@@ -6,60 +6,57 @@ import {ContextJSON, MessageJSON, StorageJSON} from "@domain/contracts/json";
 @Injectable(true)
 export class LocalRepository implements IRepository {
 
-    private storages = new Map<string, LocalStorage>();
-    public IsBack: boolean;
+    protected storages = new Map<string, LocalStorage>();
 
     constructor() {
     }
 
-    public async Init(storage: StorageJSON): Promise<StorageJSON> {
-        // await this.GetStorages();
-        if (!this.storages.has(storage.URI)){
-            const localStorage = new LocalStorage(storage.URI);
-            await localStorage.Init();
-            this.storages.set(storage.URI, localStorage);
+    public async Load(storageURI: string): Promise<StorageJSON> {
+        if (!this.storages.has(storageURI)){
+            const localStorage = await this.CreateStorage(storageURI);
         }
-        const json = await this.storages.get(storage.URI).Load();
+        const json = await this.storages.get(storageURI).Load();
         return json;
     }
-
-    public async AddMessage(message: MessageJSON): Promise<MessageJSON> {
-        const localStorage = this.storages.get(message.StorageURI);
-        const uri = await localStorage.AddMessage(message);
-        return {
-            ...message,
-            URI: uri
-        };
+    protected async CreateStorage(storageURI: string): Promise<LocalStorage>{
+        const localStorage = new LocalStorage(storageURI);
+        await localStorage.Init();
+        this.storages.set(storageURI, localStorage);
+        const json = await localStorage.Load();
+        this.stateSubject$.next(json);
+        return localStorage;
     }
 
-    public async CreateContext(context: ContextJSON): Promise<ContextJSON> {
-        const localStorage = this.storages.get(context.StorageURI);
-        const uri = await localStorage.AddContext(context);
-        return {
-            ...context,
-            URI: uri
+    public Contexts = {
+        Create: async (context: ContextJSON) =>{
+            const localStorage = this.storages.get(context.StorageURI);
+            await localStorage.AddContext(context);
+        },
+        Update: async (changes: Partial<ContextJSON>) =>{
+            const localStorage = this.storages.get(changes.StorageURI);
+            await localStorage.UpdateContext(changes.id, changes);
+        },
+        Delete: async (context: ContextJSON) =>{
+            const localStorage = this.storages.get(context.StorageURI);
+            await localStorage.RemoveContext(context);
         }
     }
 
-    public async Clear(): Promise<void> {
-        for (let storage of this.storages.values()) {
-            await storage.Clear();
+    public Messages = {
+        Create: async (message: MessageJSON) => {
+            const localStorage = this.storages.get(message.StorageURI);
+            await localStorage.AddMessage(message);
+        },
+        Update: async (changes: Partial<MessageJSON>) => {
+            const localStorage = this.storages.get(changes.StorageURI);
+            await localStorage.UpdateMessage(changes.id, changes);
+        },
+        Delete: async (message: MessageJSON) => {
+            const localStorage = this.storages.get(message.StorageURI);
+            await localStorage.RemoveMessage(message);
         }
     }
 
-    public async UpdateMessage(msg: MessageJSON): Promise<void> {
-        const localStorage = this.storages.get(msg.StorageURI);
-        await localStorage.UpdateMessage(msg);
-    }
-    public async UpdateContext(ctx: ContextJSON): Promise<void> {
-        const localStorage = this.storages.get(ctx.StorageURI);
-        await localStorage.UpdateContext(ctx);
-    }
-
-    public async RemoveMessage(msg: MessageJSON): Promise<void> {
-        const localStorage = this.storages.get(msg.StorageURI);
-        await localStorage.RemoveMessage(msg);
-    }
 
     public async GetStorages(): Promise<StorageJSON[]>{
         const result = [] as StorageJSON[];
@@ -72,4 +69,12 @@ export class LocalRepository implements IRepository {
         return result;
     }
 
+    public async Clear(): Promise<void> {
+        for (let storage of this.storages.values()) {
+            await storage.Clear();
+        }
+    }
+
+    protected stateSubject$ = new Subject<StorageJSON>();
+    public State$ = this.stateSubject$.asObservable();
 }

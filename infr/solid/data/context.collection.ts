@@ -51,7 +51,7 @@ export class ContextCollection extends Collection {
     public ToJSON(): StorageJSON{
         const contexts = this.Contexts.Documents.map(x => x.ToJSON());
         const messages = this.Contexts.Documents.flatMap(x => x.Messages.Items).map(x => x.ToJSON());
-        contexts.forEach(x => x.ParentsURIs = messages.filter(x => x.SubContextURI == x.URI).map(x => x.URI));
+        // contexts.forEach(x => x.ParentsURIs = messages.filter(x => x.SubContextURI == x.URI).map(x => x.URI));
         return {
             URI: this.URI,
             Type: 'solid',

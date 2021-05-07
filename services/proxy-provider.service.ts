@@ -21,7 +21,7 @@ export class ProxyProvider {
         await this.domainProxy.State$.pipe(
             map(x => x.Storages.find(x => x.URI == context.Storage.URI)),
             filter(x => x != null),
-            map(x => x.Contexts.find(x => x.URI == context.URI)),
+            map(x => x.Contexts.get(context.URI)),
             filter(x => x != null),
             first()
         ).toPromise()
@@ -34,7 +34,7 @@ export class ProxyProvider {
         await this.domainProxy.State$.pipe(
             map(x => x.Storages.find(x => x.URI == message.Context.Storage.URI)),
             filter(x => x != null),
-            map(x => x.Messages.find(x => x.URI == message.URI)),
+            map(x => x.Messages.get(message.URI)),
             filter(x => x != null),
             first()
         ).toPromise()

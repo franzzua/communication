@@ -82,9 +82,13 @@ export class ContextSync {
 
     //
     private onNewContext(element: XmlElement) {
-        const context = {
+        const context: Context = {
             URI: element.getAttribute('uri'),
             id: element.getAttribute('id'),
+            Storage: null,
+            IsRoot: null,
+            UpdatedAt: null,
+            CreatedAt: null,
             Messages: [],
             Parents: [],
         };

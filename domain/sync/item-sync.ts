@@ -5,8 +5,8 @@ import * as h from "@hypertype/core";
 
 export interface CRD<TItem  extends {id?: string}>{
     Create(item: TItem);
-    Update(id: string, changes: Partial<TItem>);
-    Delete(id: string);
+    Update(changes: Partial<TItem>);
+    Delete(item: TItem);
 }
 
 export class ItemSync<TItem extends { id?: string }> implements CRD<TItem> {
@@ -47,11 +47,12 @@ export class ItemSync<TItem extends { id?: string }> implements CRD<TItem> {
                         const value = element.getAttribute(key);
                         changes[key] = value;
                     }
+                    changes.id = id;
                     this.mapping.set(id, {element, item: {
                         ...this.mapping.get(id).item,
                         ...changes
                     }});
-                    crd.Update(id, changes);
+                    crd.Update(changes);
                 }
             }
         };
@@ -85,10 +86,10 @@ export class ItemSync<TItem extends { id?: string }> implements CRD<TItem> {
         this.root.push([element]);
     }
 
-    public Update(id: string, changes: Partial<TItem>) {
-        if (!this.mapping.has(id))
+    public Update(changes: Partial<TItem>) {
+        if (!this.mapping.has(changes.id))
             throw new Error("update of unknown item");
-        const {element} = this.mapping.get(id);
+        const {element} = this.mapping.get(changes.id);
         this.root.doc.transact(() => {
             for (let key of Object.getOwnPropertyNames(changes)) {
                 element.setAttribute(key, changes[key]);
@@ -104,10 +105,10 @@ export class ItemSync<TItem extends { id?: string }> implements CRD<TItem> {
         throw new Error("Get index of unknown element");
     }
 
-    public Delete(id: string) {
-        if (!this.mapping.has(id))
+    public Delete(item: TItem) {
+        if (!this.mapping.has(item.id))
             throw new Error("delete of unknown item");
-        const {element} = this.mapping.get(id);
+        const {element} = this.mapping.get(item.id);
         const index = this.getIndex(element);
         this.root.delete(index);
     }

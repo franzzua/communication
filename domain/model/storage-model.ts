@@ -1,5 +1,5 @@
 import {Model} from "@hypertype/domain";
-import {Context, Sorting, Storage} from "@model";
+import {Context, Message, Sorting, Storage} from "@model";
 import {DomainModel} from "./domain-model";
 import {ContextModel} from "./context-model";
 import {IFactory} from "./i-factory";
@@ -8,79 +8,133 @@ import {IRepository} from "../contracts/repository";
 import {ContextJSON, StorageJSON} from "@domain/contracts/json";
 import {MessageModel} from "@domain/model/message-model";
 import {ulid} from "ulid";
+import {utc} from "@hypertype/core";
+import {mode} from "rdf-namespaces/dist/acl";
+import {Permutation} from "@domain/helpers/permutation";
 
-export abstract class StorageModel extends Model<StorageJSON, IStorageActions>  implements IStorageActions{
+export abstract class StorageModel extends Model<Storage, IStorageActions>  implements IStorageActions{
     public domain: DomainModel;
     public Root: ContextModel;
     public Contexts = new Map<string, ContextModel>();
     public Messages = new Map<string, MessageModel>();
 
-    public State: Storage = {URI: undefined, id: undefined, Root: undefined, Type: undefined, Trash: []};
-
-    public get URI(): string {return  this.State.URI; }
+    public get URI(): string{ return  this.State.URI; }
+    public Type: string;
+    public readonly State: Storage = {
+        URI: undefined,
+        Type: undefined,
+        Trash: [],
+        Messages: new Map<string, Message>(),
+        Contexts: new Map<string, Context>(),
+        Root: null
+    };
 
     constructor(protected factory: IFactory, public repository: IRepository) {
         super();
+        this.repository.State$.subscribe(async json => {
+            await this.FromServer(json);
+            this.domain.Update();
+        })
     }
 
-    FromJSON(state: StorageJSON, domain?: DomainModel): any {
+    FromJSON(state: Storage, domain?: DomainModel): any {
         this.domain ??= domain;
-        Object.assign(this.State, {
-            URI: state.URI,
-            Type: state.Type
-        });
+        this.State.URI = state.URI;
+        this.State.Type = state.Type;
     }
 
-    ToJSON(): StorageJSON {
-        return {
-            ...this.State,
-            Contexts: [...this.Contexts.values()].map(x => x.ToJSON()),
-            Messages: [...this.Messages.values()].map(x => x.ToJSON()),
-        };
+    ToJSON(): Storage {
+        return this.State;
     }
 
     public async Load(): Promise<void> {
-        const json = await this.repository.Init(this.ToJSON());
-        await this.Init(json);
+        await this.repository.Load(this.URI);
     }
 
-    protected async Init(json: StorageJSON){
+    protected async FromServer(json: StorageJSON){
         for (let message of json.Messages) {
-            const model = this.factory.GetOrCreateMessage(message, this);
+            let model = this.factory.GetMessage(message.URI);
+            if (!model){
+                model = this.factory.GetOrCreateMessage(Message.FromJSON(message), this);
+            } else {
+                model.Update(message);
+            }
+            this.State.Messages.set(model.URI, model.State);
             this.Messages.set(model.URI, model);
         }
         for (let context of json.Contexts) {
-            const model = this.factory.GetOrCreateContext(context, this);
+            let model = this.factory.GetContext(context.URI);
+            if (!model) {
+                model = this.factory.GetOrCreateContext({
+                    ...Context.FromJSON(context),
+                    Storage: this.State,
+                    Messages: [],
+                    Parents: [],
+                }, this);
+            }else{
+                model.Update(context);
+            }
+
+            let messages = json.Messages
+                .filter(x => x.ContextURI == context.URI)
+                .map(x => this.Messages.get(x.URI).State)
+                .orderBy(x => x.Order);
+            // if (context.Permutation != null) {
+            //     messages = Permutation.Parse(context.Permutation).Invoke(messages);
+            // }
+            const parents = json.Messages
+                .filter(x => x.SubContextURI == context.URI)
+                .map(x => this.Messages.get(x.URI).State);
+            model.Link(messages, parents);
             this.Contexts.set(model.URI, model);
+            this.State.Contexts.set(model.URI, model.State);
+        }
+        for (let context of json.Contexts) {
+            const model = this.factory.GetContext(context.URI);
+            model.Update(context);
         }
         this.Root = [...this.Contexts.values()].find(x => x.State.IsRoot);
         if (!this.Root){
             const uri  = await this.CreateContext({
-                ParentsURIs:[],
-                MessageURIs:[],
                 URI: undefined,
                 IsRoot: true,
                 id: ulid(),
-                Permutation: null,
-                Sorting: Sorting[Sorting.Time] as string,
-                StorageURI: this.URI
+                // Permutation: null,
+                // Sorting: Sorting[Sorting.Time] as string,
+                Storage: this.State,
+                Parents: [],
+                Messages: [],
+                UpdatedAt: utc(),
+                CreatedAt: utc(),
             });
             this.Root = this.Contexts.get(uri);
         }
+        this.State.Root = this.Root.State;
     }
 
-    public async CreateContext(context: ContextJSON): Promise<string> {
-        const state = await this.repository.CreateContext({
-            ...context,
-            StorageURI: this.URI
-        });
-        const result = this.factory.GetOrCreateContext(state, this);
-        for (let parentURI of context.ParentsURIs) {
-            const message = this.factory.GetMessage(parentURI);
-            message.SubContext = result;
-            result.Parents.push(message);
+    public async CreateMessage(state: Message): Promise<string> {
+        state.URI = `${state.Context.URI}#${state.id}`;
+        console.log('domain.add-message', state, state.URI);
+        await this.repository.Messages.Create(Message.ToJSON(state));
+        const model = this.factory.GetOrCreateMessage(state, this);
+
+        if (!model.State.Context?.Messages.includes(model.State))
+            model.State.Context?.Messages.push(model.State);
+
+        this.Messages.set(model.URI, model);
+        this.State.Messages.set(model.URI, model.State);
+        return model.URI;
+    }
+    public async CreateContext(context: Context): Promise<string> {
+        context.URI = `${this.URI}/${context.id}.ttl`;
+        await this.repository.Contexts.Create(Context.ToJSON(context));
+        const result = this.factory.GetOrCreateContext(context, this);
+        result.Link([], context.Parents);
+        for (let parent of result.Parents) {
+            this.repository.Messages.Update(parent.ToJSON());
         }
         this.Contexts.set(result.URI, result);
+        this.State.Contexts.set(result.URI, result.State);
         return  result.URI;
     }
 

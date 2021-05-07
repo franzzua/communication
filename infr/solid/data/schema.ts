@@ -7,4 +7,7 @@ export const Schema = {
     date: `${uri}#date`,
     author: `${uri}#author`,
     updatedAt: `${uri}#updatedAt`,
+    permutation: `${uri}#permutation`,
+    order: `${uri}#order`,
+
 }

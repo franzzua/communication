@@ -43,12 +43,12 @@ export class SyncSpec{
             URI: '123',
             id: '1',
         };
-        this.sync1.messages.Create(msg);
+        this.sync1.Messages.Create(msg);
         await this.syncBus.isUpdating$;
         const state = this.sync2.toState();
         expect(state.Messages[0]).deep.equal(msg);
         msg.Content = 'Goodbuy hippo!';
-        this.sync1.messages.Update(msg.id, {Content: msg.Content});
+        this.sync1.Messages.Update(msg.id, {Content: msg.Content});
         await this.syncBus.isUpdating$;
         const state2 = this.sync2.toState();
         expect(state2.Messages[0]).deep.equal(msg);
@@ -62,7 +62,7 @@ export class SyncSpec{
             MessageURIs: [],
             ParentsURIs: []
         };
-        this.sync1.contexts.Create(ctx);
+        this.sync1.Contexts.Create(ctx);
         await this.syncBus.isUpdating$;
         const state = this.sync2.toState();
         expect(state.Contexts[0]).deep.equal(ctx);

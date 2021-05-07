@@ -38,7 +38,8 @@ export class TreeStore {
                     Context: root,
                     CreatedAt: utc(),
                     URI: undefined,
-                    id: ulid()
+                    id: ulid(),
+                    Order: 0
                 };
                 this.stateService.AddMessage(message);
                 root.Messages.push(message);
@@ -95,7 +96,9 @@ export class TreeStore {
                 if (parsed.Content) {
                     if (parsed.SubContext) {
                         // await this.persistanceService.Load(parsed.SubContext.URI)
-                        parsed.SubContext = this.stateService.ContextStore.getById(parsed.SubContext.id);
+                        parsed.SubContext = state.Items.map(x => x.Message.Context)
+
+                            .find(x => x.id == parsed.SubContext.id);
                     }
                     this.AddMessage(parsed, state.Selected.Message);
                 }
@@ -105,7 +108,8 @@ export class TreeStore {
                     this.AddMessage({
                         URI: undefined,
                         id: ulid(),
-                        Content: paragraph
+                        Content: paragraph,
+                        Order: state.Selected.Message.Context.Messages.length
                     }, state.Selected.Message);
                 }
             }
@@ -143,6 +147,7 @@ export class TreeStore {
                 id: ulid(),
                 CreatedAt: utc(),
                 Content: '',
+                Order: 0
             } as Message;
             if (parentPath.length > 0) {
                 this.AddMessage(newMessage, state.ItemsMap.get(parentPath.join('/')).Message);
@@ -334,14 +339,14 @@ function logReducer(target, key, descr){
     return {
         async value(data) {
             const instance = this;
-            console.groupCollapsed(key);
-            console.log('reducer', data);
+            // console.groupCollapsed(key);
+            // console.log('reducer', data);
             const reducer: Reducer<IState> = await descr.value.call(instance, data);
             return state => {
                 const newState = reducer.call(instance, state);
-                console.info(newState);
-                console.table(newState.Items.map(x => ({id: x.Message.URI, Content: x.Message.Content, Path:x.Path.join('   '), IsOpened: x.IsOpened})));
-                console.groupEnd();
+                // console.info(newState);
+                // console.table(newState.Items.map(x => ({id: x.Message.URI, Content: x.Message.Content, Path:x.Path.join('   '), IsOpened: x.IsOpened})));
+                // console.groupEnd();
                 return newState;
             }
         }

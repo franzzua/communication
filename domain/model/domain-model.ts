@@ -3,10 +3,11 @@ import {Model} from "@hypertype/domain";
 import {StorageModel} from "./storage-model";
 import { IFactory } from "./i-factory";
 import {IDomainActions} from "../contracts/actions";
-import {DomainJSON, StorageJSON} from "@domain/contracts/json";
+import { StorageJSON} from "@domain/contracts/json";
+import {DomainState, Storage} from "@model";
 
 @Injectable()
-export class DomainModel extends Model<DomainJSON, IDomainActions> implements IDomainActions {
+export class DomainModel extends Model<DomainState, IDomainActions> implements IDomainActions {
     public Storages: Map<string, StorageModel> = new Map();
 
 
@@ -15,17 +16,17 @@ export class DomainModel extends Model<DomainJSON, IDomainActions> implements ID
     }
 
 
-    public FromJSON(state: DomainJSON): any {
+    public FromJSON(state: DomainState): any {
         this.Storages = new Map(state.Storages.map(x => [x.URI, this.factory.GetOrCreateStorage(x, this)]));
     }
 
-    public ToJSON(): DomainJSON {
+    public ToJSON(): DomainState{
         return {
-            Storages: [...this.Storages.values()].map(x => x.ToJSON())
+            Storages: [...this.Storages.values()].map(x => x.State)
         };
     }
 
-    public async CreateStorage(json: StorageJSON): Promise<StorageModel>{
+    public async CreateStorage(json: Storage): Promise<StorageModel>{
         const storage = this.factory.GetOrCreateStorage(json, this);
         await storage.Load();
         this.Storages.set(storage.URI, storage);

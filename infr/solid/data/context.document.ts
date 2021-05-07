@@ -5,6 +5,20 @@ import {ContextCollection} from "@infr/solid/data/context.collection";
 import {ContextJSON} from "@domain";
 import {DateTime} from "luxon";
 import {Schema} from "./schema";
+import { utc } from "@hypertype/core";
+
+export class ContextEntity extends Entity{
+
+    @field(Schema.date, {type: "Date"})
+    public CreatedAt: Date;
+
+    @field(Schema.updatedAt, {type: "Date"})
+    public UpdatedAt: Date;
+
+    @field(Schema.permutation, {type: "string"})
+    public Permutation: string;
+
+}
 
 @document()
 export class ContextDocument extends Document {
@@ -17,8 +31,8 @@ export class ContextDocument extends Document {
     @entitySet(MessageEntity, {isArray: true})
     public Messages: EntitySet<MessageEntity>;
 
-    // @entitySet(MessageEntity, {isArray: false})
-    // public Context = new ContextEntity();
+    @entitySet(ContextEntity)
+    public Context = new ContextEntity();
 
     public static Map = new Map<string, ContextDocument>();
 
@@ -26,12 +40,15 @@ export class ContextDocument extends Document {
 
     public ToJSON(): ContextJSON{
         return {
-            MessageURIs: this.Messages.Items.map(x => x.Id),
+            // MessageURIs: this.Messages.Items.map(x => x.Id),
             URI: this.URI,
-            Permutation: null,
+            id: this.URI,
+            Permutation: this.Context.Permutation,
+            UpdatedAt: utc(this.Context.UpdatedAt).toISO(),
+            CreatedAt: utc(this.Context.CreatedAt).toISO(),
             Sorting: null,
             StorageURI: this.Collection.folderURI,
-            ParentsURIs: [],
+            // ParentsURIs: [],
             IsRoot: this.URI.endsWith('root.ttl')
         }
     }
@@ -46,10 +63,4 @@ export class ContextDocument extends Document {
 
 }
 
-export class ContextEntity extends Entity{
-
-    @field(Schema.updatedAt, {type: "Date"})
-    public UpdatedAt: DateTime;
-
-}
 

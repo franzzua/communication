@@ -4,14 +4,14 @@ import {IFactory} from "@domain/model/i-factory";
 import {LocalRepository} from "@infr/local/local.repository";
 import {SolidRepository} from "@infr/solid";
 import {BackgroundRepository} from "@infr/background.repository";
+import {SolidMockRepository} from "@infr/local/solid-mock.repository";
 
 @Injectable(true)
 export class SolidStorageModel extends StorageModel {
 
     constructor(factory: IFactory,
-                private localRepository: LocalRepository,
-                private solidRepository: SolidRepository) {
-        super(factory, new BackgroundRepository(solidRepository, localRepository));
+                private solidRepository: SolidMockRepository) {
+        super(factory, new BackgroundRepository(solidRepository));
         // this.solidRepository.IsBack = true;
     }
 

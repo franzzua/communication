@@ -4,14 +4,7 @@ import {Context, Message, Storage} from "@model";
 import {LogService} from "./log.service";
 import {DomainProxy} from "@domain";
 import {ProxyProvider} from "./proxy-provider.service";
-import {StorageStore} from "./stores/storage-store";
-import {MessageStore} from "./stores/message-store";
-import {ContextStore} from "./stores/context-store";
 import {ulid} from "ulid";
-
-class AsyncQueueStore {
-
-}
 
 @Injectable()
 export class StateService {
@@ -26,19 +19,18 @@ export class StateService {
         window.State = this;
     }
 
-    public StorageStore = new StorageStore(this.proxyProvider);
-    public MessagesStore = new MessageStore(this.StorageStore, this.proxyProvider);
-    public ContextStore = new ContextStore(this.StorageStore, this.MessagesStore, this.proxyProvider);
+    // public StorageStore = new StorageStore(this.proxyProvider);
+    // public ContextStore = new ContextStore(this.StorageStore, this.proxyProvider);
+    // public MessagesStore = new MessageStore(this.StorageStore, this.ContextStore, this.proxyProvider);
 
 
     async CreateContext(context: Context) {
-        // if (context.URI && this.State.has(context.URI))/**/
-        //     return;
-        this.ContextStore.Create(context).catch(console.log);
+        const proxy = await this.proxyProvider.GetStorageProxy(context.Storage);
+        await proxy.Actions.CreateContext(context);
         this._subject$.next();
     }
 
-    CreateSubContext(message: Message) {
+    async CreateSubContext(message: Message) {
         // if (context.URI && this.State.has(context.URI))/**/
         //     return;
         message.SubContext = {
@@ -46,28 +38,38 @@ export class StateService {
             Messages: [],
             Parents: [message],
             Storage: message.Context.Storage,
-        } as Context;
-        this.ContextStore.Create(message.SubContext).catch(console.log);
-        this._subject$.next();
+            UpdatedAt: utc(),
+            CreatedAt: utc(),
+            IsRoot: false,
+            URI: undefined
+        }
+        await this.CreateContext(message.SubContext);
+        //
+        // this.ContextStore.Create(message.SubContext)
+        //     .then(x => this.proxyProvider.GetMessageProxy(message))
+        //     .then(proxy => proxy.Actions.Attach(message.SubContext.URI))
+        //     .catch(console.log);
+        // this._subject$.next();
     }
 
-    async AttachContext(contextId: string, to: Message) {
-        const subContext = this.ContextStore.getById(contextId);
-        const existed = this.MessagesStore.getById(to.id);
-        if (!existed)
-            throw new Error("Attach context to unknown message");
-        if (!subContext)
-            throw new Error("Attach not loaded context to message");
-        existed.SubContext = subContext;
-        this._subject$.next();
+    async AttachContext(context: Context, to: Message) {
+        // const subContext = this.ContextStore.getById(contextId);
+        // const existed = this.MessagesStore.getById(to.id);
+        // if (!existed)
+        //     throw new Error("Attach context to unknown message");
+        // if (!subContext)
+        //     throw new Error("Attach not loaded context to message");
+        // existed.SubContext = subContext;
+        // this._subject$.next();
         (await this.proxyProvider.GetMessageProxy(to))
-            .Actions.Attach(contextId)
+            .Actions.Attach(context.URI)
             .catch(err => console.log(err));
     }
 
-    public AddMessage(message: Message) {
-        this.MessagesStore.Create(message).catch(console.log);
-        this._subject$.next();
+    public async AddMessage(message: Message) {
+        message.Order = message.Context.Messages.length;
+        const proxy = await this.proxyProvider.GetStorageProxy(message.Context.Storage);
+        await proxy.Actions.CreateMessage(message);
     }
 
     public MoveMessage(message: Message, to: Context, toIndex: number = to.Messages.length): void {
@@ -108,54 +110,47 @@ export class StateService {
     }
 
     public async LoadStorage(uri: string): Promise<string> {
-        const existed = this.StorageStore.getByURI(uri);
-        if (existed) return uri;
-        const type = uri.startsWith('local') ? 'local' : 'solid';
+        // const existed = this.StorageStore.getByURI(uri);
+        // if (existed) return uri;
+
+        const type = uri.startsWith('local://') ? 'local' : 'solid';
         await this.domainProxy.Actions.CreateStorage({
             URI: uri,
-            Messages: [],
-            Contexts: [],
-            Type: type
+            Type: type,
+            Root: null,
+            Trash: [],
+            Messages: null,
+            Contexts: null
         });
         return uri;
     }
 
-    // @ts-ignore
+    // @ts-ignorem
     private _subject$ = new BehaviorSubject<void>();
 
-
+    //
     public getContext$(uri: string): Observable<Context> {
         return this.State$.pipe(
-            map(x => x.Contexts.get(uri)),
+            tap(x => console.log(x)),
+            map(x => x.Root),
         );
     }
+    //
+    // private DomainState$: Observable<void> = this.domainProxy.State$.pipe(
+    //     h.map(model => {
+    //         for (const storageState of model.Storages) {
+    //             this.StorageStore.SetOrUpdate(storageState);
+    //             storageState.Contexts.forEach(m => this.ContextStore.SetOrUpdate(m));
+    //             storageState.Messages.forEach(m => this.MessagesStore.SetOrUpdate(m));
+    //         }
+    //     })
+    // )
 
-    private DomainState$: Observable<void> = this.domainProxy.State$.pipe(
-        h.map(model => {
-            for (const storageState of model.Storages) {
-                this.StorageStore.SetOrUpdate(storageState);
-                storageState.Messages.forEach(m => this.MessagesStore.SetOrUpdate(m));
-                storageState.Contexts.forEach(m => this.ContextStore.SetOrUpdate(m));
-            }
-        })
+
+    public State$: Observable<Storage> = this.domainProxy.State$.pipe(
+        map(x => x.Storages[0]),
+        shareReplay(1)
     )
-
-
-    public State$: Observable<{
-        Contexts: Map<string, Context>,
-        Messages: Map<string, Message>,
-        Storages: Map<string, Storage>,
-    }> = h.merge(
-        this._subject$.asObservable(),
-        this.DomainState$,
-    ).pipe(
-        map(s => ({
-            Contexts: this.ContextStore.State,
-            Messages: this.MessagesStore.State,
-            Storages: this.StorageStore.State,
-        })),
-        shareReplay(1),
-    );
 
 }
 

@@ -12,9 +12,9 @@ export abstract class IFactory {
 
     public abstract GetMessage(uri: string): MessageModel;
 
-    public abstract GetOrCreateStorage(state: StorageJSON, domain: DomainModel): StorageModel;
+    public abstract GetOrCreateStorage(state: Storage, domain: DomainModel): StorageModel;
 
-    public abstract GetOrCreateContext(state: ContextJSON, storage: StorageModel): ContextModel;
+    public abstract GetOrCreateContext(state: Context, storage: StorageModel): ContextModel;
 
-    public abstract GetOrCreateMessage(state: MessageJSON, storage: StorageModel): MessageModel;
+    public abstract GetOrCreateMessage(state: Message, storage: StorageModel): MessageModel;
 }
