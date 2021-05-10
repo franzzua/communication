@@ -37,6 +37,7 @@ export class TreeStore {
                     Content: 'Добро пожаловать!',
                     Context: root,
                     CreatedAt: utc(),
+                    UpdatedAt: utc(),
                     URI: undefined,
                     id: ulid(),
                     Order: 0
@@ -109,6 +110,8 @@ export class TreeStore {
                         URI: undefined,
                         id: ulid(),
                         Content: paragraph,
+                        CreatedAt: utc(),
+                        UpdatedAt: utc(),
                         Order: state.Selected.Message.Context.Messages.length
                     }, state.Selected.Message);
                 }
@@ -142,13 +145,14 @@ export class TreeStore {
     private CreateMessage(getParentPath: (state: IState) => string[]): Reducer<IState> {
         return state => {
             const parentPath = getParentPath(state);
-            const newMessage = {
+            const newMessage: Message = {
                 URI: undefined,
                 id: ulid(),
                 CreatedAt: utc(),
+                UpdatedAt: utc(),
                 Content: '',
                 Order: 0
-            } as Message;
+            };
             if (parentPath.length > 0) {
                 this.AddMessage(newMessage, state.ItemsMap.get(parentPath.join('/')).Message);
             } else {
@@ -248,13 +252,14 @@ export class TreeStore {
                 this.stateService.CreateSubContext(prevMessage);
             }
             this.stateService.MoveMessage(message, prevMessage.SubContext);
-            const newPath = [...state.Selected.Path.slice(0, -1), prevMessage.id, message.id].join(TreePresenter.Separator);
-            const items = TreePresenter.ToTree(state.Root, state.ItemsMap);
-            const selected = state.ItemsMap.get(newPath);
+            const newPath = [...state.Selected.Path.slice(0, -1), prevMessage.id, message.id];
+            state.Selected.Path = newPath;
+            state.ItemsMap.delete(state.Selected.Path.join(TreePresenter.Separator));
+            state.ItemsMap.set(newPath.join(TreePresenter.Separator), state.Selected);
+            const newParentItem = state.ItemsMap.get(state.Selected.Path.slice(0, -1).join(TreePresenter.Separator));
+            newParentItem.Length++;
             return {
                 ...state,
-                Items: items,
-                Selected: selected
             }
         }
     }
@@ -271,13 +276,16 @@ export class TreeStore {
             const parentIndex = parent.Message.Context.Messages.indexOf(parent.Message);
 
             this.stateService.MoveMessage(message, parent.Message.Context, parentIndex + 1);
-            const newPath = [...parent.Path.slice(0, -1), message.id].join(TreePresenter.Separator);
-            const items = TreePresenter.ToTree(state.Root, state.ItemsMap);
-            const selected = state.ItemsMap.get(newPath);
+            const newPath = [...parent.Path.slice(0, -1), message.id];
+            state.Selected.Path = newPath;
+            state.ItemsMap.delete(state.Selected.Path.join(TreePresenter.Separator));
+            state.ItemsMap.set(newPath.join(TreePresenter.Separator), state.Selected);
+            const parentItemIndex = state.Items.indexOf(parent);
+            state.Items.remove(state.Selected);
+            state.Items.splice(parentItemIndex + parent.Length, 0, state.Selected);
+            parent.Length--;
             return {
                 ...state,
-                Items: items,
-                Selected: selected
             }
         }
     }

@@ -73,12 +73,13 @@ export class StateService {
     }
 
     public MoveMessage(message: Message, to: Context, toIndex: number = to.Messages.length): void {
-        message.Context.Messages.remove(message);
-        to.Messages.splice(toIndex, 0, message);
-        message.Context = to;
+        const fromURI = message.Context.URI;
+        // message.Context.Messages.remove(message);
+        // to.Messages.splice(toIndex, 0, message);
+        // message.Context = to;
         Promise.all([this.proxyProvider.GetContextProxy(message.Context), this.proxyProvider.GetContextProxy(to)])
             .then(() => this.proxyProvider.GetMessageProxy(message))
-            .then(proxy => proxy.Actions.Move(message.Context.URI, to.URI, toIndex))
+            .then(proxy => proxy.Actions.Move(fromURI, to.URI, toIndex))
     }
 
     public DeleteMessage(message: Message) {
@@ -119,8 +120,8 @@ export class StateService {
             Type: type,
             Root: null,
             Trash: [],
-            Messages: null,
-            Contexts: null
+            Messages: new Map(),
+            Contexts: new Map()
         });
         return uri;
     }

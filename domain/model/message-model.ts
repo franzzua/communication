@@ -40,7 +40,6 @@ export class MessageModel implements IMessageActions {
         this.State.UpdatedAt = utc();
         this.State.Content = text;
         await this.Storage.repository.Messages.Update(this.ToJSON());
-        this.Storage.Update();
     }
 
 
@@ -52,17 +51,21 @@ export class MessageModel implements IMessageActions {
     }
 
     public async Move(fromURI, toURI, toIndex: number){
-        const oldContext = this.Context;
+        if (fromURI == toURI)
+            return await  this.Reorder(toIndex);
+        const oldContext = this.Storage.Contexts.get(fromURI).State;
         if (oldContext)
-            oldContext.State.Messages.remove(this.State)
+            oldContext.Messages.remove(this.State)
+        await this.Storage.repository.Messages.Delete(this.ToJSON());
         this.State.Context = this.Storage.Contexts.get(toURI).State;
-        this.State.Context.Messages.push(this.State);
-        await this.Reorder(toIndex);
+        if (!this.State.Context.Messages.includes(this.State))
+            this.State.Context.Messages.push(this.State);
+        this.SetOrder(toIndex);
+        this.State.URI = `${this.State.Context.URI}#${this.State.id}`;
+        await this.Storage.repository.Messages.Create(this.ToJSON());
     }
 
-    public async Reorder(newOrder: number): Promise<void>{
-        if (!this.Context)
-            return ;
+    private SetOrder(newOrder: number){
         this.State.Context.Messages.remove(this.State);
         if (this.State.Context.Messages.length == 0){
             this.State.Order = 0;
@@ -77,6 +80,12 @@ export class MessageModel implements IMessageActions {
         }
         this.State.Context.Messages.splice(newOrder, 0, this.State);
         this.State.UpdatedAt = utc();
+    }
+
+    public async Reorder(newOrder: number): Promise<void>{
+        if (!this.Context)
+            return ;
+        this.SetOrder(newOrder);
         await this.Storage.repository.Messages.Update(this.ToJSON());
     }
 }

@@ -24,9 +24,9 @@ export class ContextCollection extends Collection {
 
     public async Init(){
         await super.Init();
-        if (this.Contexts.Documents.length == 0) {
-            await this.Contexts.Create('root.ttl');
-        }
+        // if (this.Contexts.Documents.length == 0) {
+        //     await this.Contexts.Create('root.ttl');
+        // }
         for (const x of this.Contexts.Documents) {
             await x.Init();
             x.Collection = this;
@@ -50,10 +50,13 @@ export class ContextCollection extends Collection {
 
     public ToJSON(): StorageJSON{
         const contexts = this.Contexts.Documents.map(x => x.ToJSON());
-        const messages = this.Contexts.Documents.flatMap(x => x.Messages.Items).map(x => x.ToJSON());
+        const messages = this.Contexts.Documents
+            .flatMap(x => x.Messages.Items)
+            .filter(x => !x.IsDeleted)
+            .map(x => x.ToJSON());
         // contexts.forEach(x => x.ParentsURIs = messages.filter(x => x.SubContextURI == x.URI).map(x => x.URI));
         return {
-            URI: this.URI,
+            URI: this.folderURI,
             Type: 'solid',
             Contexts: contexts,
             Messages: messages

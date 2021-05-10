@@ -8,8 +8,8 @@ export class Message {
     public Content: string;
     public Description?: string;
     public Author?: User;
-    public CreatedAt?: DateTime;
-    public UpdatedAt?: DateTime;
+    public CreatedAt: DateTime;
+    public UpdatedAt: DateTime;
     public Context?: Context;
     public SubContext?: Context;
     public Action?: string;
@@ -55,8 +55,8 @@ export class Message {
             URI: m.URI,
             id: m.id,
             Description: m.Description,
-            CreatedAt: m.CreatedAt.toISO(),
-            UpdatedAt: m.UpdatedAt?.toISO(),
+            CreatedAt: m.CreatedAt.set({millisecond: 0}).toISO(),
+            UpdatedAt: m.UpdatedAt.set({millisecond: 0}).toISO(),
             StorageURI: m.Context.Storage.URI,
             ContextURI: m.Context.URI,
             SubContextURI: m.SubContext?.URI,

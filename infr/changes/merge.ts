@@ -61,45 +61,46 @@ export function mergeStorages(local: StorageJSON, remote: StorageJSON){
     ]
 }
 
-export function mergeArrays<TItem extends ContextJSON | MessageJSON>(from: Map<any, TItem>, to: Map<any, TItem>, type: 'Contexts'| 'Messages'): Change[]{
+export function mergeArrays<TItem extends ContextJSON | MessageJSON>(remote: Map<any, TItem>, local: Map<any, TItem>, type: 'Contexts'| 'Messages'): Change[]{
     const changes: Change[] = [];
     // const removed: TItem[] = [];
     // const changes = new Map<TItem, Partial<TItem>>();
-    for (let [key, value] of from) {
-        if (!to.has(key)) {
+    for (let [key, value] of remote) {
+        if (!local.has(key)) {
             changes.push({
                 Entity: value,
-                Action: 'Delete',
+                Action: 'Create',
                 Type: type,
                 ulid: ulid()
             });
             continue;
         }
-        const existed = to.get(key);
-        to.delete(key);
+        const existed = local.get(key);
+        local.delete(key);
         const change: Partial<TItem> = {};
         let changed = false;
         const keys = new Set([...Object.getOwnPropertyNames(value), ...Object.getOwnPropertyNames(existed)]);
         for (let key of keys){
             if (existed[key] != value[key]) {
                 changed = true;
-                change[key] = existed[key];
+                change[key] = value[key];
             }
         }
         if (changed){
             changes.push({
                 Entity: value,
                 Action: 'Update',
+                Change: change,
                 Type: type,
                 ulid: ulid(+utc(value.UpdatedAt ?? value.CreatedAt))
-            })
+            } as Change)
         }
     }
-    const added: TItem[] = [...to.values()];
-    for (let value of added) {
+    const deleted: TItem[] = [...local.values()];
+    for (let value of deleted) {
         changes.push({
             Entity: value,
-            Action: 'Create',
+            Action: 'Delete',
             Type: type,
             ulid: ulid(+utc(value.UpdatedAt))
         })

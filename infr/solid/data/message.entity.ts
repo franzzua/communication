@@ -31,13 +31,28 @@ export class MessageEntity extends Entity {
     @field(Schema.updatedAt, {type: "Date"})
     public UpdatedAt: Date;
 
+    @field(Schema.isDeleted, {type: "string"})
+    public IsDeleted: '' | 'deleted';
+
+    public FromJSON(json: Partial<MessageJSON>){
+        if ('Content' in json)
+            this.Content = json.Content;
+        if ('Order' in json)
+            this.Order = json.Order;
+        if ('SubContextURI' in json)
+            this.SubContext = json.SubContextURI;
+        if ('CreatedAt' in json)
+            this.CreatedAt = utc(json.CreatedAt).toJSDate();
+        if ('UpdatedAt' in json)
+            this.UpdatedAt = utc(json.UpdatedAt).toJSDate();
+    }
     public ToJSON(): MessageJSON{
         return {
             CreatedAt: this.CreatedAt && utc(this.CreatedAt).toISO(),
             UpdatedAt: this.UpdatedAt && utc(this.UpdatedAt).toISO(),
             Content: this.Content,
             URI: this.Id,
-            id: this.Id,
+            id: this.Id.split('#').pop(),
             SubContextURI: this.SubContext,
             ContextURI: this.Document.URI,
             Order: this.Order,

@@ -5,50 +5,54 @@ import {ContextModel} from "./context-model";
 import {IFactory} from "./i-factory";
 import {IStorageActions} from "../contracts/actions";
 import {IRepository} from "../contracts/repository";
-import {ContextJSON, StorageJSON} from "@domain/contracts/json";
+import { StorageJSON} from "@domain/contracts/json";
 import {MessageModel} from "@domain/model/message-model";
 import {ulid} from "ulid";
 import {utc} from "@hypertype/core";
-import {mode} from "rdf-namespaces/dist/acl";
-import {Permutation} from "@domain/helpers/permutation";
+import {LocalRepository} from "@infr/local/local.repository";
+import {SolidRepository} from "@infr/solid";
+import {SolidCachedRepository} from "@infr/solid-cached-repository";
 
-export abstract class StorageModel extends Model<Storage, IStorageActions>  implements IStorageActions{
-    public domain: DomainModel;
+export class RepositoryProvider{
+    public static get(storage: Storage): IRepository{
+        switch (storage.Type){
+            case 'local':
+                return new LocalRepository(storage.URI);
+            case 'solid':
+                return new SolidRepository(storage.URI);
+        }
+    }
+}
+
+export class StorageModel implements IStorageActions{
     public Root: ContextModel;
     public Contexts = new Map<string, ContextModel>();
     public Messages = new Map<string, MessageModel>();
 
     public get URI(): string{ return  this.State.URI; }
     public Type: string;
-    public readonly State: Storage = {
-        URI: undefined,
-        Type: undefined,
-        Trash: [],
-        Messages: new Map<string, Message>(),
-        Contexts: new Map<string, Context>(),
-        Root: null
-    };
+    public repository = RepositoryProvider.get(this.State)
 
-    constructor(protected factory: IFactory, public repository: IRepository) {
-        super();
+    constructor(protected readonly factory: IFactory,
+                public readonly State: Storage,
+                private readonly domain: DomainModel) {
         this.repository.State$.subscribe(async json => {
             await this.FromServer(json);
             this.domain.Update();
         })
     }
-
-    FromJSON(state: Storage, domain?: DomainModel): any {
-        this.domain ??= domain;
-        this.State.URI = state.URI;
-        this.State.Type = state.Type;
-    }
+    //
+    // FromJSON(state: Storage): any {
+    //     this.State.URI = state.URI;
+    //     this.State.Type = state.Type;
+    // }
 
     ToJSON(): Storage {
         return this.State;
     }
 
     public async Load(): Promise<void> {
-        await this.repository.Load(this.URI);
+        await this.repository.Load();
     }
 
     protected async FromServer(json: StorageJSON){

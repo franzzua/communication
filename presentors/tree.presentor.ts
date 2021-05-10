@@ -29,16 +29,20 @@ export class TreePresenter{
                         Message: msg,
                         Path: [...path, msg.id],
                         IsOpened: level < 10,
+                        Length: 0
                     };
                     itemsMap.set(pathString, existed)
                 }else{
                     existed.Message = msg;
                 }
-                if (existed.IsOpened && existed.Message.SubContext)
+                if (existed.IsOpened && existed.Message.SubContext) {
+                    const subContextTree = TreePresenter.ToTree(msg.SubContext, itemsMap, existed.Path);
+                    existed.Length = subContextTree.length;
                     return ([
                         existed,
-                        ...TreePresenter.ToTree(msg.SubContext, itemsMap, existed.Path)
+                        ...subContextTree
                     ]);
+                }
                 return ([
                     existed,
                 ]);
@@ -52,5 +56,6 @@ export type TreeItem =  {
     Path: string[];
     Message: Message;
     IsOpened: boolean;
+    Length: number;
     // HasSubItems: boolean;
 }

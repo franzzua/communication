@@ -7,6 +7,7 @@ import {DateTime} from "luxon";
 import {Schema} from "./schema";
 import { utc } from "@hypertype/core";
 
+@entity(Schema.Context)
 export class ContextEntity extends Entity{
 
     @field(Schema.date, {type: "Date"})
@@ -17,6 +18,9 @@ export class ContextEntity extends Entity{
 
     @field(Schema.permutation, {type: "string"})
     public Permutation: string;
+
+    @field(Schema.isRoot, {type: "string"})
+    public IsRoot: string;
 
 }
 
@@ -32,7 +36,7 @@ export class ContextDocument extends Document {
     public Messages: EntitySet<MessageEntity>;
 
     @entitySet(ContextEntity)
-    public Context = new ContextEntity();
+    public Context: ContextEntity;
 
     public static Map = new Map<string, ContextDocument>();
 
@@ -42,14 +46,14 @@ export class ContextDocument extends Document {
         return {
             // MessageURIs: this.Messages.Items.map(x => x.Id),
             URI: this.URI,
-            id: this.URI,
+            id: this.URI.split('/').pop().split(".ttl")[0],
             Permutation: this.Context.Permutation,
             UpdatedAt: utc(this.Context.UpdatedAt).toISO(),
             CreatedAt: utc(this.Context.CreatedAt).toISO(),
             Sorting: null,
             StorageURI: this.Collection.folderURI,
             // ParentsURIs: [],
-            IsRoot: this.URI.endsWith('root.ttl')
+            IsRoot: this.Context.IsRoot == "true",
         }
     }
 

@@ -1,5 +1,5 @@
 import {Component, HyperComponent, property} from "@hypertype/ui";
-import {combineLatest, filter, first, Fn, Injectable, map, merge, Observable, switchMap, tap,} from "@hypertype/core";
+import {combineLatest, filter, first, Fn, Injectable, map, merge, Observable, switchMap, tap, utc,} from "@hypertype/core";
 import {Context, Message} from "@model";
 import {StateService} from "@services";
 import {BaseContextComponent} from "../BaseContextComponent";
@@ -49,6 +49,8 @@ export class ContextComponent extends BaseContextComponent<IState> {
             await this.stateService.AddMessage({
                 Context: await this.Context$.pipe(first()).toPromise(),
                 Content: text,
+                CreatedAt: utc(),
+                UpdatedAt: utc(),
                 id: `message.${Id()}`,
                 URI: undefined,
                 Order: 0

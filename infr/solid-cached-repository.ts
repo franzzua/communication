@@ -1,5 +1,4 @@
 import {ContextJSON, IRepository, MessageJSON, StorageJSON} from "@domain";
-import {tap, utc} from "@hypertype/core";
 import { merge } from "@hypertype/core";
 import {Change, ChangesStorage} from "@infr/changes/changes-storage";
 import {LocalRepository} from "@infr/local/local.repository";
@@ -7,22 +6,23 @@ import {ulid} from "ulid";
 import {CRD} from "@domain/sync/item-sync";
 import {mergeChanges, mergeStorages} from "@infr/changes/merge";
 import { concatMap } from "@hypertype/core";
+import {SolidRepository} from "@infr/solid";
 
 
-export class BackgroundRepository implements IRepository{
+export class SolidCachedRepository implements IRepository{
     private changes = new ChangesStorage();
-    private local = new LocalRepository()
+    private local = new LocalRepository(this.storageURI);
+    private main = new SolidRepository(this.storageURI);
 
-    constructor(private main: IRepository & {isOffline: boolean}) {
+    constructor(private storageURI: string) {
         this.changes.Init().catch(console.error);
     }
-
 
     private cacheToLocal<TJson extends MessageJSON | ContextJSON>(local: CRD<TJson>, type: 'Contexts' | 'Messages'): CRD<TJson> {
         return {
             Create: (item: TJson) => Promise.all([
                 local.Create(item),
-                this.changes.Add({
+                this.apply({
                     Action: 'Create',
                     Entity: item,
                     Type: type,
@@ -31,7 +31,7 @@ export class BackgroundRepository implements IRepository{
             ]),
             Update: (changes: Partial<TJson>) => Promise.all([
                 local.Update(changes),
-                this.changes.Add({
+                this.apply({
                     Action: 'Update',
                     Type: type,
                     Entity: changes,
@@ -40,13 +40,27 @@ export class BackgroundRepository implements IRepository{
             ]),
             Delete: (item: TJson)=> Promise.all([
                 local.Delete(item),
-                this.changes.Add({
+                this.apply({
                     Action: 'Delete',
                     Type: type,
                     Entity: item,
                     ulid: ulid()
                 })
             ])
+        }
+    }
+
+    private async apply(change: Change){
+        await this.changes.Add(change);
+        if (!this.main.isOffline){
+            (this.main[change.Type][change.Action](change.Entity as any) as Promise<any>)
+                .then(x => {
+                    return this.changes.Remove(change.ulid);
+                })
+                .catch(err => {
+                    console.error(err);
+                    return this.changes.Add(change)
+                });
         }
     }
 
@@ -61,21 +75,21 @@ export class BackgroundRepository implements IRepository{
     }
 
 
-    public async Load(storageURI: string): Promise<StorageJSON> {
-        this.main.Load(storageURI).catch(console.error);
-        return this.local.Load(storageURI);
+    public async Load(): Promise<StorageJSON> {
+        this.main.Load().catch(console.error);
+        return this.local.Load();
     }
 
     private async Merge(remote: StorageJSON){
 
-        const local = await this.local.Load(remote.URI);
+        const local = await this.local.Load();
 
-        const localChanges = await this.changes.GetAll();
-        for (let change of localChanges) {
-            await this.changes.Remove(change.ulid);
-        }
-        const remoteChanges = mergeStorages(local, remote);
+        const localChanges = (await this.changes.GetAll())
+            .orderBy(x => `${x.Type}.${x.Action}`)
 
+        const remoteChanges = mergeStorages(local, remote)
+            .orderBy(x => `${x.Type}.${x.Action}`)
+        const oldLocalChanges = [...localChanges];
         console.group('merge')
         console.log('local');
         console.table(localChanges);
@@ -87,15 +101,22 @@ export class BackgroundRepository implements IRepository{
         console.log('remote')
         console.table(remoteChanges);
         console.groupEnd();
+        for (let change of oldLocalChanges) {
+            await this.changes.Remove(change.ulid);
+        }
         for (let change of localChanges) {
+            await this.changes.Add(change);
+        }
+        for (let change of localChanges){
             await this.main[change.Type][change.Action](change.Entity as any);
+            await this.changes.Remove(change.ulid);
         }
 
         for (let change of remoteChanges) {
             await this.local[change.Type][change.Action](change.Entity as any);
         }
 
-        const result = await this.local.Load(remote.URI);
+        const result = await this.local.Load();
         console.groupCollapsed('merge');
         console.table(result.Messages);
         console.table(result.Contexts);

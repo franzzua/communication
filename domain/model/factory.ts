@@ -3,11 +3,8 @@ import {Container, Injectable} from "@hypertype/core";
 import {ContextModel} from "./context-model";
 import {DomainModel} from "./domain-model";
 import {StorageModel} from "./storage-model";
-import {LocalStorageModel} from "./local-storage.model";
 import {IFactory} from "./i-factory";
 import {MessageModel} from "@domain/model/message-model";
-import {ContextJSON, MessageJSON, StorageJSON} from "@domain/contracts/json";
-import {SolidStorageModel} from "@domain/model/solid-storage-model.service";
 
 @Injectable()
 export class Factory extends IFactory {
@@ -31,16 +28,7 @@ export class Factory extends IFactory {
     public GetOrCreateStorage(state: Storage, domain: DomainModel): StorageModel {
         if (this.StorageMap.has(state.URI))
             return this.StorageMap.get(state.URI);
-        let storage: StorageModel;
-        switch (state.Type) {
-            case 'local':
-                storage = this.container.get<LocalStorageModel>(LocalStorageModel);
-                break;
-            case 'solid':
-                storage = this.container.get<SolidStorageModel>(SolidStorageModel);
-                break;
-        }
-        storage.FromJSON(state, domain);
+        let storage: StorageModel = new StorageModel(this, state, domain)
         this.StorageMap.set(state.URI, storage);
         return storage;
     }
