@@ -35,7 +35,7 @@ export class ContextDocument extends Document {
     @entitySet(MessageEntity, {isArray: true})
     public Messages: EntitySet<MessageEntity>;
 
-    @entitySet(ContextEntity)
+    @entitySet(ContextEntity, {isArray: false})
     public Context: ContextEntity;
 
     public static Map = new Map<string, ContextDocument>();

@@ -1,12 +1,37 @@
 import {Injectable} from "@hypertype/core";
 import {ActionService} from "@services";
 import {IAccountInfo, IAccountProvider} from "../../services/account.manager";
-import {Profile, useFetch} from "solidocity";
+import {Profile, useFetch} from "solidocity/dist/index";
 import * as fetcher from "solid-auth-fetcher"
 import * as inrupt from "@inrupt/solid-client-authn-browser";
 import decode from "jose/lib/jwt/decode";
 
-const auth = {
+const useInrupt = true;
+const auth = useInrupt ? {
+    session: null,
+    login: idp => inrupt.login({
+        oidcIssuer: idp,
+        redirectUrl: window.location.href,
+    }),
+    getSession: async () => {
+        const session = await inrupt.getDefaultSession();
+        if (!session || !session.info.isLoggedIn)
+            await session.handleIncomingRedirect(location.href);
+        if (!session || !session.info.isLoggedIn)
+            return null;
+        useFetch(session.fetch);
+        window['authFetch'] = session.fetch;
+        return {
+            title: session.info.webId,
+            type: 'solid',
+            session: {
+                fetch: session.fetch,
+                webId: session.info.webId
+            }
+        }
+    }
+}: {
+    session: null,
     login: idp => fetcher.login({
         oidcIssuer: idp,
         redirect: window.location.href,
@@ -17,6 +42,8 @@ const auth = {
         if (!session || !session.loggedIn)
             return null;
         useFetch(session.fetch);
+        // @ts-ignore
+        window.authFetch = session.fetch;
         console.log(session);
         return {
             title: session.webId,
@@ -40,9 +67,7 @@ const auth = {
         return {
             title: id.webid,
             type: 'solid',
-            session: {
-                webId: id.webid
-            }
+            session
         };
     }
 }
@@ -63,8 +88,10 @@ export class SolidLoginService implements IAccountProvider {
         }
     }
 
-   // private idp = 'https://broker.pod.inrupt.com';
-    private idp = 'https://solidcommunity.net/';
+   private idp = 'https://broker.pod.inrupt.com';
+    // private idp = 'https://fransua.solidcommunity.net/';
+
+    // private idp = 'https://solidweb.org/';
     // private session: Session;
 
     public async Login(): Promise<IAccountInfo> {
@@ -85,7 +112,7 @@ export class SolidLoginService implements IAccountProvider {
     type: string = 'solid';
 
     public Check(): Promise<IAccountInfo> {
-        return auth.getSession();
+        return auth.session || (auth.session = auth.getSession());
     }
 
     public async CreateDefaultStorage(account: IAccountInfo) {

@@ -5,6 +5,11 @@ export const Routes = [
         template: (html, params) => html`<ctx-crdt></ctx-crdt>`
     },
     {
+        name: 'sparql',
+        path: '/sparql',
+        template: html => html`<ctx-sparql></ctx-sparql>`
+    },
+    {
         name: 'context',
         path: '/context/*uri',
         template: (html, params) => html`<ctx-context uri=${atob(decodeURIComponent(params.uri))}></ctx-context>`

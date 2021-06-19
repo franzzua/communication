@@ -11,9 +11,11 @@ import {TreeComponent} from "./tree/tree.component";
 import {TreeStore} from "./tree/tree-store.service";
 import {MobileToolbarComponent} from "./mobile-toolbar/mobile-toolbar.component";
 import {StateService} from "@services";
+import {SparqlComponent} from "./sparql/sparql.component";
 
 export const UIContainer = Container.withProviders(
     ContextComponent,
+    SparqlComponent,
     MessageComponent,
     StorageComponent,
     TextContentComponent,

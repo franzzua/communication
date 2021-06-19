@@ -2,7 +2,7 @@ import {Component, HyperComponent} from "@hypertype/ui";
 import {IEvents, IState, Template} from "./concord.template";
 import {BehaviorSubject} from "@hypertype/core";
 import {Concord} from "./concord";
-const {crdtlib} = require("@concordant/c-crdtlib");
+// const {crdtlib} = require("@concordant/c-crdtlib");
 
 @Component({
     name: 'ctx-concord',

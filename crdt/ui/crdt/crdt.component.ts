@@ -2,7 +2,6 @@ import {Component, HyperComponent} from "@hypertype/ui";
 import {IEvents, IState, Template} from "./crdt.template";
 import {BehaviorSubject, of} from "@hypertype/core";
 import {AworSet} from "../../delta/awor-set";
-import {crdtlib} from "@concordant/c-crdtlib";
 
 @Component({
     name: 'ctx-crdt',

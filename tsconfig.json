@@ -22,7 +22,8 @@
       "@infr/*": [        "./infr/*"      ],
       "@services": [        "./services"      ],
       "@domain/*": [        "./domain/*"      ],
-      "@domain": [        "./domain"      ]
+      "@domain": [        "./domain"      ],
+//      "solidocity": ["../solidocity"]
     }
   },
   "exclude": [

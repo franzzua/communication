@@ -75,7 +75,6 @@ export class SolidRepository implements IRepository {
     public Messages = queueCRD({
         Create: async (message: MessageJSON) => {
             const contextDocument = ContextDocument.Map.get(message.ContextURI);
-            await contextDocument.Loading;
             const messageEntity = contextDocument.Messages.get(message.URI) ??
                 contextDocument.Messages.Add(message.id);
             messageEntity.IsDeleted = '';
