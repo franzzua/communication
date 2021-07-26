@@ -45,4 +45,5 @@ export interface IAccountInfo {
     type: string;
     title: string;
     session: any;
+    defaultStorage: string;
 }

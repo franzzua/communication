@@ -1,4 +1,4 @@
-import {Document, document, entity, Entity, entitySet, EntitySet, field} from "solidocity";
+import {Document, document, entity, Entity, entityField, entitySet, EntitySet, field} from "solidocity";
 import {MessageEntity} from "./message.entity";
 import {Context, Storage} from "@model";
 import {ContextCollection} from "@infr/solid/data/context.collection";
@@ -35,7 +35,7 @@ export class ContextDocument extends Document {
     @entitySet(MessageEntity, {isArray: true})
     public Messages: EntitySet<MessageEntity>;
 
-    @entitySet(ContextEntity, {isArray: false})
+    @entityField(ContextEntity, '')
     public Context: ContextEntity;
 
     public static Map = new Map<string, ContextDocument>();

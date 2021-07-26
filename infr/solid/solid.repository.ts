@@ -51,6 +51,7 @@ export class SolidRepository implements IRepository {
             contextDocument.Context.Save();
             context.URI = contextDocument.URI;
             ContextDocument.Map.set(context.URI, contextDocument);
+            this.ChangedDocs.add(contextDocument);
             await this.SaveDocsNow();
         },
         Update: async (changes: Partial<ContextJSON>) => {
@@ -76,7 +77,7 @@ export class SolidRepository implements IRepository {
         Create: async (message: MessageJSON) => {
             const contextDocument = ContextDocument.Map.get(message.ContextURI);
             const messageEntity = contextDocument.Messages.get(message.URI) ??
-                contextDocument.Messages.Add(message.id);
+                contextDocument.Messages.Add(message.URI);
             messageEntity.IsDeleted = '';
             // messageEntity.Author = message.Author.URI;
             messageEntity.FromJSON(message);
@@ -85,10 +86,15 @@ export class SolidRepository implements IRepository {
             const check = contextDocument.Messages.get(message.URI);
             if (!check)
                 throw new Error("not created");
+            console.info(message.URI, 'exists')
         },
         Update: async (changes: Partial<MessageJSON>) => {
             const contextDocument = ContextDocument.Map.get(changes.ContextURI);
             const messageEntity = contextDocument.Messages.get(changes.URI);
+            if (!messageEntity) {
+                console.info(changes.URI, 'not exists')
+                return;
+            }
             messageEntity.FromJSON(changes);
             messageEntity.Save();
             this.ChangedDocs.add(contextDocument);

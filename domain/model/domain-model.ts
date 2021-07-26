@@ -27,6 +27,7 @@ export class DomainModel extends Model<DomainState, IDomainActions> implements I
     }
 
     public async CreateStorage(json: Storage): Promise<StorageModel>{
+
         const storage = this.factory.GetOrCreateStorage(json, this);
         await storage.Load();
         this.Storages.set(storage.URI, storage);

@@ -1,12 +1,12 @@
 import {Injectable} from "@hypertype/core";
 import {ActionService} from "@services";
 import {IAccountInfo, IAccountProvider} from "../../services/account.manager";
-import {Profile, useFetch} from "solidocity/dist/index";
+import {Profile, useFetch} from "solidocity";
 import * as fetcher from "solid-auth-fetcher"
 import * as inrupt from "@inrupt/solid-client-authn-browser";
-import decode from "jose/lib/jwt/decode";
+// import decode from "jose/lib/jwt/decode";
 
-const useInrupt = true;
+const useInrupt = false;
 const auth = useInrupt ? {
     session: null,
     login: idp => inrupt.login({
@@ -21,14 +21,7 @@ const auth = useInrupt ? {
             return null;
         useFetch(session.fetch);
         window['authFetch'] = session.fetch;
-        return {
-            title: session.info.webId,
-            type: 'solid',
-            session: {
-                fetch: session.fetch,
-                webId: session.info.webId
-            }
-        }
+        return session
     }
 }: {
     session: null,
@@ -45,30 +38,26 @@ const auth = useInrupt ? {
         // @ts-ignore
         window.authFetch = session.fetch;
         console.log(session);
-        return {
-            title: session.webId,
-            type: 'solid',
-            session: session
-        }
-        const tokens: {
-            accessToken;
-            clientId;
-            webId;
-            refreshToken;
-            redirectUri;
-            issuer;
-            idToken;
-            clientSecret;
-            codeVerifier;
-        } = JSON.parse(localStorage.getItem('solidAuthFetcherUser:global'));
-        const id: {
-            exp; webid; iat; aud; iss; jti; kid; sub;
-        } = decode(tokens.idToken);
-        return {
-            title: id.webid,
-            type: 'solid',
-            session
-        };
+        return session;
+        // const tokens: {
+        //     accessToken;
+        //     clientId;
+        //     webId;
+        //     refreshToken;
+        //     redirectUri;
+        //     issuer;
+        //     idToken;
+        //     clientSecret;
+        //     codeVerifier;
+        // } = JSON.parse(localStorage.getItem('solidAuthFetcherUser:global'));
+        // const id: {
+        //     exp; webid; iat; aud; iss; jti; kid; sub;
+        // } = decode(tokens.idToken);
+        // return {
+        //     title: id.webid,
+        //     type: 'solid',
+        //     session
+        // };
     }
 }
 
@@ -79,17 +68,30 @@ export class SolidLoginService implements IAccountProvider {
         this.actionService.Register('solid.account.add', () => this.Login());
     }
 
-    private toAccountInfo(session): IAccountInfo {
+    private async toAccountInfo(session): Promise<IAccountInfo> {
         if (!session ) return null;
+        if (!session.info){
+            const profile = new Profile(session.webId);
+            await profile.Init();
+            return {
+                type: this.type,
+                title: session.webId,
+                session: session,
+                defaultStorage: `${profile.Me.Storage}contexts`
+            }
+        }
+        const profile = new Profile(session.info.webId);
+        await profile.Init();
         return {
             type: this.type,
-            title: session.webId,
-            session
+            title: session.info.webId,
+            session: session.info,
+            defaultStorage: `${profile.Me.Storage}/contexts`
         }
     }
 
-   private idp = 'https://broker.pod.inrupt.com';
-    // private idp = 'https://fransua.solidcommunity.net/';
+   // private idp = 'https://broker.pod.inrupt.com';
+    private idp = 'https://fransua.solidcommunity.net/';
 
     // private idp = 'https://solidweb.org/';
     // private session: Session;
@@ -111,8 +113,9 @@ export class SolidLoginService implements IAccountProvider {
 
     type: string = 'solid';
 
-    public Check(): Promise<IAccountInfo> {
-        return auth.session || (auth.session = auth.getSession());
+    public async Check(): Promise<IAccountInfo> {
+        const session = await (auth.session || (auth.session = auth.getSession()));
+        return await this.toAccountInfo(session);
     }
 
     public async CreateDefaultStorage(account: IAccountInfo) {

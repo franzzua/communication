@@ -22,7 +22,7 @@ export class ContextCollection extends Collection {
 
     public LinkedStorages: StorageJSON[] = [];
 
-    public async Init(){
+    public async Init() {
         await super.Init();
         // if (this.Contexts.Documents.length == 0) {
         //     await this.Contexts.Create('root.ttl');
@@ -34,7 +34,7 @@ export class ContextCollection extends Collection {
                 if (!message.SubContext)
                     continue;
                 const collectionURI = message.SubContext.substr(0, message.SubContext.lastIndexOf('/'))
-                if (!ContextCollection.Map.has(collectionURI)){
+                if (!ContextCollection.Map.has(collectionURI)) {
                     this.LinkedStorages.push({
                         URI: collectionURI,
                         Type: 'solid',
@@ -48,12 +48,17 @@ export class ContextCollection extends Collection {
 
     public eventBus = new EventBus();
 
-    public ToJSON(): StorageJSON{
+    public ToJSON(): StorageJSON {
         const contexts = this.Contexts.Documents.map(x => x.ToJSON());
         const messages = this.Contexts.Documents
-            .flatMap(x => x.Messages.Items)
-            .filter(x => !x.IsDeleted)
-            .map(x => x.ToJSON());
+            .flatMap(x => x.Messages.Items
+                .filter(x => !x.IsDeleted)
+                .map(m => ({
+                    ...m.ToJSON(),
+                    ContextURI: x.URI,
+                    StorageURI: x.Collection.folderURI
+                }))
+            );
         // contexts.forEach(x => x.ParentsURIs = messages.filter(x => x.SubContextURI == x.URI).map(x => x.URI));
         return {
             URI: this.folderURI,

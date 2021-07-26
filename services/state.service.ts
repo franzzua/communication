@@ -1,10 +1,11 @@
 import * as h from "@hypertype/core";
-import {BehaviorSubject, Injectable, map, Observable, shareReplay, tap, utc} from "@hypertype/core";
+import {BehaviorSubject, filter, first, Injectable, map, Observable, shareReplay, tap, utc} from "@hypertype/core";
 import {Context, Message, Storage} from "@model";
 import {LogService} from "./log.service";
 import {DomainProxy} from "@domain";
 import {ProxyProvider} from "./proxy-provider.service";
 import {ulid} from "ulid";
+import {AccountManager} from "./account.manager";
 
 @Injectable()
 export class StateService {
@@ -12,6 +13,7 @@ export class StateService {
     constructor(
         private domainProxy: DomainProxy,
         private proxyProvider: ProxyProvider,
+        private accManager: AccountManager,
         private logService: LogService
     ) {
 
@@ -113,7 +115,20 @@ export class StateService {
     public async LoadStorage(uri: string): Promise<string> {
         // const existed = this.StorageStore.getByURI(uri);
         // if (existed) return uri;
-
+        if (!uri) {
+            const accounts = await this.accManager.Accounts$.pipe(filter(x => x.length > 0), first()).toPromise();
+            const defaultStorage = accounts[0].defaultStorage;
+            await this.domainProxy.Actions.CreateStorage({
+                URI: defaultStorage,
+                Type: accounts[0].type,
+                Root: null,
+                Trash: [],
+                Messages: new Map(),
+                Contexts: new Map()
+            });
+            history.replaceState(null, defaultStorage, `${location.href}${btoa(defaultStorage).replaceAll('=','')}`)
+            return defaultStorage;
+        }
         const type = uri.startsWith('local://') ? 'local' : 'solid';
         await this.domainProxy.Actions.CreateStorage({
             URI: uri,
@@ -136,6 +151,7 @@ export class StateService {
             map(x => x.Root),
         );
     }
+
     //
     // private DomainState$: Observable<void> = this.domainProxy.State$.pipe(
     //     h.map(model => {

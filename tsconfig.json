@@ -23,7 +23,7 @@
       "@services": [        "./services"      ],
       "@domain/*": [        "./domain/*"      ],
       "@domain": [        "./domain"      ],
-//      "solidocity": ["../solidocity"]
+      "solidocity": ["../solidocity"]
     }
   },
   "exclude": [

@@ -11,8 +11,6 @@ import {DateTime} from "luxon";
 @entity(Schema.Message)
 export class MessageEntity extends Entity {
 
-    Document: ContextDocument;
-
     @field(Schema.content)
     public Content: string;
 
@@ -54,9 +52,9 @@ export class MessageEntity extends Entity {
             URI: this.Id,
             id: this.Id.split('#').pop(),
             SubContextURI: this.SubContext,
-            ContextURI: this.Document.URI,
             Order: this.Order,
-            StorageURI: this.Document.Collection.folderURI,
+            StorageURI: null,
+            ContextURI: null
         }
     }
 }
