@@ -18,26 +18,19 @@ export class MeldFactory {
     }
 
     public static async GetMeldClone(uri: string, genesis: boolean | null = false) {
+        genesis = !!localStorage.getItem('genesis');
         const config = {
             "@domain": "default.app",
             "@id": uri,
             logLevel: "trace",
-            genesis: genesis ?? true
+            genesis: genesis
         } as MeldConfig;
-
+        localStorage.setItem('genesis', 'genesis');
         const backend = leveljs(uri);
         const remote = this.GetRemote(config) as MeldRemotes;
-        remote.live.subscribe(console.log);
-        try {
-            const meld = await clone(backend, remote, config);
-            meld.status.subscribe(console.info);
-            return meld;
-        }catch (e){
-            console.warn(e);
-            return clone(backend, remote, {
-                ...config,
-                genesis: !(genesis ?? true)
-            });
-        }
+        remote.live.subscribe(x => console.log('remote','live',x));
+        const meld = await clone(backend, remote, config);
+        meld.status.subscribe(x => console.log('meld','status',x));
+        return meld;
     }
 }
