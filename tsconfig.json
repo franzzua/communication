@@ -5,9 +5,9 @@
     "sourceMap": true,
     "baseUrl": "./",
     "experimentalDecorators": true,
-    "allowJs": true,
     "checkJs": false,
     "outDir": "./dist/esm",
+    "skipLibCheck": true,
     "emitDecoratorMetadata": true,
     "declarationDir": "./dist/typings",
     "declaration": true,
@@ -23,7 +23,8 @@
       "@services": [        "./services"      ],
       "@domain/*": [        "./domain/*"      ],
       "@domain": [        "./domain"      ],
-      "solidocity": ["../solidocity"]
+      "solidocity": [ "../solidocity" ],
+      "@m-ld/m-ld/*": [ "../m-ld-js/*" ]
     }
   },
   "exclude": [

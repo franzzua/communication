@@ -15,7 +15,7 @@ export interface IContextActions {
 }
 
 export interface IDomainActions {
-    CreateStorage(storage: Storage): Promise<StorageModel>;
+    CreateStorage(storage: Storage): Promise<Storage>;
 }
 
 export interface IStorageActions {

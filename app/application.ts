@@ -6,13 +6,13 @@ import {AppRootComponent} from "./app-root.component";
 import {AccountManager, ActionService, StateService} from "@services";
 import {Container, Injectable, merge} from "@hypertype/core";
 import {PanelService} from "./services/panel.service";
-import {SolidLoginService} from "./services/solid-login.service";
 import {SolidStorageActions} from "./services/solid-storage-actions.service";
 import {SettingsComponent} from "./pages/settings/settings.component";
 import {PanelComponent} from "./panels/panel.component";
 import {DomainProxy} from "@domain";
 import {CrdtComponent} from "../crdt/ui/crdt/crdt.component";
 import {ConcordComponent} from "../crdt/ui/concord/concord.component";
+import {AppInitComponent} from "./app-init.component";
 
 UIContainer.provide([
     AppRootComponent,
@@ -46,9 +46,10 @@ export class Application {
             .withUI(UIContainer)
             .withUI(Container.withProviders(
                 PanelService,
-                SolidLoginService,
+                // SolidLoginService,
                 SolidStorageActions,
-                Application
+                Application,
+                AppInitComponent,
             ))
             .build();
         return base.get<Application>(Application);
@@ -61,7 +62,7 @@ export class Application {
     }
 
     private async registerAccounts() {
-        await this.accountManager.Register(this.base.get<SolidLoginService>(SolidLoginService));
+        // await this.accountManager.Register(this.base.get<SolidLoginService>(SolidLoginService));
     }
 
     private registerActions() {

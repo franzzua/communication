@@ -1,5 +1,5 @@
 import * as h from "@hypertype/core";
-import {BehaviorSubject, filter, first, Injectable, map, Observable, shareReplay, tap, utc} from "@hypertype/core";
+import {BehaviorSubject, filter, first, Fn, Injectable, map, Observable, shareReplay, tap, utc} from "@hypertype/core";
 import {Context, Message, Storage} from "@model";
 import {LogService} from "./log.service";
 import {DomainProxy} from "@domain";
@@ -147,7 +147,8 @@ export class StateService {
     //
     public getContext$(uri: string): Observable<Context> {
         return this.State$.pipe(
-            tap(x => console.log(x)),
+            tap(x => console.log('root:', x)),
+            filter(Fn.Ib),
             map(x => x.Root),
         );
     }

@@ -12,12 +12,13 @@ import {utc} from "@hypertype/core";
 import {LocalRepository} from "@infr/local/local.repository";
 import {SolidRepository} from "@infr/solid";
 import {SolidCachedRepository} from "@infr/solid-cached-repository";
+import {MeldRepository} from "@infr/m-ld/meld.repository";
 
 export class RepositoryProvider{
     public static get(storage: Storage): IRepository{
         switch (storage.Type){
             case 'local':
-                return new LocalRepository(storage.URI);
+                return new MeldRepository(storage.URI);
             case 'solid':
                 return new SolidRepository(storage.URI);
         }
@@ -53,6 +54,7 @@ export class StorageModel implements IStorageActions{
 
     public async Load(): Promise<void> {
         await this.repository.Load();
+        // await this.FromServer(json);
     }
 
     protected async FromServer(json: StorageJSON){

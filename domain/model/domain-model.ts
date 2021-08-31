@@ -26,11 +26,10 @@ export class DomainModel extends Model<DomainState, IDomainActions> implements I
         };
     }
 
-    public async CreateStorage(json: Storage): Promise<StorageModel>{
-
+    public async CreateStorage(json: Storage): Promise<Storage>{
         const storage = this.factory.GetOrCreateStorage(json, this);
         await storage.Load();
         this.Storages.set(storage.URI, storage);
-        return storage;
+        return storage.ToJSON();
     }
 }
