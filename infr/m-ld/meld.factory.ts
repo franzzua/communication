@@ -12,7 +12,6 @@ export class MeldFactory {
             ...config,
             ably: {
                 key: 'L-kF0A.fmJC2g:5jJoEJKmu7HbbQtO',
-
             }
         });
     }
@@ -22,7 +21,7 @@ export class MeldFactory {
         const config = {
             "@domain": "default.app",
             "@id": uri,
-            logLevel: "trace",
+            logLevel: "info",
             genesis: genesis
         } as MeldConfig;
         localStorage.setItem('genesis', 'genesis');
@@ -31,6 +30,7 @@ export class MeldFactory {
         remote.live.subscribe(x => console.log('remote','live',x));
         const meld = await clone(backend, remote, config);
         meld.status.subscribe(x => console.log('meld','status',x));
+        // await meld.status.becomes({ online: true, outdated: false });
         return meld;
     }
 }

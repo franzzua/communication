@@ -13,6 +13,7 @@ export class DomainModel extends Model<DomainState, IDomainActions> implements I
 
     constructor(private factory: IFactory) {
         super();
+        window['domain'] = this;
     }
 
 
@@ -22,7 +23,7 @@ export class DomainModel extends Model<DomainState, IDomainActions> implements I
 
     public ToJSON(): DomainState{
         return {
-            Storages: [...this.Storages.values()].map(x => x.State)
+            Storages: [...this.Storages.values()].map(x => x.ToJSON())
         };
     }
 

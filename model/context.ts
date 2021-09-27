@@ -3,6 +3,7 @@ import {Storage} from "./storage";
 import { DateTime } from "@hypertype/core";
 import {ContextJSON} from "@domain";
 import { utc } from "@hypertype/core";
+import { Permutation } from "@domain/helpers/permutation";
 
 export class Context {
     public readonly id: string;
@@ -10,21 +11,24 @@ export class Context {
     public Messages: Array<Message> = [];
     // public Access?: Array<AccessRule> = [];
     // public Sorting?: Sorting;
-    // public Permutation?: Permutation;
-    public readonly Storage: Storage;
+    public Permutation?: Permutation;
+    public Storage: Omit<Storage, keyof {Root, Contexts, Messages}>;
     public Parents: Array<Message> = [];
     public IsRoot: boolean;
     public UpdatedAt: DateTime;
     public CreatedAt: DateTime;
+    public equals?(m: Context): boolean;
 
 
-    static FromJSON(c: ContextJSON): Pick<Context, "URI" | "id" | "IsRoot" | "UpdatedAt" | "CreatedAt"> {
+    static FromJSON(c: ContextJSON){
         return  {
             URI: c.URI,
             id: c.id,
             IsRoot: c.IsRoot,
             UpdatedAt: utc(c.UpdatedAt),
             CreatedAt: utc(c.CreatedAt),
+            Permutation: Permutation.Parse(c.Permutation),
+            Messages: [],
         };
     }
 
@@ -37,10 +41,26 @@ export class Context {
             CreatedAt: c.CreatedAt.set({millisecond: 0}).toISO(),
             IsRoot: c.IsRoot,
             // Sorting: Sorting[c.],
-            // Permutation: c.Permutation?.toString(),
+            Permutation: c.Permutation?.toString(),
             // MessageURIs: c.Messages.map(m => m.URI),
             // ParentsURIs: c.Parents.map(m => m.URI)
         };
+    }
+
+    static equals(context: Context): (context1: Context) => boolean;
+    static equals(context: Context, context1: Context): boolean;
+    static equals(...contexts: Context[]) {
+        if (contexts.length == 1) {
+            return (context2: Context) => {
+                if (context2.URI && context2.URI !== contexts[0].URI)
+                    return false;
+                if (contexts[0].id && contexts[0].id !== context2.id)
+                    return false;
+                return context2.UpdatedAt.equals(contexts[0].UpdatedAt);
+            }
+        } else {
+            return Context.equals(contexts[0])(contexts[1]);
+        }
     }
 
 }

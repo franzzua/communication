@@ -33,6 +33,7 @@ export class TreeComponent extends HyperComponent<IState, IEvents> {
         this.stateService.State$
     ]).pipe(
         h.map(([uri, state])=> state?.Root),
+        h.tap(console.log),
         h.filter(x => x != null)
     );
 

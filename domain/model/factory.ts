@@ -21,6 +21,10 @@ export class Factory extends IFactory {
         if (this.MessageMap.has(state.URI))
             return  this.MessageMap.get(state.URI);
         const message = new MessageModel(this, storage, state);
+        message.Update = storage.Update;
+        message.Link(this.GetContext(state.Context.URI), state.SubContext ? this.GetContext(state.SubContext.URI) : null);
+        message.Context.AddChild(message);
+        message.SubContext && message.SubContext.AddParent(message);
         this.MessageMap.set(state.URI, message);
         return message;
     }
@@ -29,6 +33,7 @@ export class Factory extends IFactory {
         if (this.StorageMap.has(state.URI))
             return this.StorageMap.get(state.URI);
         let storage: StorageModel = new StorageModel(this, state, domain)
+        storage.Update = domain.Update;
         this.StorageMap.set(state.URI, storage);
         return storage;
     }

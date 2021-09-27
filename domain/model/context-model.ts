@@ -5,62 +5,85 @@ import {IFactory} from "@domain/model/i-factory";
 import {ContextJSON} from "@domain/contracts/json";
 import {Permutation} from "@domain/helpers/permutation";
 import {Context, Message} from "@model";
+import {Model} from "@hypertype/domain";
+import { utc } from "@hypertype/core";
 
-export class ContextModel implements IContextActions {
+export class ContextModel extends Model<Context, IContextActions> implements IContextActions {
 
-    public get Messages(): ReadonlyArray<MessageModel>{
-        return this.State.Messages
-            .map(x => this.factory.GetMessage(x.URI));
+    public get State(): Readonly<Omit<Context, keyof {Messages, Parents, Storage}>> {
+        return this._state;
     }
 
-    public get Parents(): ReadonlyArray<MessageModel>{
-        return this.State.Parents
-            .map(x => this.factory.GetMessage(x.URI));
+    private _messages: Array<MessageModel> = [];
+    private _parents: Array<MessageModel> = [];
+
+    public get Messages(): ReadonlyArray<MessageModel> {
+        return this._state.Permutation ? this._state.Permutation.Invoke(this._messages.orderBy(x => +x.State.CreatedAt)) : this._messages;
     }
 
-    public get URI(): string {return  this.State.URI; }
+    public get Parents(): ReadonlyArray<MessageModel> {
+        return this._parents;
+    }
+
+    public get URI(): string {
+        return this._state.URI;
+    }
 
     constructor(private readonly factory: IFactory,
                 public readonly Storage: StorageModel,
-                public readonly State: Context) {
-
+                private _state: Context) {
+        super();
     }
 
-    public Link(messages: Message[], parents: Message[]){
-        this.State.Messages = messages;
-        this.State.Parents = parents;
-        for (let message of messages) {
-            message.Context = this.State;
-        }
-        for (let message of parents) {
-            message.SubContext = this.State;
-        }
+    public FromServer(state: ContextJSON) {
+        Object.assign(this._state, Context.FromJSON(state));
     }
 
-    public Update(state: ContextJSON){
-        Object.assign(this.State, Context.FromJSON(state));
-    }
-
-    public ToJSON(): ContextJSON {
-        const permutation = Permutation.Diff(this.State.Messages.orderBy(x => +x.CreatedAt), this.State.Messages);
+    public ToJSON(): Context {
         return {
-            ...Context.ToJSON(this.State),
-            Permutation: permutation.toString(),
-            // MessageURIs: this.Messages.map(x => x.URI),
-            // ParentsURIs: this.Parents.map(x => x.URI)
+            ...this._state,
+            Storage: null,
+            equals: Context.equals(this._state)
+            // Messages: []
         };
     }
 
+    public FromJSON(state: Context): any {
+        Object.assign(this._state, state);
+    }
+
+    public ToServer(): ContextJSON {
+        return Context.ToJSON(this._state);
+    }
+
+    public DetachMessage(message: MessageModel){
+        this._messages.remove(message);
+    }
+    public AttachMessage(message: MessageModel, index: number){
+        this._messages.splice(index, 0, message);
+        this._state.Permutation  = Permutation.Diff(this._messages.orderBy(x => +x.State.CreatedAt), this._messages);
+    }
 
     public async RemoveMessage(uri: string): Promise<void> {
         const msg = this.Storage.Messages.get(uri);
-        await this.Storage.repository.Messages.Delete(msg.ToJSON());
-        msg.State.Context = null;
-        this.State.Messages.remove(msg.State);
+        await this.Storage.repository.Messages.Delete(msg.ToServer());
+        this._state.Messages.remove(msg.State);
         this.Storage.Messages.delete(uri);
     }
 
     public SetOrder(): void {
 
+    }
+
+    AddParent(message: MessageModel) {
+        this._parents.push(message);
+    }
+    AddChild(message: MessageModel) {
+        this._messages.push(message);
+    }
+
+    Save() {
+        this._state.UpdatedAt = utc();
+        this.Storage.repository.Contexts.Update(this.ToServer());
     }
 }

@@ -8,6 +8,7 @@ export class Storage {
     public Trash: Context[];
     public Contexts: Map<string, Context>;
     public Messages: Map<string, Message>;
+    public equals?: (s: Storage) => boolean;
 }
 
 export class DomainState {

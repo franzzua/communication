@@ -45,11 +45,15 @@ export class TreeStore {
                 this.stateService.AddMessage(message);
                 root.Messages.push(message);
             }
+            // state.ItemsMap = new Map<string, TreeItem>();
             const items = TreePresenter.ToTree(root, state.ItemsMap);
+            // const items = TreePresenter.ToTree(root, new Map());
+            const selected = state?.Selected &&
+                items.find(x => x.Path.join(TreePresenter.Separator) == state.Selected.Path.join(TreePresenter.Separator)) || items[0];
             const newState = ({
                 ...state,
                 Root: root,
-                Selected: state?.Selected ?? items[0],
+                Selected: selected,
                 Items: items
             });
             return newState;
@@ -205,7 +209,7 @@ export class TreeStore {
     async Up(event: KeyboardEvent): Promise<Reducer<IState>> {
         return (state: IState) => {
             const selectedIndex = state.Items.indexOf(state.Selected);
-            if (selectedIndex <= 0)
+            if (selectedIndex < 0)
                 return state;
             return {
                 ...state,

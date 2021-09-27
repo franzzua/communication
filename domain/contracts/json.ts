@@ -21,7 +21,7 @@ export class ContextJSON {
     public IsRoot?: boolean;
     public id?: string;
     // public Access?: Array<AccessRule> = [];
-    public Sorting?: string;
+    // public Sorting?: string;
     public Permutation?: string;
     public CreatedAt: string;
     public UpdatedAt?: string;

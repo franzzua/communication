@@ -50,7 +50,6 @@ export class ContextDocument extends Document {
             Permutation: this.Context.Permutation,
             UpdatedAt: utc(this.Context.UpdatedAt).toISO(),
             CreatedAt: utc(this.Context.CreatedAt).toISO(),
-            Sorting: null,
             StorageURI: this.Collection.folderURI,
             // ParentsURIs: [],
             IsRoot: this.Context.IsRoot == "true",

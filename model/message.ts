@@ -16,7 +16,7 @@ export class Message {
     public URI: string;
     public id: string;
     public Order: number;
-
+    public equals?(m: Message): boolean;
     static isLast(message: Message) {
         return message.Context.Messages[message.Context.Messages.length - 1].URI == message.URI;
     }
@@ -26,11 +26,11 @@ export class Message {
     static equals(...messages: Message[]) {
         if (messages.length == 1) {
             return message2 => {
-                if (message2.URI && message2.URI == messages[0].URI)
-                    return true;
-                if (messages[0].id && messages[0].id == message2.id)
-                    return true;
-                return false;
+                if (message2.URI && message2.URI !== messages[0].URI)
+                    return false;
+                if (messages[0].id && messages[0].id !== message2.id)
+                    return false;
+                return message2.UpdatedAt.equals(messages[0].UpdatedAt);
             }
         } else {
             return Message.equals(messages[0])(messages[0]);
@@ -46,6 +46,12 @@ export class Message {
             UpdatedAt: utc(m.UpdatedAt),
             Order: m.Order,
             id: m.id,
+            Context: m.ContextURI && {
+                URI: m.ContextURI
+            } as Context,
+            SubContext: m.SubContextURI && {
+                URI: m.SubContextURI
+            } as Context,
         };
     }
 
@@ -57,8 +63,8 @@ export class Message {
             Description: m.Description,
             CreatedAt: m.CreatedAt.set({millisecond: 0}).toISO(),
             UpdatedAt: m.UpdatedAt.set({millisecond: 0}).toISO(),
-            StorageURI: m.Context.Storage.URI,
-            ContextURI: m.Context.URI,
+            StorageURI: m.Context?.Storage?.URI,
+            ContextURI: m.Context?.URI,
             SubContextURI: m.SubContext?.URI,
             AuthorURI: m.Author?.URI,
             Order: m.Order

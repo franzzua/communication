@@ -7,7 +7,7 @@ export class ProxyProvider {
     constructor(private domainProxy: DomainProxy) {
     }
 
-    public async GetStorageProxy(storage: Storage) {
+    public async GetStorageProxy(storage: {URI}) {
         await this.domainProxy.State$.pipe(
             map(x => x.Storages.find(x => x.URI == storage.URI)),
             filter(x => x != null),

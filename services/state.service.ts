@@ -16,7 +16,7 @@ export class StateService {
         private accManager: AccountManager,
         private logService: LogService
     ) {
-
+        this.domainProxy.State$.subscribe(x => console.log('storage', x.Storages[0]));
         // @ts-ignore
         window.State = this;
     }
@@ -166,6 +166,7 @@ export class StateService {
 
 
     public State$: Observable<Storage> = this.domainProxy.State$.pipe(
+        tap(x => console.log('root:', x)),
         map(x => x.Storages[0]),
         shareReplay(1)
     )
