@@ -7,7 +7,7 @@ import {StorageJSON} from "@domain/contracts/json";
 import {MessageModel} from "@domain/model/message-model";
 import {ulid} from "ulid";
 import {utc} from "@hypertype/core";
-import {SolidRepository} from "@infr/solid";
+// import {SolidRepository} from "@infr/solid";
 import {MeldRepository} from "@infr/m-ld/meld.repository";
 import {Model} from "@hypertype/domain";
 
@@ -16,8 +16,8 @@ export class RepositoryProvider {
         switch (storage.Type) {
             case 'local':
                 return new MeldRepository(storage.URI);
-            case 'solid':
-                return new SolidRepository(storage.URI);
+            // case 'solid':
+            //     return new SolidRepository(storage.URI);
         }
     }
 }
