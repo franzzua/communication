@@ -33,7 +33,7 @@ export class TreeComponent extends HyperComponent<IState, IEvents> {
         this.stateService.State$
     ]).pipe(
         h.map(([uri, state])=> state?.Root),
-        h.tap(console.log),
+        // h.tap(console.log),
         h.filter(x => x != null)
     );
 
@@ -58,7 +58,7 @@ export class TreeComponent extends HyperComponent<IState, IEvents> {
             h.concatMap(x => this.treeStore[keyMap[x.modKey]](x.event as any) as Promise<Reducer<IState>>)
         ),
         this.Root$.pipe(
-            h.switchMap(root => this.treeStore.Init(root) as Promise<Reducer<IState>>)
+            h.switchMap(root => this.treeStore.Init(root) as Promise<Reducer<IState>>),
         ),
     );
 

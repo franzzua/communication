@@ -21,15 +21,15 @@ export class MeldFactory {
         const config = {
             "@domain": "default.app",
             "@id": uri,
-            logLevel: "info",
+            logLevel: "error",
             genesis: genesis
         } as MeldConfig;
         localStorage.setItem('genesis', 'genesis');
         const backend = leveljs(uri);
         const remote = this.GetRemote(config) as MeldRemotes;
-        remote.live.subscribe(x => console.log('remote','live',x));
+        // remote.live.subscribe(x => console.log('remote','live',x));
         const meld = await clone(backend, remote, config);
-        meld.status.subscribe(x => console.log('meld','status',x));
+        // meld.status.subscribe(x => console.log('meld','status',x));
         // await meld.status.becomes({ online: true, outdated: false });
         return meld;
     }

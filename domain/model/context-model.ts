@@ -64,10 +64,11 @@ export class ContextModel extends Model<Context, IContextActions> implements ICo
         this._state.Permutation  = Permutation.Diff(this._messages.orderBy(x => +x.State.CreatedAt), this._messages);
     }
 
-    public async RemoveMessage(uri: string): Promise<void> {
+    public async RemoveMessage(uri: string, time: string): Promise<void> {
+        this.Storage.domain.lastUpdate = utc(time);
         const msg = this.Storage.Messages.get(uri);
         await this.Storage.repository.Messages.Delete(msg.ToServer());
-        this._state.Messages.remove(msg.State);
+        this._messages.remove(msg);
         this.Storage.Messages.delete(uri);
     }
 

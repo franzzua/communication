@@ -1,4 +1,4 @@
-import {Injectable} from "@hypertype/core";
+import {DateTime, Injectable, utc} from "@hypertype/core";
 import {Model} from "@hypertype/domain";
 import {StorageModel} from "./storage-model";
 import { IFactory } from "./i-factory";
@@ -16,6 +16,7 @@ export class DomainModel extends Model<DomainState, IDomainActions> implements I
         window['domain'] = this;
     }
 
+    public lastUpdate: DateTime = utc();
 
     public FromJSON(state: DomainState): any {
         this.Storages = new Map(state.Storages.map(x => [x.URI, this.factory.GetOrCreateStorage(x, this)]));
@@ -23,6 +24,7 @@ export class DomainModel extends Model<DomainState, IDomainActions> implements I
 
     public ToJSON(): DomainState{
         return {
+            LastUpdate: this.lastUpdate,
             Storages: [...this.Storages.values()].map(x => x.ToJSON())
         };
     }

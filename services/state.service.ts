@@ -1,5 +1,5 @@
 import * as h from "@hypertype/core";
-import {BehaviorSubject, filter, first, Fn, Injectable, map, Observable, shareReplay, tap, utc} from "@hypertype/core";
+import {BehaviorSubject, filter, first, Fn, DateTime, Injectable, map, Observable, shareReplay, tap, utc} from "@hypertype/core";
 import {Context, Message, Storage} from "@model";
 import {LogService} from "./log.service";
 import {DomainProxy} from "@domain";
@@ -16,10 +16,12 @@ export class StateService {
         private accManager: AccountManager,
         private logService: LogService
     ) {
-        this.domainProxy.State$.subscribe(x => console.log('storage', x.Storages[0]));
+        // this.domainProxy.State$.subscribe(x => console.log('storage', x.Storages[0]));
         // @ts-ignore
-        window.State = this;
+        window.state = this;
     }
+
+    private lastUpdate: DateTime = null;
 
     // public StorageStore = new StorageStore(this.proxyProvider);
     // public ContextStore = new ContextStore(this.StorageStore, this.proxyProvider);
@@ -27,12 +29,14 @@ export class StateService {
 
 
     async CreateContext(context: Context) {
+        const lastUpdate = this.lastUpdate = utc();
         const proxy = await this.proxyProvider.GetStorageProxy(context.Storage);
-        await proxy.Actions.CreateContext(context);
+        await proxy.Actions.CreateContext(context, lastUpdate.toISO());
         this._subject$.next();
     }
 
     async CreateSubContext(message: Message) {
+        this.lastUpdate = utc();
         // if (context.URI && this.State.has(context.URI))/**/
         //     return;
         message.SubContext = {
@@ -55,6 +59,7 @@ export class StateService {
     }
 
     async AttachContext(context: Context, to: Message) {
+        const lastUpdate = this.lastUpdate = utc();
         // const subContext = this.ContextStore.getById(contextId);
         // const existed = this.MessagesStore.getById(to.id);
         // if (!existed)
@@ -64,48 +69,53 @@ export class StateService {
         // existed.SubContext = subContext;
         // this._subject$.next();
         (await this.proxyProvider.GetMessageProxy(to))
-            .Actions.Attach(context.URI)
+            .Actions.Attach(context.URI, this.lastUpdate.toISO())
             .catch(err => console.log(err));
     }
 
     public async AddMessage(message: Message) {
+        const lastUpdate = this.lastUpdate = utc().plus({second: 1});
         message.Order = message.Context.Messages.length;
         const proxy = await this.proxyProvider.GetStorageProxy(message.Context.Storage);
-        await proxy.Actions.CreateMessage(message);
+        await proxy.Actions.CreateMessage(message, lastUpdate.toISO());
     }
 
     public MoveMessage(message: Message, to: Context, toIndex: number = to.Messages.length): void {
+        this.lastUpdate = utc();
         const fromURI = message.Context.URI;
         // message.Context.Messages.remove(message);
         // to.Messages.splice(toIndex, 0, message);
         // message.Context = to;
         Promise.all([this.proxyProvider.GetContextProxy(message.Context), this.proxyProvider.GetContextProxy(to)])
             .then(() => this.proxyProvider.GetMessageProxy(message))
-            .then(proxy => proxy.Actions.Move(fromURI, to.URI, toIndex))
+            .then(proxy => proxy.Actions.Move(fromURI, to.URI, toIndex, this.lastUpdate.toISO()))
     }
 
     public DeleteMessage(message: Message) {
+        this.lastUpdate = utc();
         message.Context.Messages.remove(message);
         this.proxyProvider.GetMessageProxy(message)
             .then(() => this.proxyProvider.GetContextProxy(message.Context))
-            .then(proxy => proxy.Actions.RemoveMessage(message.URI))
+            .then(proxy => proxy.Actions.RemoveMessage(message.URI, this.lastUpdate.toISO()))
             .catch(err => console.log(err));
     }
 
     public Reorder(message: Message, newIndex: number): void {
+        this.lastUpdate = utc();
         message.Context.Messages.remove(message);
         message.Context.Messages.splice(newIndex, 0, message);
         message.Context.Messages.remove(message);
         this.proxyProvider.GetMessageProxy(message)
-            .then(proxy => proxy.Actions.Reorder(newIndex))
+            .then(proxy => proxy.Actions.Reorder(newIndex, this.lastUpdate.toISO()))
             .catch(err => console.log(err));
     }
 
     public UpdateContent(message: Message, content: any) {
+        const lastUpdate = this.lastUpdate = utc();
         message.Content = content;
         this._subject$.next();
         this.proxyProvider.GetMessageProxy(message)
-            .then(proxy => proxy.Actions.UpdateText(message.Content))
+            .then(proxy => proxy.Actions.UpdateText(message.Content, lastUpdate.toISO()))
             .catch(err => {
                 console.log(err);
             })
@@ -166,7 +176,17 @@ export class StateService {
 
 
     public State$: Observable<Storage> = this.domainProxy.State$.pipe(
-        tap(x => console.log('root:', x)),
+        // tap(x => console.log('root:', x)),
+        filter(s => {
+            if (!this.lastUpdate)
+                return true;
+            if (this.lastUpdate > s.LastUpdate) {
+                console.info('ignore state');
+                return false;
+            }
+            console.info('new state');
+            return true;
+        }),
         map(x => x.Storages[0]),
         shareReplay(1)
     )

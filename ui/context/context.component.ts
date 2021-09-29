@@ -40,7 +40,6 @@ export class ContextComponent extends BaseContextComponent<IState> {
                 Action: 'add.message'
             }
         })),
-        tap(console.log),
         filter(Fn.Ib),
     );
 
@@ -62,7 +61,7 @@ export class ContextComponent extends BaseContextComponent<IState> {
 interface IState {
     context: Context;
     isSelected: boolean;
-    addMessage: Message;
+    addMessage: any;
 }
 
 export function arrayEqual(arr1: any[], arr2: any[]) {

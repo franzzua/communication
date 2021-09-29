@@ -38,7 +38,7 @@ export class MessageComponent extends HyperComponent<IState, IEvents> {
     }
 
     public State$ = this.message$.pipe(
-        tap(console.log),
+        // tap(console.log),
 
         map(message => ({
             message,

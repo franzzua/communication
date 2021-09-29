@@ -36,7 +36,7 @@ export class StorageModel extends Model<Storage, IStorageActions> implements ISt
 
     constructor(protected readonly factory: IFactory,
                 public readonly State: Omit<Storage, keyof {Root, Contexts, Messages}>,
-                private readonly domain: DomainModel) {
+                readonly domain: DomainModel) {
         super();
         console.time('repository');
         this.repository =  RepositoryProvider.get(this.State)
@@ -138,12 +138,13 @@ export class StorageModel extends Model<Storage, IStorageActions> implements ISt
                 Messages: [],
                 UpdatedAt: utc(),
                 CreatedAt: utc(),
-            });
+            }, utc().toISO());
             this.Root = this.Contexts.get(uri);
         }
     }
 
-    public async CreateMessage(state: Message): Promise<string> {
+    public async CreateMessage(state: Message, time: string): Promise<string> {
+        this.domain.lastUpdate = utc(time);
         state.URI = `${state.Context.URI}#${state.id}`;
         console.log('domain.add-message', state, state.URI);
         await this.repository.Messages.Create(Message.ToJSON(state));
@@ -153,7 +154,8 @@ export class StorageModel extends Model<Storage, IStorageActions> implements ISt
         return model.URI;
     }
 
-    public async CreateContext(context: Context): Promise<string> {
+    public async CreateContext(context: Context, time: string): Promise<string> {
+        this.domain.lastUpdate = utc(time);
         context.URI = `${this.URI}/${context.id}.ttl`;
         await this.repository.Contexts.Create(Context.ToJSON(context));
         const result = this.factory.GetOrCreateContext(context, this);
@@ -161,7 +163,7 @@ export class StorageModel extends Model<Storage, IStorageActions> implements ISt
         parents.forEach(x => result.AddParent(x));
         for (let parent of result.Parents) {
             parent.Link(parent.Context, result);
-            this.repository.Messages.Update(parent.ToServer());
+            await this.repository.Messages.Update(parent.ToServer());
         }
         this.Contexts.set(result.URI, result);
         return result.URI;

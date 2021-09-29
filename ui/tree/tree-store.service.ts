@@ -48,8 +48,16 @@ export class TreeStore {
             // state.ItemsMap = new Map<string, TreeItem>();
             const items = TreePresenter.ToTree(root, state.ItemsMap);
             // const items = TreePresenter.ToTree(root, new Map());
-            const selected = state?.Selected &&
-                items.find(x => x.Path.join(TreePresenter.Separator) == state.Selected.Path.join(TreePresenter.Separator)) || items[0];
+            const selected = (() => {
+                if (state?.Selected) {
+                    const existed = state.ItemsMap.get(state.Selected.Path.join(TreePresenter.Separator));
+                    if (!existed) {
+                        return items[0];
+                    }
+                    return existed;
+                }
+                return items[0];
+            })();
             const newState = ({
                 ...state,
                 Root: root,
