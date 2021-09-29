@@ -2,7 +2,7 @@ import {clone} from "@m-ld/m-ld";
 // @ts-ignore
 import type {MeldConfig, MeldRemotes} from "@m-ld/m-ld";
 import {AblyRemotes} from "@m-ld/m-ld/dist/ably";
-import leveljs from "level-js";
+import * as leveljs from "level-js";
 
 
 export class MeldFactory {

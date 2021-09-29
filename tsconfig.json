@@ -8,24 +8,44 @@
     "checkJs": false,
     "outDir": "./dist/esm",
     "skipLibCheck": true,
+    "skipDefaultLibCheck": true,
     "emitDecoratorMetadata": true,
     "declarationDir": "./dist/typings",
     "declaration": true,
-    "esModuleInterop": true,
-    "types": ["node", "db.js"],
+    "types": [
+      "node",
+      "db.js"
+    ],
     "lib": [
       "ESNext",
       "DOM"
     ],
     "paths": {
-      "@model": [        "./model"      ],
-      "@infr/*": [        "./infr/*"      ],
-      "@services": [        "./services"      ],
-      "@domain/*": [        "./domain/*"      ],
-      "@domain": [        "./domain"      ],
-      "solidocity": [ "../solidocity" ],
-      "@m-ld/m-ld/*": [ "../m-ld-js/*" ]
-    }
+      "@model": [
+        "./model"
+      ],
+      "@infr/*": [
+        "./infr/*"
+      ],
+      "@services": [
+        "./services"
+      ],
+      "@domain/*": [
+        "./domain/*"
+      ],
+      "@domain": [
+        "./domain"
+      ],
+      "solidocity": [
+        "../solidocity"
+      ]
+    },
+    "plugins": [
+      {
+        "transform": "@hypertype/tools/plugins/absolute",
+        "after": true
+      }
+    ]
   },
   "exclude": [
     "node_modules",

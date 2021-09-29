@@ -59,7 +59,6 @@ export class MessageModel extends Model<Message, IMessageActions> implements IMe
     }
 
     public async UpdateText(text: string): Promise<void> {
-        this.Storage.domain.lastUpdate = utc();
         this.State.UpdatedAt = utc();
         this.State.Content = text;
         await this.Storage.repository.Messages.Update(this.ToServer());
@@ -67,7 +66,6 @@ export class MessageModel extends Model<Message, IMessageActions> implements IMe
 
 
     public async Attach(uri: string): Promise<void> {
-        this.Storage.domain.lastUpdate = utc();
         this.State.UpdatedAt = utc();
         this._subContext = this.factory.GetContext(uri);
         this._subContext.AddParent(this);
@@ -75,7 +73,6 @@ export class MessageModel extends Model<Message, IMessageActions> implements IMe
     }
 
     public async Move(fromURI, toURI, toIndex: number){
-        this.Storage.domain.lastUpdate = utc();
         if (fromURI == toURI)
             return await  this.Reorder(toIndex);
         const oldContext = this.Storage.Contexts.get(fromURI);
@@ -87,7 +84,6 @@ export class MessageModel extends Model<Message, IMessageActions> implements IMe
     }
 
     public async Reorder(newOrder: number): Promise<void>{
-        this.Storage.domain.lastUpdate = utc();
         if (!this.Context)
             return ;
         this._context.DetachMessage(this);

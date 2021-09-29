@@ -11,6 +11,7 @@
     "build:server": "hypertype server --watch",
     "build:server:prod": "hypertype server --prod",
     "build": "hypertype client && hypertype server --prod",
+    "ci": "ttsc && hypertype client --prod",
     "server": "http-server ./dist -p 8080",
     "server:watch": "nodemon ./dist/server.js",
     "signal": "y-webrtc-signaling",
@@ -41,13 +42,13 @@
     "ws": "7.4.2"
   },
   "devDependencies": {
-    "@hypertype/app": "3.6.1",
-    "@hypertype/core": "3.6.0",
-    "@hypertype/domain": "3.6.9",
-    "@hypertype/infr": "3.6.1",
-    "@hypertype/infr-browser": "3.6.1",
-    "@hypertype/tools": "3.6.1",
-    "@hypertype/ui": "3.6.1",
+    "@hypertype/app": "3.6.15",
+    "@hypertype/core": "3.6.15",
+    "@hypertype/domain": "3.6.15",
+    "@hypertype/infr": "3.6.15",
+    "@hypertype/infr-browser": "3.6.15",
+    "@hypertype/tools": "3.6.15",
+    "@hypertype/ui": "3.6.15",
     "@types/luxon": "^1.25.0",
     "@types/node": "^14.14.14",
     "babel-jest": "^26.6.3",
@@ -65,7 +66,7 @@
   "hypertype": {
     "client": {
       "type": "server",
-      "index": "./entry/index.ts",
+      "index": "./dist/esm/entry/index.js",
       "html": "./entry/index.html",
       "port": 3001,
       "publicPath": "/context"

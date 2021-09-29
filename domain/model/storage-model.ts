@@ -138,13 +138,12 @@ export class StorageModel extends Model<Storage, IStorageActions> implements ISt
                 Messages: [],
                 UpdatedAt: utc(),
                 CreatedAt: utc(),
-            }, utc().toISO());
+            });
             this.Root = this.Contexts.get(uri);
         }
     }
 
-    public async CreateMessage(state: Message, time: string): Promise<string> {
-        this.domain.lastUpdate = utc(time);
+    public async CreateMessage(state: Message): Promise<string> {
         state.URI = `${state.Context.URI}#${state.id}`;
         console.log('domain.add-message', state, state.URI);
         await this.repository.Messages.Create(Message.ToJSON(state));
@@ -154,8 +153,7 @@ export class StorageModel extends Model<Storage, IStorageActions> implements ISt
         return model.URI;
     }
 
-    public async CreateContext(context: Context, time: string): Promise<string> {
-        this.domain.lastUpdate = utc(time);
+    public async CreateContext(context: Context): Promise<string> {
         context.URI = `${this.URI}/${context.id}.ttl`;
         await this.repository.Contexts.Create(Context.ToJSON(context));
         const result = this.factory.GetOrCreateContext(context, this);

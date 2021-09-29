@@ -14,9 +14,8 @@ export class DomainModel extends Model<DomainState, IDomainActions> implements I
     constructor(private factory: IFactory) {
         super();
         window['domain'] = this;
+        this.useLastUpdate = true;
     }
-
-    public lastUpdate: DateTime = utc();
 
     public FromJSON(state: DomainState): any {
         this.Storages = new Map(state.Storages.map(x => [x.URI, this.factory.GetOrCreateStorage(x, this)]));
@@ -24,7 +23,6 @@ export class DomainModel extends Model<DomainState, IDomainActions> implements I
 
     public ToJSON(): DomainState{
         return {
-            LastUpdate: this.lastUpdate,
             Storages: [...this.Storages.values()].map(x => x.ToJSON())
         };
     }

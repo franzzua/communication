@@ -4,14 +4,14 @@ import {StorageModel} from "@domain/model";
 
 
 export interface IMessageActions {
-    Attach(uri: string, time: string): Promise<void>;
-    UpdateText(text: string, time: string): Promise<void>;
-    Reorder(newOrder: number, time: string): Promise<void>;
-    Move(fromURI: string, toURI: string, toIndex: number, time: string): Promise<void>;
+    Attach(uri: string): Promise<void>;
+    UpdateText(text: string): Promise<void>;
+    Reorder(newOrder: number): Promise<void>;
+    Move(fromURI: string, toURI: string, toIndex: number): Promise<void>;
 }
 
 export interface IContextActions {
-    RemoveMessage(uri: string, time: string): Promise<void>;
+    RemoveMessage(uri: string): Promise<void>;
 }
 
 export interface IDomainActions {
@@ -19,8 +19,8 @@ export interface IDomainActions {
 }
 
 export interface IStorageActions {
-    CreateMessage(message: Message, time: string): Promise<string>;
-    CreateContext(context: Context, time: string): Promise<string>;
+    CreateMessage(message: Message): Promise<string>;
+    CreateContext(context: Context): Promise<string>;
 
     Clear(): Promise<void>;
 }

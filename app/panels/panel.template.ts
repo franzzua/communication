@@ -1,6 +1,6 @@
 import {IEventHandler, wire} from "@hypertype/ui";
 
-const icon = wire(wire,'svg:settings-icon')([require('./settings.icon.html')]);
+const icon = wire(wire,'svg:settings-icon')([require('./settings.icon.svg')]);
 
 export const Template = (html, state: IState, events: IEventHandler<IEvents>) => html`
     <div class=${`panel ${state.isOpen ? '' : 'closed'}`}>

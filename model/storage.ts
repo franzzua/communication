@@ -13,6 +13,5 @@ export class Storage {
 }
 
 export class DomainState {
-    public LastUpdate: DateTime;
     public Storages: Storage[];
 }
