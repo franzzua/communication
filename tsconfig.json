@@ -35,10 +35,10 @@
       ],
       "@domain": [
         "./domain"
-      ],
-      "solidocity": [
-        "../solidocity"
       ]
+//      "solidocity": [
+//        "../solidocity"
+//      ]
     },
     "plugins": [
       {

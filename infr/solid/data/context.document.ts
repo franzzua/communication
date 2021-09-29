@@ -1,3 +1,4 @@
+// @ts-ignore
 import {Document, document, entity, Entity, entityField, entitySet, EntitySet, field} from "solidocity";
 import {MessageEntity} from "./message.entity";
 import {Context, Storage} from "@model";
