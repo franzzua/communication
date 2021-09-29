@@ -1,8 +1,7 @@
-import {MeldClone} from "@m-ld/m-ld";
 import {ContextJSON, MessageJSON, StorageJSON} from "@domain";
 
 export class MeldStore {
-    public constructor(public URI: string, private meld: MeldClone) {
+    public constructor(public URI: string, private meld) {
     }
 
     async GetContexts(): Promise<ContextJSON[]> {
