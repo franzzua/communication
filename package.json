@@ -69,7 +69,7 @@
       "index": "./dist/esm/entry/index.js",
       "html": "./entry/index.html",
       "port": 3001,
-      "publicPath": "/context"
+      "publicPath": "/"
     },
     "server": {
       "type": "node",
