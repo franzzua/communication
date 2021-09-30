@@ -42,6 +42,7 @@ export class StorageModel extends Model<Storage, IStorageActions> implements ISt
         this.repository =  RepositoryProvider.get(this.State)
         this.repository.State$.subscribe(async json => {
             console.timeEnd('repository');
+            console.time('repository');
             await this.FromServer(json);
             this.domain.Update();
         })

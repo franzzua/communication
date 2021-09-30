@@ -4,13 +4,13 @@ import {IContextActions} from "../contracts/actions";
 import {IFactory} from "@domain/model/i-factory";
 import {ContextJSON} from "@domain/contracts/json";
 import {Permutation} from "@domain/helpers/permutation";
-import {Context, Message} from "@model";
+import {Context} from "@model";
 import {Model} from "@hypertype/domain";
-import { utc } from "@hypertype/core";
+import {utc} from "@hypertype/core";
 
 export class ContextModel extends Model<Context, IContextActions> implements IContextActions {
 
-    public get State(): Readonly<Omit<Context, keyof {Messages, Parents, Storage}>> {
+    public get State(): Readonly<Omit<Context, keyof { Messages, Parents, Storage }>> {
         return this._state;
     }
 
@@ -18,7 +18,10 @@ export class ContextModel extends Model<Context, IContextActions> implements ICo
     private _parents: Array<MessageModel> = [];
 
     public get Messages(): ReadonlyArray<MessageModel> {
-        return this._state.Permutation ? this._state.Permutation.Invoke(this._messages.orderBy(x => +x.State.CreatedAt)) : this._messages;
+        if (!this._state.Permutation)
+            return this._messages;
+        return this._state.Permutation.Invoke(this._messages.orderBy(x => +x.State.CreatedAt))
+            .filter(x => x != null);
     }
 
     public get Parents(): ReadonlyArray<MessageModel> {
@@ -56,18 +59,22 @@ export class ContextModel extends Model<Context, IContextActions> implements ICo
         return Context.ToJSON(this._state);
     }
 
-    public DetachMessage(message: MessageModel){
+    public DetachMessage(message: MessageModel) {
         this._messages.remove(message);
     }
-    public AttachMessage(message: MessageModel, index: number){
+
+    public AttachMessage(message: MessageModel, index: number) {
         this._messages.splice(index, 0, message);
-        this._state.Permutation  = Permutation.Diff(this._messages.orderBy(x => +x.State.CreatedAt), this._messages);
+        this._state.Permutation = Permutation.Diff(this._messages.orderBy(x => +x.State.CreatedAt), this._messages);
     }
 
     public async RemoveMessage(uri: string): Promise<void> {
         const msg = this.Storage.Messages.get(uri);
+        if (msg.SubContext)
+            msg.SubContext.DetachFrom(msg)
         await this.Storage.repository.Messages.Delete(msg.ToServer());
         this._messages.remove(msg);
+        this._state.Permutation = Permutation.Diff(this._messages.orderBy(x => +x.State.CreatedAt), this._messages);
         this.Storage.Messages.delete(uri);
     }
 
@@ -78,6 +85,7 @@ export class ContextModel extends Model<Context, IContextActions> implements ICo
     AddParent(message: MessageModel) {
         this._parents.push(message);
     }
+
     AddChild(message: MessageModel) {
         this._messages.push(message);
     }
@@ -85,5 +93,13 @@ export class ContextModel extends Model<Context, IContextActions> implements ICo
     Save() {
         this._state.UpdatedAt = utc();
         this.Storage.repository.Contexts.Update(this.ToServer());
+    }
+
+    public DetachFrom(msg: MessageModel) {
+        this._parents.remove(msg);
+    }
+
+    public AttachToParent(msg: MessageModel) {
+        this._parents.push(msg);
     }
 }

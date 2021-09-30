@@ -3,6 +3,7 @@ const {clone} = require("@m-ld/m-ld/dist/index.js");
 //import type {MeldConfig, MeldRemotes} from "@m-ld/m-ld";
 const {AblyRemotes} = require("@m-ld/m-ld/dist/ably");
 import * as leveljs from "level-js";
+import { ulid } from "ulid";
 
 
 export class MeldFactory {
@@ -18,10 +19,10 @@ export class MeldFactory {
     }
 
     public static async GetMeldClone(uri: string, genesis: boolean | null = false) {
-        genesis = !!localStorage.getItem('genesis');
+        genesis = !localStorage.getItem('genesis');
         const config = {
             "@domain": "default.app",
-            "@id": uri,
+            "@id": ulid(),
             logLevel: "error",
             genesis: genesis
         } as any;
@@ -32,7 +33,7 @@ export class MeldFactory {
         // @ts-ignore
         const meld = await clone(backend, remote, config);
         // meld.status.subscribe(x => console.log('meld','status',x));
-        // await meld.status.becomes({ online: true, outdated: false });
+        await meld.status.becomes({ online: true, outdated: false });
         return meld;
     }
 }

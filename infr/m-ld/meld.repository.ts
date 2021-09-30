@@ -1,8 +1,7 @@
-import {Injectable, Observable, of, Subject} from "@hypertype/core";
+import * as h from "@hypertype/core";
+import {Injectable, Observable, Subject} from "@hypertype/core";
 import {IRepository} from "@domain";
 import {ContextJSON, MessageJSON, StorageJSON} from "@domain/contracts/json";
-
-import * as h from "@hypertype/core";
 import {MeldStore} from "@infr/m-ld/meldStore";
 import {MeldFactory} from "@infr/m-ld/meld.factory";
 
@@ -35,13 +34,13 @@ export class MeldRepository implements IRepository {
     }
 
     public Contexts = {
-        Create: async (context: ContextJSON) =>{
+        Create: async (context: ContextJSON) => {
             await this.store.CreateContext(context);
         },
-        Update: async (changes: Partial<ContextJSON>) =>{
+        Update: async (changes: Partial<ContextJSON>) => {
             await this.store.UpdateContext(changes);
         },
-        Delete: async (context: ContextJSON) =>{
+        Delete: async (context: ContextJSON) => {
         }
     }
 
@@ -62,7 +61,13 @@ export class MeldRepository implements IRepository {
     }
 
     protected stateSubject$ = new Subject<StorageJSON>();
-    public State$ = h.from(this.Init$).pipe(
-        h.concatMap(x => this.Load())
+    public State$ = h.from(this.meld).pipe(
+        h.switchMap(x => new Observable(subscr => x.read(
+            state => subscr.next({state}),
+                (update, state) => subscr.next({update,state}),
+            ))),
+        h.tap(console.log),
+        h.concatMap(x => this.Load()),
+        h.tap(console.log),
     )
 }
