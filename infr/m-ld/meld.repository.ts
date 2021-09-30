@@ -64,8 +64,10 @@ export class MeldRepository implements IRepository {
     public State$ = h.from(this.meld).pipe(
         h.switchMap(x => new Observable(subscr => x.read(
             state => subscr.next({state}),
-                (update, state) => subscr.next({update,state}),
-            ))),
+            (update, state) => {
+                subscr.next({update, state})
+            },
+        ))),
         h.tap(console.log),
         h.concatMap(x => this.Load()),
         h.tap(console.log),

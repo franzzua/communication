@@ -10,7 +10,7 @@
     "build:run": "hypertype client --watch --run",
     "build:server": "hypertype server --watch",
     "build:server:prod": "hypertype server --prod",
-    "build": "ttsc && hypertype client --prod",
+    "build": "ttsc && hypertype client --prod && cp ./.github/workflows/staticwebapp.config.json ./dist/prod",
     "ci": "ttsc && hypertype client --prod",
     "server": "http-server ./dist -p 8080",
     "server:watch": "nodemon ./dist/server.js",
