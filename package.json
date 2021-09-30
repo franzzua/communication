@@ -10,7 +10,7 @@
     "build:run": "hypertype client --watch --run",
     "build:server": "hypertype server --watch",
     "build:server:prod": "hypertype server --prod",
-    "build": "echo hello",
+    "build": "ttsc && hypertype client --prod",
     "ci": "ttsc && hypertype client --prod",
     "server": "http-server ./dist -p 8080",
     "server:watch": "nodemon ./dist/server.js",
