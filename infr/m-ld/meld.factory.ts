@@ -1,7 +1,7 @@
-const {clone} = require("@m-ld/m-ld/dist/index.js");
+import {clone} from "@m-ld/m-ld";
 // @ts-ignore
-//import type {MeldConfig, MeldRemotes} from "@m-ld/m-ld";
-const {AblyRemotes} = require("@m-ld/m-ld/dist/ably");
+import type {MeldConfig, MeldRemotes, MeldClone} from "@m-ld/m-ld";
+import {AblyRemotes} from "@m-ld/m-ld/dist/ably";
 import * as leveljs from "level-js";
 import { ulid } from "ulid";
 
@@ -18,7 +18,7 @@ export class MeldFactory {
         });
     }
 
-    public static async GetMeldClone(uri: string, genesis: boolean | null = false) {
+    public static async GetMeldClone(uri: string, genesis: boolean | null = false): Promise<MeldClone> {
         genesis = !localStorage.getItem('genesis');
         const config = {
             "@domain": "default.app",

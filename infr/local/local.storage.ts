@@ -113,7 +113,7 @@ export class LocalStorage {
     public static async getAllDatabases(): Promise<LocalStorage[]> {
         // @ts-ignore
         const databases = await indexedDB.databases();
-        const storages = databases.map(d => new LocalStorage(`local://${d.name}`, d.version));
+        const storages = databases.map(d => new LocalStorage(`local://${d.name}`, d.name, d.version));
         for (let storage of storages) {
             await storage.Init();
         }
