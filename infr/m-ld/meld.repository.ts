@@ -1,44 +1,69 @@
+// import {Buffer} from "buffer";
 import * as h from "@hypertype/core";
 import {Injectable, Observable, Subject} from "@hypertype/core";
 import {IRepository} from "@domain";
 import {ContextJSON, MessageJSON, StorageJSON} from "@domain/contracts/json";
-import {MeldStore} from "@infr/m-ld/meldStore";
+import {MeldReader, MeldStore} from "@infr/m-ld/meldStore";
 import {MeldFactory} from "@infr/m-ld/meld.factory";
+import {MeldReadState, MeldState} from "@m-ld/m-ld";
+import {ulid} from "ulid";
+
+// Buffer.isBuffer = (x => {
+//     return ArrayBuffer.isView(x) || Array.isArray(x);
+// }) as any;
 
 @Injectable(true)
 export class MeldRepository implements IRepository {
 
-    private meld = MeldFactory.GetMeldClone('default');
+    private id = ulid();
 
-    public Init$ = this.meld.then(meld => new MeldStore(this.storageURI, meld));
-    private store!: MeldStore;
+    private async getWriter(contextURI: string){
+        const meld = await MeldFactory.GetMeldClone(contextURI, this.id);
+        const writer = new MeldStore(meld, this.id);
+        return writer;
+    }
 
     constructor(private storageURI: string) {
+        this.Listen(storageURI);
     }
 
 
+private listened = [];
+    private  async Listen(uri){
+        if (this.listened.includes(uri))
+            return;
+        this.listened.push(uri);
+        const meld = await MeldFactory.GetMeldClone(uri, this.id);
+        meld.read((state) => {
+            this.stateSubject$.next(state);
+        }, async (update, state) => {
+            const writer  = await state.get('writer')
+            if (writer.value == this.id)
+                return;
+            this.stateSubject$.next(state);
+            console.log('update', update, writer)
+        });
+    }
+
     public async Load(): Promise<StorageJSON> {
-        this.store = await this.Init$;
-        const contexts = await this.store.GetContexts();
-        const messages = [];
-        for (let context of contexts) {
-            const msgs = await this.store.GetMessages(context.URI);
-            messages.push(...msgs);
-        }
         return {
-            Contexts: contexts,
-            Messages: messages,
-            URI: this.store.URI,
-            Type: 'local'
+            URI: this.storageURI,
+            Type: 'local',
+            Contexts: [],
+            Messages: []
         };
     }
 
     public Contexts = {
         Create: async (context: ContextJSON) => {
-            await this.store.CreateContext(context);
+            const writer = await this.getWriter(this.storageURI);
+            await writer.CreateContext(context);
+            await MeldFactory.GetMeldClone(context.URI, this.id, true);
+            this.Listen(context.URI);
         },
         Update: async (changes: Partial<ContextJSON>) => {
-            await this.store.UpdateContext(changes);
+            const writer = await this.getWriter(this.storageURI);
+            await writer.UpdateContext(changes);
         },
         Delete: async (context: ContextJSON) => {
         }
@@ -46,13 +71,16 @@ export class MeldRepository implements IRepository {
 
     public Messages = {
         Create: async (message: MessageJSON) => {
-            await this.store.AddMessage(message);
+            const writer = await this.getWriter(message.ContextURI);
+            await writer.AddMessage(message);
         },
         Update: async (changes: Partial<MessageJSON>) => {
-            await this.store.UpdateMessage(changes);
+            const writer = await this.getWriter(changes.ContextURI);
+            await writer.UpdateMessage(changes);
         },
         Delete: async (message: MessageJSON) => {
-            await this.store.DeleteMessage(message);
+            const writer = await this.getWriter(message.ContextURI);
+            await writer.DeleteMessage(message);
         }
     }
 
@@ -60,16 +88,31 @@ export class MeldRepository implements IRepository {
     public async Clear(): Promise<void> {
     }
 
-    protected stateSubject$ = new Subject<StorageJSON>();
-    public State$ = h.from(this.meld).pipe(
-        h.switchMap(x => new Observable(subscr => x.read(
-            state => subscr.next({state}),
-            (update, state) => {
-                subscr.next({update, state})
-            },
-        ))),
+    protected stateSubject$ = new Subject<MeldReadState>();
+
+    public State$ = this.stateSubject$.asObservable().pipe(
         h.tap(console.log),
-        h.concatMap(x => this.Load()),
+        h.concatMap(() => this.readState()),
         h.tap(console.log),
     )
+
+    private async readState(){
+        const meld = await MeldFactory.GetMeldClone(this.storageURI, this.id);
+        const reader = new MeldReader(meld);
+        const contexts = await reader.GetContexts();
+        const messages = [];
+        for (let context of contexts) {
+            const meld = await MeldFactory.GetMeldClone(context.URI, this.id);
+            this.Listen(context.URI);
+            const contextReader = new MeldReader(meld);
+            const msgs = await contextReader.GetMessages(context.URI);
+            messages.push(...msgs);
+        }
+        return {
+            Contexts: contexts,
+            Messages: messages,
+            URI: '',
+            Type: 'local'
+        };
+    }
 }

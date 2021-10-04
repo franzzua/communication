@@ -18,22 +18,32 @@ export class MeldFactory {
         });
     }
 
-    public static async GetMeldClone(uri: string, genesis: boolean | null = false): Promise<MeldClone> {
-        genesis = !localStorage.getItem('genesis');
+    private static Cache = new Map<string, Promise<MeldClone>>();
+
+    private static async CreateMeldClone(uri: string, id: string, genesis = false): Promise<MeldClone> {
         const config = {
-            "@domain": "default.app",
-            "@id": ulid(),
+            "@domain": `${btoa(uri).toLowerCase().replace(/=/g,'')}.context.app`,
+            "@id": id,
             logLevel: "error",
-            genesis: genesis
-        } as any;
-        localStorage.setItem('genesis', 'genesis');
+            genesis
+        } as MeldConfig;
+        localStorage.setItem(uri, 'genesis');
         const backend = leveljs(uri);
-        const remote = this.GetRemote(config) as any;
+        const remote = this.GetRemote(config);
         // remote.live.subscribe(x => console.log('remote','live',x));
         // @ts-ignore
         const meld = await clone(backend, remote, config);
         // meld.status.subscribe(x => console.log('meld','status',x));
         await meld.status.becomes({ online: true, outdated: false });
         return meld;
+    }
+
+    public static GetMeldClone(uri: string, id: string, genesis = false): Promise<MeldClone> {
+        if (this.Cache.has(uri)) {
+            return this.Cache.get(uri);
+        }
+        const clone = this.CreateMeldClone(uri, id, genesis);
+        this.Cache.set(uri, clone);
+        return clone;
     }
 }
