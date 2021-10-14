@@ -32,7 +32,7 @@ export class Permutation {
         return JSON.stringify(this.values);
     }
 
-    public Invoke<T>(arr: T[]){
+    public Invoke<T>(arr: ReadonlyArray<T>){
         const result: T[] = new Array(arr.length);
         for (let i = 0; i < arr.length; i++){
             result[i] = arr[this.values[i] ?? i];

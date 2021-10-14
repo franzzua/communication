@@ -1,11 +1,11 @@
 // import {Buffer} from "buffer";
 import * as h from "@hypertype/core";
-import {Injectable, Observable, Subject} from "@hypertype/core";
+import {Injectable, Subject} from "@hypertype/core";
 import {IRepository} from "@domain";
 import {ContextJSON, MessageJSON, StorageJSON} from "@domain/contracts/json";
 import {MeldReader, MeldStore} from "@infr/m-ld/meldStore";
 import {MeldFactory} from "@infr/m-ld/meld.factory";
-import {MeldReadState, MeldState} from "@m-ld/m-ld";
+import {MeldReadState} from "@m-ld/m-ld";
 import {ulid} from "ulid";
 
 // Buffer.isBuffer = (x => {
@@ -17,7 +17,7 @@ export class MeldRepository implements IRepository {
 
     private id = ulid();
 
-    private async getWriter(contextURI: string){
+    private async getWriter(contextURI: string) {
         const meld = await MeldFactory.GetMeldClone(contextURI, this.id);
         const writer = new MeldStore(meld, this.id);
         return writer;
@@ -28,8 +28,9 @@ export class MeldRepository implements IRepository {
     }
 
 
-private listened = [];
-    private  async Listen(uri){
+    private listened = [];
+
+    private async Listen(uri) {
         if (this.listened.includes(uri))
             return;
         this.listened.push(uri);
@@ -37,8 +38,8 @@ private listened = [];
         meld.read((state) => {
             this.stateSubject$.next(state);
         }, async (update, state) => {
-            const writer  = await state.get('writer')
-            if (writer.value == this.id)
+            const writer = update["@insert"].find(x => x["@id"] == 'writer').value;
+            if (writer == this.id)
                 return;
             this.stateSubject$.next(state);
             console.log('update', update, writer)
@@ -96,7 +97,7 @@ private listened = [];
         h.tap(console.log),
     )
 
-    private async readState(){
+    private async readState() {
         const meld = await MeldFactory.GetMeldClone(this.storageURI, this.id);
         const reader = new MeldReader(meld);
         const contexts = await reader.GetContexts();

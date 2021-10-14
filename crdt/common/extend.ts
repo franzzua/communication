@@ -1,5 +1,5 @@
 
-declare interface Array<T> {
+declare interface ReadonlyArray<T> {
     orderBy(selector: (t: T) => (string | number), descending?: any): Array<T>;
 }
 

@@ -14,14 +14,20 @@ export class ContextModel extends Model<Context, IContextActions> implements ICo
         return this._state;
     }
 
-    private _messages: Array<MessageModel> = [];
+    private _messages: ReadonlyArray<MessageModel> = [];
+    private get DefaultOrderedMessages(): ReadonlyArray<MessageModel>{
+        return this._messages.orderBy(x => x.State.id);
+    }
+    private get OrderedMessages(): ReadonlyArray<MessageModel>{
+        if (!this._state.Permutation)
+            return this.DefaultOrderedMessages;
+        return this._state.Permutation.Invoke(this.DefaultOrderedMessages)
+            .filter(x => x != null);
+    }
     private _parents: Array<MessageModel> = [];
 
     public get Messages(): ReadonlyArray<MessageModel> {
-        if (!this._state.Permutation)
-            return this._messages;
-        return this._state.Permutation.Invoke(this._messages.orderBy(x => +x.State.CreatedAt))
-            .filter(x => x != null);
+        return this.OrderedMessages;
     }
 
     public get Parents(): ReadonlyArray<MessageModel> {
@@ -59,13 +65,14 @@ export class ContextModel extends Model<Context, IContextActions> implements ICo
         return Context.ToJSON(this._state);
     }
 
-    public DetachMessage(message: MessageModel) {
-        this._messages.remove(message);
+    public DetachMessage(msg: MessageModel) {
+        this.UpdateMessagesPermutation(this.OrderedMessages.filter(x => x.URI != msg.URI));
     }
 
     public AttachMessage(message: MessageModel, index: number) {
-        this._messages.splice(index, 0, message);
-        this._state.Permutation = Permutation.Diff(this._messages.orderBy(x => +x.State.CreatedAt), this._messages);
+        const messages = [...this.OrderedMessages]
+        messages.splice(index, 0, message);
+        this.UpdateMessagesPermutation(messages);
     }
 
     public async RemoveMessage(uri: string): Promise<void> {
@@ -73,9 +80,13 @@ export class ContextModel extends Model<Context, IContextActions> implements ICo
         if (msg.SubContext)
             msg.SubContext.DetachFrom(msg)
         await this.Storage.repository.Messages.Delete(msg.ToServer());
-        this._messages.remove(msg);
-        this._state.Permutation = Permutation.Diff(this._messages.orderBy(x => +x.State.CreatedAt), this._messages);
+        this.DetachMessage(msg);
         this.Storage.Messages.delete(uri);
+    }
+
+    private UpdateMessagesPermutation(orderedMessages: ReadonlyArray<MessageModel>){
+        this._messages = orderedMessages;
+        this._state.Permutation = Permutation.Diff(this.DefaultOrderedMessages, orderedMessages);
     }
 
     public SetOrder(): void {
@@ -87,7 +98,7 @@ export class ContextModel extends Model<Context, IContextActions> implements ICo
     }
 
     AddChild(message: MessageModel) {
-        this._messages.push(message);
+        this.UpdateMessagesPermutation([...this.OrderedMessages, message]);
     }
 
     Save() {
