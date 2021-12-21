@@ -34,12 +34,12 @@ export class ProxyProvider {
         await this.domainProxy.State$.pipe(
             map(x => x.Storages.find(x => x.URI == message.Context.Storage.URI)),
             filter(x => x != null),
-            map(x => x.Messages.get(message.URI)),
+            map(x => x.Messages.get(message.id)),
             filter(x => x != null),
             first()
         ).toPromise()
         return this.domainProxy
             .GetStorageProxy(message.Context.Storage.URI)
-            .GetMessageProxy(message.URI)
+            .GetMessageProxy(message.id)
     }
 }

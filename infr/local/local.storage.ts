@@ -71,7 +71,7 @@ export class LocalStorage {
         console.groupCollapsed('local storage: add message', message.id);
         console.table(await this.db.messages.query().all().execute());
         console.groupEnd();
-        return message.URI;
+        return message.id;
     }
 
 
@@ -104,7 +104,7 @@ export class LocalStorage {
     }
 
     public async RemoveMessage(message: MessageJSON): Promise<void> {
-        await this.db.messages.remove(message.URI);
+        await this.db.messages.remove(message.id);
         console.groupCollapsed('local storage: remove message', message.id);
         console.table(await this.db.messages.query().all().execute());
         console.groupEnd();

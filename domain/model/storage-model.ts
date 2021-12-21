@@ -10,12 +10,14 @@ import {utc} from "@hypertype/core";
 // import {SolidRepository} from "@infr/solid";
 import {MeldRepository} from "@infr/m-ld/meld.repository";
 import {Model} from "@hypertype/domain";
+import {YRepository} from "@infr/y/y.repository";
+import {TreePresenter} from "../../presentors/tree.presentor";
 
 export class RepositoryProvider {
     public static get(storage: {Type; URI}): IRepository {
         switch (storage.Type) {
             case 'local':
-                return new MeldRepository(storage.URI);
+                return new YRepository(storage.URI);
             // case 'solid':
             //     return new SolidRepository(storage.URI);
         }
@@ -55,7 +57,7 @@ export class StorageModel extends Model<Storage, IStorageActions> implements ISt
     }
 
     ToJSON(): Storage {
-        const messages = new Map([...this.Messages.values()].map(c => [c.URI, c.ToJSON()]));
+        const messages = new Map([...this.Messages.values()].map(c => [c.id, c.ToJSON()]));
         const storage = {
             ...this.State,
             Messages: messages,
@@ -65,8 +67,8 @@ export class StorageModel extends Model<Storage, IStorageActions> implements ISt
         } as Storage;
         storage.Contexts = new Map([...this.Contexts.values()].map(c => {
             const context = c.ToJSON();
-            context.Messages = c.Messages.map(x => messages.get(x.URI));
-            context.Parents = c.Parents.map(x => messages.get(x.URI));
+            context.Messages = c.Messages.map(x => messages.get(x.id));
+            context.Parents = c.Parents.map(x => messages.get(x.id));
             context.Storage = storage;
             for (let parent of context.Parents) {
                 parent.SubContext = context;
@@ -88,17 +90,12 @@ export class StorageModel extends Model<Storage, IStorageActions> implements ISt
 
     protected async FromServer(json: StorageJSON) {
         for (let context of json.Contexts) {
-            let model = this.factory.GetContext(context.URI);
-            if (!model) {
-                model = this.factory.GetOrCreateContext({
-                    ...Context.FromJSON(context),
-                    Storage: this.State,
-                    Messages: [],
-                    Parents: [],
-                }, this);
-            } else {
-                model.FromServer(context);
-            }
+            let model = this.factory.GetOrCreateContext({
+                ...Context.FromJSON(context),
+                Storage: this.State,
+                Messages: [],
+                Parents: [],
+            }, this);
             // json.Messages
             //     .filter(x => x.ContextURI == context.URI)
             //     .map(x => this.Messages.get(x.URI))
@@ -113,13 +110,8 @@ export class StorageModel extends Model<Storage, IStorageActions> implements ISt
                 this.Root = model;
         }
         for (let message of json.Messages) {
-            let model = this.factory.GetMessage(message.URI);
-            if (!model) {
-                model = this.factory.GetOrCreateMessage(Message.FromJSON(message), this);
-            } else {
-                model.FromServer(message);
-            }
-            this.Messages.set(model.URI, model);
+            let model =  this.factory.GetOrCreateMessage(Message.FromJSON(message), this);
+            this.Messages.set(model.id, model);
         }
         // for (let message of json.Messages) {
         //     const model = this.factory.GetMessage(message.URI);
@@ -145,20 +137,21 @@ export class StorageModel extends Model<Storage, IStorageActions> implements ISt
     }
 
     public async CreateMessage(state: Message): Promise<string> {
-        state.URI = `${state.Context.URI}#${state.id}`;
-        console.log('domain.add-message', state, state.URI);
+        console.log('domain.add-message', state, state.id);
         await this.repository.Messages.Create(Message.ToJSON(state));
         const model = this.factory.GetOrCreateMessage(state, this);
-        this.Messages.set(model.URI, model);
+        model.Link(model.Context, model.SubContext);
+        model.SubContext && model.SubContext.AddParent(model);
+        this.Messages.set(model.id, model);
 
-        return model.URI;
+        return model.id;
     }
 
     public async CreateContext(context: Context): Promise<string> {
         context.URI = `${this.URI}/${context.id}.ttl`;
         await this.repository.Contexts.Create(Context.ToJSON(context));
         const result = this.factory.GetOrCreateContext(context, this);
-        const parents = context.Parents.map(x => this.factory.GetMessage(x.URI));
+        const parents = context.Parents.map(x => this.factory.GetMessage(x.id));
         parents.forEach(x => result.AddParent(x));
         for (let parent of result.Parents) {
             parent.Link(parent.Context, result);

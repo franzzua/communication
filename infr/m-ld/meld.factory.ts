@@ -20,7 +20,7 @@ export class MeldFactory {
 
     private static Cache = new Map<string, Promise<MeldClone>>();
 
-    private static async CreateMeldClone(uri: string, id: string, genesis = false): Promise<MeldClone> {
+    private static async CreateMeldClone(uri: string, id: string, genesis = false, isRetrying = false): Promise<MeldClone> {
         const config = {
             "@domain": `${btoa(uri).toLowerCase().replace(/=/g,'')}.context.app`,
             "@id": id,
@@ -30,12 +30,17 @@ export class MeldFactory {
         localStorage.setItem(uri, 'genesis');
         const backend = leveljs(uri);
         const remote = this.GetRemote(config);
-        // remote.live.subscribe(x => console.log('remote','live',x));
-        // @ts-ignore
-        const meld = await clone(backend, remote, config);
-        // meld.status.subscribe(x => console.log('meld','status',x));
-        await meld.status.becomes({ online: true, outdated: false });
-        return meld;
+        try {
+            const meld = await clone(backend, remote, config);
+            await meld.status.becomes({ online: true, outdated: false });
+            return meld;
+        }catch (e){
+            if (isRetrying)
+                throw e;
+            console.warn(`create meld clone ${genesis ? 'with' : 'without'} genesis failed:`);
+            console.warn(e);
+            return await this.CreateMeldClone(uri, id, !genesis, true);
+        }
     }
 
     public static GetMeldClone(uri: string, id: string, genesis = false): Promise<MeldClone> {

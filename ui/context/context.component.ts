@@ -51,7 +51,6 @@ export class ContextComponent extends BaseContextComponent<IState> {
                 CreatedAt: utc(),
                 UpdatedAt: utc(),
                 id: `message.${Id()}`,
-                URI: undefined,
                 Order: 0
             })
         }

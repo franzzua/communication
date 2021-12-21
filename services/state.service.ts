@@ -88,7 +88,7 @@ export class StateService {
         message.Context.Messages.remove(message);
         this.proxyProvider.GetMessageProxy(message)
             .then(() => this.proxyProvider.GetContextProxy(message.Context))
-            .then(proxy => proxy.Actions.RemoveMessage(message.URI))
+            .then(proxy => proxy.Actions.RemoveMessage(message.id))
             .catch(err => console.log(err));
     }
 

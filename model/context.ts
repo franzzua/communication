@@ -27,7 +27,7 @@ export class Context {
             IsRoot: c.IsRoot,
             UpdatedAt: utc(c.UpdatedAt),
             CreatedAt: utc(c.CreatedAt),
-            Permutation: Permutation.Parse(c.Permutation),
+            Permutation: c.Permutation ? Permutation.Parse(c.Permutation) : null,
             Messages: [],
         };
     }

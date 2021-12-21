@@ -5,14 +5,13 @@ export class MessageJSON{
     public ContextURI: string;
     public SubContextURI?: string;
     public StorageURI: string;
-    public id: string;
     public Content: string;
     public Description?: string;
     public AuthorURI?: string;
     public CreatedAt: string;
     public UpdatedAt: string;
     public Action?: string;
-    public URI?: string;
+    public id?: string;
     public Order: number;
 }
 

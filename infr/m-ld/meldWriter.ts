@@ -1,49 +1,7 @@
 import {ContextJSON, MessageJSON} from "@domain";
-import {MeldClone, MeldReadState} from "@m-ld/m-ld";
+import {MeldClone} from "@m-ld/m-ld";
 
-export class MeldReader {
-    public constructor(private state: MeldReadState) {
-    }
-
-
-    async GetMessages(uri: string): Promise<ReadonlyArray<MessageJSON>> {
-        const messageEntities = await this.state.read({
-            "@describe": "?id",
-            "@where": {
-                "@id": "?id",
-                '@type': 'message',
-                'ContextURI': uri
-            }
-        });
-        const messages = [...messageEntities.values()].map(x => ({
-            ...x as any
-        } as MessageJSON));
-        return messages;
-    }
-
-    async GetContexts(): Promise<ContextJSON[]> {
-        try {
-            const contextEntities = await this.state.read({
-                "@describe": "?id",
-                "@where": {
-                    "@id": "?id",
-                    '@type': 'context',
-                }
-            });
-            const contexts = [...contextEntities.values()].map((x: any) => ({
-                ...x,
-                '@id': undefined,
-                URI: x['@id']
-            } as ContextJSON));
-            return contexts;
-        } catch (e) {
-            console.error(e);
-            return [];
-        }
-    }
-}
-
-export class MeldStore {
+export class MeldWriter {
     public constructor(private meld: MeldClone, private id: string) {
     }
 
@@ -106,7 +64,8 @@ export class MeldStore {
             '@insert': [{
                 ...message,
                 SubContextURI: message.SubContextURI ?? '',
-                '@id': message.URI,
+                '@id': message.id,
+                id: undefined,
                 '@type': 'message'
             }, {
                 '@id': 'writer',
@@ -118,15 +77,17 @@ export class MeldStore {
     async UpdateMessage(changes: Partial<MessageJSON>) {
         await this.meld.write({
             '@delete': [{
-                '@id': changes.URI,
+                '@id': changes.id,
                 Content: '?',
+                ContextURI: '?',
                 SubContextURI: '?'
             }, {
                 '@id': 'writer',
             }],
             '@insert': [{
-                '@id': changes.URI,
+                '@id': changes.id,
                 Content: changes.Content,
+                ContextURI: changes.ContextURI,
                 SubContextURI: changes.SubContextURI ?? ''
             }, {
                 '@id': 'writer',
@@ -135,10 +96,10 @@ export class MeldStore {
         })
     }
 
-    async DeleteMessage(message: MessageJSON) {
+    async DeleteMessage(message: Pick<MessageJSON, "id">) {
         await this.meld.write({
             '@delete': [{
-                '@id': message.URI,
+                '@id': message.id,
                 "?prop": "?value"
             }, {
                 '@id': 'writer',

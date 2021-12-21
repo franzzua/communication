@@ -76,23 +76,23 @@ export class SolidRepository implements IRepository {
     public Messages = queueCRD({
         Create: async (message: MessageJSON) => {
             const contextDocument = ContextDocument.Map.get(message.ContextURI);
-            const messageEntity = contextDocument.Messages.get(message.URI) ??
-                contextDocument.Messages.Add(message.URI);
+            const messageEntity = contextDocument.Messages.get(message.id) ??
+                contextDocument.Messages.Add(message.id);
             messageEntity.IsDeleted = '';
             // messageEntity.Author = message.Author.URI;
             messageEntity.FromJSON(message);
             this.ChangedDocs.add(contextDocument);
             await this.SaveDocsNow();
-            const check = contextDocument.Messages.get(message.URI);
+            const check = contextDocument.Messages.get(message.id);
             if (!check)
                 throw new Error("not created");
-            console.info(message.URI, 'exists')
+            console.info(message.id, 'exists')
         },
         Update: async (changes: Partial<MessageJSON>) => {
             const contextDocument = ContextDocument.Map.get(changes.ContextURI);
-            const messageEntity = contextDocument.Messages.get(changes.URI);
+            const messageEntity = contextDocument.Messages.get(changes.id);
             if (!messageEntity) {
-                console.info(changes.URI, 'not exists')
+                console.info(changes.id, 'not exists')
                 return;
             }
             messageEntity.FromJSON(changes);
@@ -101,10 +101,10 @@ export class SolidRepository implements IRepository {
             await this.SaveDocsNow();
         },
         Delete: async (message: MessageJSON) => {
-            if (!message.URI)
+            if (!message.id)
                 return;
             const contextDocument = ContextDocument.Map.get(message.ContextURI);
-            const messageEntity = contextDocument.Messages.get(message.URI);
+            const messageEntity = contextDocument.Messages.get(message.id);
             messageEntity.IsDeleted = "deleted";
             messageEntity.Save();
             this.ChangedDocs.add(contextDocument);

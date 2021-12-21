@@ -19,7 +19,7 @@ export class MessageModel extends Model<Message, IMessageActions> implements IMe
         return this._subContext;
     }
 
-    public get URI(): string {return  this.State.URI; }
+    public get id(): string {return  this.State.id; }
 
     constructor(private readonly factory: IFactory,
                 public readonly Storage: StorageModel,
@@ -28,8 +28,16 @@ export class MessageModel extends Model<Message, IMessageActions> implements IMe
     }
 
     public Link(context: ContextModel, subContext: ContextModel){
-        this._context = context;
-        this._subContext = subContext;
+        if (this._context !== context){
+            this._context?.DetachMessage(this, 'force');
+            this._context = context;
+            this._context?.AddChild(this, 'force');
+        }
+        if (this._subContext !== subContext) {
+            this._subContext?.DetachFrom(this, 'force');
+            this._subContext = subContext;
+            this._subContext?.AddParent(this, 'force');
+        }
     }
 
     public FromServer(json: MessageJSON){
@@ -61,7 +69,7 @@ export class MessageModel extends Model<Message, IMessageActions> implements IMe
     public async UpdateText(text: string): Promise<void> {
         this.State.UpdatedAt = utc();
         this.State.Content = text;
-        await this.Storage.repository.Messages.Update(this.ToServer());
+        await this.Save();
     }
 
 
@@ -69,18 +77,24 @@ export class MessageModel extends Model<Message, IMessageActions> implements IMe
         this.State.UpdatedAt = utc();
         this._subContext = this.factory.GetContext(uri);
         this._subContext.AddParent(this);
-        await this.Storage.repository.Messages.Update(this.ToServer());
+        await this.Save();
     }
 
     public async Move(fromURI, toURI, toIndex: number){
         if (fromURI == toURI)
             return await  this.Reorder(toIndex);
         const oldContext = this.Storage.Contexts.get(fromURI);
-        if (oldContext)
-            oldContext.DetachMessage(this)
-        this._context = this.Storage.Contexts.get(toURI);
-        this._context.AttachMessage(this, toIndex);
-        await this._context.Save();
+        if (oldContext) {
+            await oldContext.RemoveMessage(this.id);
+            await oldContext.Save();
+        }
+        const context = this.Storage.Contexts.get(toURI);
+        await this.Storage.CreateMessage({
+            ...this.State,
+            Context: context.State,
+            SubContext: this.SubContext?.State,
+        } as Message);
+        await this.Reorder(toIndex);
     }
 
     public async Reorder(newOrder: number): Promise<void>{
@@ -89,6 +103,10 @@ export class MessageModel extends Model<Message, IMessageActions> implements IMe
         this._context.DetachMessage(this);
         this._context.AttachMessage(this, newOrder);
         await this._context.Save();
+    }
+
+    private async Save(){
+        await this.Storage.repository.Messages.Update(this.ToServer());
     }
 }
 

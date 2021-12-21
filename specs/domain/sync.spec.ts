@@ -40,7 +40,7 @@ export class SyncSpec{
         const msg: MessageJSON = {
             Content: 'Hyppo Hello',
             StorageURI: this.storageURI,
-            URI: '123',
+            id: '123',
             id: '1',
         };
         this.sync1.Messages.Create(msg);

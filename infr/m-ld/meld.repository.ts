@@ -3,10 +3,11 @@ import * as h from "@hypertype/core";
 import {Injectable, Subject} from "@hypertype/core";
 import {IRepository} from "@domain";
 import {ContextJSON, MessageJSON, StorageJSON} from "@domain/contracts/json";
-import {MeldReader, MeldStore} from "@infr/m-ld/meldStore";
+import {MeldWriter} from "@infr/m-ld/meldWriter";
 import {MeldFactory} from "@infr/m-ld/meld.factory";
 import {MeldReadState} from "@m-ld/m-ld";
 import {ulid} from "ulid";
+import {MeldReader} from "@infr/m-ld/meldReader";
 
 // Buffer.isBuffer = (x => {
 //     return ArrayBuffer.isView(x) || Array.isArray(x);
@@ -19,7 +20,7 @@ export class MeldRepository implements IRepository {
 
     private async getWriter(contextURI: string) {
         const meld = await MeldFactory.GetMeldClone(contextURI, this.id);
-        const writer = new MeldStore(meld, this.id);
+        const writer = new MeldWriter(meld, this.id);
         return writer;
     }
 
@@ -92,12 +93,12 @@ export class MeldRepository implements IRepository {
     protected stateSubject$ = new Subject<MeldReadState>();
 
     public State$ = this.stateSubject$.asObservable().pipe(
-        h.tap(console.log),
+        // h.tap(console.log),
         h.concatMap(() => this.readState()),
-        h.tap(console.log),
+        // h.tap(console.log),
     )
 
-    private async readState() {
+    private async readState(): Promise<StorageJSON> {
         const meld = await MeldFactory.GetMeldClone(this.storageURI, this.id);
         const reader = new MeldReader(meld);
         const contexts = await reader.GetContexts();

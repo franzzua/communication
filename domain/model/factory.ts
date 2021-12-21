@@ -18,14 +18,11 @@ export class Factory extends IFactory {
     }
 
     public GetOrCreateMessage(state: Message, storage: StorageModel): MessageModel {
-        if (this.MessageMap.has(state.URI))
-            return  this.MessageMap.get(state.URI);
-        const message = new MessageModel(this, storage, state);
+        const message = this.MessageMap.get(state.id) ?? new MessageModel(this, storage, state);
         message.Update = storage.Update;
         message.Link(this.GetContext(state.Context.URI), state.SubContext ? this.GetContext(state.SubContext.URI) : null);
-        message.Context.AddChild(message);
-        message.SubContext && message.SubContext.AddParent(message);
-        this.MessageMap.set(state.URI, message);
+        message.FromJSON(state);
+        this.MessageMap.set(state.id, message);
         return message;
     }
 
@@ -39,9 +36,8 @@ export class Factory extends IFactory {
     }
 
     public GetOrCreateContext(state: Context, storage: StorageModel): ContextModel {
-        if (this.ContextMap.has(state.URI))
-            return this.ContextMap.get(state.URI);
-        const context = new ContextModel(this, storage, state);
+        const context = this.ContextMap.get(state.URI) ?? new ContextModel(this, storage, state);
+        context.FromJSON(state);
         this.ContextMap.set(state.URI, context);
         return context;
     }

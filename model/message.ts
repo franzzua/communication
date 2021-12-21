@@ -13,12 +13,11 @@ export class Message {
     public Context?: Context;
     public SubContext?: Context;
     public Action?: string;
-    public URI: string;
     public id: string;
     public Order: number;
     public equals?(m: Message): boolean;
     static isLast(message: Message) {
-        return message.Context.Messages[message.Context.Messages.length - 1].URI == message.URI;
+        return message.Context.Messages[message.Context.Messages.length - 1].id == message.id;
     }
 
     static equals(message: Message): (message2: Message) => boolean;
@@ -26,7 +25,7 @@ export class Message {
     static equals(...messages: Message[]) {
         if (messages.length == 1) {
             return message2 => {
-                if (message2.URI && message2.URI !== messages[0].URI)
+                if (message2.URI && message2.URI !== messages[0].id)
                     return false;
                 if (messages[0].id && messages[0].id !== message2.id)
                     return false;
@@ -40,7 +39,6 @@ export class Message {
     static FromJSON(m: MessageJSON): Message{
         return  {
             Content: m.Content,
-            URI: m.URI,
             Description: m.Description,
             CreatedAt: utc(m.CreatedAt),
             UpdatedAt: utc(m.UpdatedAt),
@@ -58,7 +56,6 @@ export class Message {
     static ToJSON(m: Message): MessageJSON {
         return {
             Content: m.Content,
-            URI: m.URI,
             id: m.id,
             Description: m.Description,
             CreatedAt: m.CreatedAt.set({millisecond: 0}).toISO(),

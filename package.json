@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "tsc": "ttsc --watch",
+    "yjs:weboscket": "PORT=1234 node ./node_modules/y-websocket/bin/server.js",
     "build:client": "hypertype client --watch",
     "build:client:prod": "hypertype client --prod",
     "build:run": "hypertype client --watch --run",
@@ -39,7 +40,9 @@
     "tsconfig-paths-webpack-plugin": "^3.5.1",
     "ulid": "^2.3.0",
     "webcrypto": "^0.1.1",
-    "ws": "7.4.2"
+    "ws": "7.4.2",
+    "y-indexeddb": "^9.0.6",
+    "y-websocket": "^1.3.18"
   },
   "devDependencies": {
     "@hypertype/app": "3.6.16",
@@ -61,7 +64,8 @@
     "ts-jest": "^26.4.4",
     "ttypescript": "1.5.12",
     "typescript": "4.4.3",
-    "yjs": "^13.4.9"
+    "y-webrtc": "^10.2.2",
+    "yjs": "^13.5.23"
   },
   "hypertype": {
     "client": {

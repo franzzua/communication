@@ -38,7 +38,6 @@ export class TreeStore {
                     Context: root,
                     CreatedAt: utc(),
                     UpdatedAt: utc(),
-                    URI: undefined,
                     id: ulid(),
                     Order: 0
                 };
@@ -119,7 +118,6 @@ export class TreeStore {
                 const paragraphs = clipboard.split('\n');
                 for (let paragraph of paragraphs) {
                     this.AddMessage({
-                        URI: undefined,
                         id: ulid(),
                         Content: paragraph,
                         CreatedAt: utc(),
@@ -158,7 +156,6 @@ export class TreeStore {
         return state => {
             const parentPath = getParentPath(state);
             const newMessage: Message = {
-                URI: undefined,
                 id: ulid(),
                 CreatedAt: utc(),
                 UpdatedAt: utc(),

@@ -23,13 +23,13 @@ const invoke = () => {
 export const queueCRD = (crd: CRD<ContextJSON | MessageJSON>) => {
     function get(key: keyof CRD<ContextJSON | MessageJSON>){
         return (x: ContextJSON | MessageJSON) => {
-            console.time(`${key} ${x.URI}`);
+            console.time(`${key} ${x.id}`);
             return new Promise((resolve, reject) => {
                 queue.push(
                     () => crd[key](x)
                         .then(resolve)
                         .catch(reject)
-                        .then(() => console.timeEnd(`${key} ${x.URI}`))
+                        .then(() => console.timeEnd(`${key} ${x.id}`))
                 );
                 invoke();
             });
