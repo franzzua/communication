@@ -13,7 +13,7 @@ export class YjsStore {
     });
     private indexeddbProvider = new IndexeddbPersistence(this.URI, this.doc);
 
-    private wsProvider = new WebsocketProvider('ws://localhost:1234', this.URI, this.doc);
+    // private wsProvider = new WebsocketProvider('ws://localhost:1234', this.URI, this.doc);
     private webRtcProvider = new WebrtcProvider(this.URI, this.doc, {
         signaling: ['wss://signaling.yjs.dev', 'wss://y-webrtc-signaling-eu.herokuapp.com', 'wss://y-webrtc-signaling-us.herokuapp.com'],
         // If password is a string, it will be used to encrypt all communication over the signaling servers.
