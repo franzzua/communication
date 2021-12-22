@@ -83,7 +83,7 @@ export class TreeStore {
                 const json = {
                     Content: message.Content,
                     SubContext: message.SubContext ? {
-                        URI: message.SubContext.id
+                        URI: message.SubContext.URI
                     } : undefined,
                 };
                 if (event.clipboardData) {
@@ -104,14 +104,16 @@ export class TreeStore {
                         ?? await navigator.clipboard.readText();
         return (state: IState) => {
             try {
-                const parsed = JSON.parse(clipboard);
+                const parsed = JSON.parse(clipboard) as Message;
                 if (parsed.Content) {
                     if (parsed.SubContext) {
                         // await this.persistanceService.Load(parsed.SubContext.URI)
                         parsed.SubContext = state.Items.map(x => x.Message.Context)
 
-                            .find(x => x.id == parsed.SubContext.id);
+                            .find(x => x.URI == parsed.SubContext.URI);
                     }
+                    parsed.CreatedAt = utc();
+                    parsed.UpdatedAt = utc();
                     this.AddMessage(parsed, state.Selected.Message);
                 }
             } catch (e) {
@@ -342,10 +344,14 @@ export const keyMap: {
     CtrlArrowRight: "MoveRight",
     CtrlArrowUp: "MoveUp",
     CtrlArrowDown: "MoveDown",
+    CtrlC: "Copy",
+    CtrlV: "Paste",
     ShiftDelete: "Remove",
     ArrowDown: "Down",
     ArrowUp: "Up",
     CtrlEnter: "AddChild",
+    CtrlNumpadEnter: "AddChild",
+    NumpadEnter: "AddNext",
     Enter: "AddNext",
     Paste: "Paste",
     Copy: "Copy",
