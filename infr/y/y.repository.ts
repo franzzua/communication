@@ -45,9 +45,17 @@ export class YRepository implements IRepository {
 
     async Load(): Promise<StorageJSON> {
         await this.storageStore.IsLoaded$;
-        return this.State$.pipe(
+        const state = await this.State$.pipe(
             first()
         ).toPromise();
+        if (state.Contexts.length != 0) {
+            return state;
+        } else {
+            await this.storageStore.IsSynced$;
+            return await this.State$.pipe(
+                first()
+            ).toPromise();
+        }
     }
 
 }

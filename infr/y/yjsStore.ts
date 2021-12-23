@@ -27,6 +27,7 @@ export class YjsStore {
     } as any);
 
     public IsLoaded$: Promise<any> = this.indexeddbProvider.whenSynced;
+    public IsSynced$ = new Promise(resolve => this.webRtcProvider.once('connect', resolve));
 
     public constructor(public URI: string) {
     }
