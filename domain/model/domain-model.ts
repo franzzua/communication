@@ -1,36 +1,56 @@
-import {DateTime, Injectable, utc} from "@hypertype/core";
-import {Model} from "@hypertype/domain";
-import {StorageModel} from "./storage-model";
-import { IFactory } from "./i-factory";
+import {Injectable} from "@hypertype/core";
+import {IFactory, Model} from "@common/domain";
 import {IDomainActions} from "../contracts/actions";
-import { StorageJSON} from "@domain/contracts/json";
-import {DomainState, Storage} from "@model";
+import {Context, DomainState, Message} from "@model";
+import {ContextModel} from "@domain/model/context-model";
 
 @Injectable()
-export class DomainModel extends Model<DomainState, IDomainActions> implements IDomainActions {
-    public Storages: Map<string, StorageModel> = new Map();
-
+export class DomainModel extends Model<DomainState, IDomainActions> {
+    public Contexts: Map<string, ContextModel> = new Map<string, ContextModel>();
 
     constructor(private factory: IFactory) {
         super();
         window['domain'] = this;
-        this.useLastUpdate = true;
+        // this.useLastUpdate = true;
     }
 
-    public FromJSON(state: DomainState): any {
-        this.Storages = new Map(state.Storages.map(x => [x.URI, this.factory.GetOrCreateStorage(x, this)]));
+    public set State(state: DomainState) {
     }
 
-    public ToJSON(): DomainState{
-        return {
-            Storages: [...this.Storages.values()].map(x => x.ToJSON())
+    public get State(): DomainState {
+        const state = {
+            Contexts: new Map<string, Readonly<Context>>(),
+            Messages: new Map<string, Readonly<Message>>()
         };
+        for (let context of this.Contexts.values()) {
+            this.toJSON(context, state);
+        }
+        return state;
     }
 
-    public async CreateStorage(json: Storage): Promise<Storage>{
-        const storage = this.factory.GetOrCreateStorage(json, this);
-        await storage.Load();
-        this.Storages.set(storage.URI, storage);
-        return storage.ToJSON();
+    private toJSON(context: ContextModel, output: DomainState) {
+        if (output.Contexts.has(context.URI))
+            return output.Contexts.get(context.URI);
+        const contextState = context.ToJSON();
+        output.Contexts.set(context.URI, contextState);
+        contextState.Messages = context.OrderedMessages.map(msg => ({
+            ...msg.State,
+            Context: contextState,
+            SubContext: msg.SubContext ? this.toJSON(msg.SubContext, output) : null
+        }));
+        return contextState;
     }
+
+
+    public Actions: IDomainActions = Object.assign(Object.create(this), {
+        async LoadContext(uri: string) {
+            this.Contexts.set(uri, this.factory.GetOrCreateContext(uri));
+        },
+
+        async CreateContext(context: Context): Promise<void> {
+            const model = await this.factory.GetOrCreateContext(context.URI);
+        }
+    });
+
 }
+

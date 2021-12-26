@@ -1,112 +1,77 @@
-import {ContextModel} from "@domain/model/context-model";
 import {Injectable, utc} from "@hypertype/core";
-import { MessageJSON } from "@domain/contracts/json";
-import {StorageModel} from "@domain/model/storage-model";
-import {IFactory} from "@domain/model/i-factory";
 import {IMessageActions} from "@domain/contracts/actions";
-import { Message} from "@model";
-import {Model} from "@hypertype/domain";
+import {Message} from "@model";
+import {Factory} from "./factory";
+import {Model} from "@common/domain";
+import {ContextStore} from "@infr/y/contextStore";
 
 @Injectable(true)
-export class MessageModel extends Model<Message, IMessageActions> implements IMessageActions {
+export class MessageModel extends Model<Message, IMessageActions> {
 
-    private _context: ContextModel;
-    public get Context(){
-        return this._context;
+    public get Context() {
+        return this.factory.GetOrCreateContext(this.$state().Context.URI);
     }
-    private _subContext: ContextModel;
+
     public get SubContext() {
-        return this._subContext;
+        return this.$state().SubContext ? this.factory.GetOrCreateContext(this.$state().SubContext.URI) : null;
     }
 
-    public get id(): string {return  this.State.id; }
-
-    constructor(private readonly factory: IFactory,
-                public readonly Storage: StorageModel,
-                public readonly State: Omit<Message, keyof {Context, SubContext, Storage}>) {
+    constructor(private readonly factory: Factory, private contextStore: ContextStore, public id: string) {
         super();
     }
 
-    public Link(context: ContextModel, subContext: ContextModel){
-        if (this._context !== context){
-            this._context?.DetachMessage(this, 'force');
-            this._context = context;
-            this._context?.AddChild(this, 'force');
+    public get State() {
+        return Message.FromJSON(this.contextStore.State().Messages.find(x => x.id === this.id));
+    }
+
+    public set State(value: Readonly<Message>) {
+        const cur = this.contextStore.State();
+        this.contextStore.State({
+            Context: cur.Context,
+            Messages: [...cur.Messages.filter(x => x.id !== value.id), Message.ToJSON(value)]
+        });
+    }
+
+    public Actions: IMessageActions = Object.assign(Object.create(this), {
+
+
+        async UpdateText(text: string): Promise<void> {
+            this.State = {
+                ...this.State,
+                UpdatedAt: utc(),
+                Content: text
+            };
+        },
+
+
+        async Attach(uri: string): Promise<void> {
+            this.State = {
+                ...this.State,
+                UpdatedAt: utc(),
+                SubContext: {
+                    URI: uri
+                } as any
+            };
+        },
+
+        async Move(fromURI, toURI, toIndex: number) {
+            if (fromURI == toURI)
+                return await this.Reorder(toIndex);
+            const oldContext = this.factory.GetOrCreateContext(fromURI);
+            if (oldContext) {
+                await oldContext.Actions.RemoveMessage(this.id);
+            }
+            const context = this.factory.GetOrCreateContext(toURI);
+            await context.Actions.CreateMessage(this.State);
+            await this.Reorder(toIndex);
+        },
+
+        async Reorder(newOrder: number): Promise<void> {
+            if (!this.Context)
+                return;
+            this.Context.Actions.ReorderMessage(this, newOrder);
         }
-        if (this._subContext !== subContext) {
-            this._subContext?.DetachFrom(this, 'force');
-            this._subContext = subContext;
-            this._subContext?.AddParent(this, 'force');
-        }
-    }
+    });
 
-    public FromServer(json: MessageJSON){
-        Object.assign(this.State, Message.FromJSON(json));
-    }
-
-    FromJSON(state: Message): any {
-        Object.assign(this.State, state);
-    }
-
-    public ToJSON(): Message {
-        return {
-            ...this.State,
-            Context: null,
-            SubContext: null,
-            equals: Message.equals(this.State)
-        };
-    }
-
-    public ToServer(){
-        return {
-            ...Message.ToJSON(this.State),
-            ContextURI: this.Context.URI,
-            SubContextURI: this.SubContext?.URI,
-            StorageURI: this.Storage?.URI
-        };
-    }
-
-    public async UpdateText(text: string): Promise<void> {
-        this.State.UpdatedAt = utc();
-        this.State.Content = text;
-        await this.Save();
-    }
-
-
-    public async Attach(uri: string): Promise<void> {
-        this.State.UpdatedAt = utc();
-        this._subContext = this.factory.GetContext(uri);
-        this._subContext.AddParent(this);
-        await this.Save();
-    }
-
-    public async Move(fromURI, toURI, toIndex: number){
-        if (fromURI == toURI)
-            return await  this.Reorder(toIndex);
-        const oldContext = this.Storage.Contexts.get(fromURI);
-        if (oldContext) {
-            await oldContext.RemoveMessage(this.id);
-            await oldContext.Save();
-        }
-        const context = this.Storage.Contexts.get(toURI);
-        await this.Storage.CreateMessage({
-            ...this.State,
-            Context: context.State,
-            SubContext: this.SubContext?.State,
-        } as Message);
-        await this.Reorder(toIndex);
-    }
-
-    public async Reorder(newOrder: number): Promise<void>{
-        if (!this.Context)
-            return ;
-        this._context.DetachMessage(this);
-        this._context.AttachMessage(this, newOrder);
-        await this._context.Save();
-    }
-
-    private async Save(){
-        await this.Storage.repository.Messages.Update(this.ToServer());
-    }
 }
 

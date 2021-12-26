@@ -20,10 +20,12 @@ export class Context {
     public equals?(m: Context): boolean;
 
 
-    static FromJSON(c: ContextJSON){
+    static FromJSON(c: ContextJSON): Context{
         return  {
             URI: c.URI,
             id: c.id,
+            Storage: null,
+            Parents: [],
             IsRoot: c.IsRoot,
             UpdatedAt: utc(c.UpdatedAt),
             CreatedAt: utc(c.CreatedAt),
@@ -34,7 +36,7 @@ export class Context {
 
     static ToJSON(c: Context): ContextJSON {
         return {
-            StorageURI: c.Storage.URI,
+            // StorageURI: c.Storage.URI,
             URI: c.URI,
             id: c.id,
             UpdatedAt: c.UpdatedAt.set({millisecond: 0}).toISO(),

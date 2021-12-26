@@ -32,18 +32,18 @@ export class TreeStore {
     @logReducer
     async Init(root: Context): Promise<Reducer<IState>> {
         return state => {
-            if (root.Messages.length == 0) {
-                const message: Message = {
-                    Content: 'Добро пожаловать!',
-                    Context: root,
-                    CreatedAt: utc(),
-                    UpdatedAt: utc(),
-                    id: ulid(),
-                    Order: 0
-                };
-                this.stateService.AddMessage(message);
-                root.Messages.push(message);
-            }
+            // if (root.Messages.length == 0) {
+            //     const message: Message = {
+            //         Content: 'Добро пожаловать!',
+            //         Context: root,
+            //         CreatedAt: utc(),
+            //         UpdatedAt: utc(),
+            //         id: ulid(),
+            //         Order: 0
+            //     };
+            //     this.stateService.AddMessage(message);
+            //     root.Messages.push(message);
+            // }
             // state.ItemsMap = new Map<string, TreeItem>();
             const items = TreePresenter.ToTree(root, state.ItemsMap);
             // const items = TreePresenter.ToTree(root, new Map());
@@ -106,12 +106,12 @@ export class TreeStore {
             try {
                 const parsed = JSON.parse(clipboard) as Message;
                 if (parsed.Content) {
-                    if (parsed.SubContext) {
-                        // await this.persistanceService.Load(parsed.SubContext.URI)
-                        parsed.SubContext = state.Items.map(x => x.Message.Context)
-
-                            .find(x => x.URI == parsed.SubContext.URI);
-                    }
+                    // if (parsed.SubContext) {
+                    //     // await this.persistanceService.Load(parsed.SubContext.URI)
+                    //     parsed.SubContext = state.Items.map(x => x.Message.Context)
+                    //
+                    //         .find(x => x.URI == parsed.SubContext.URI);
+                    // }
                     parsed.CreatedAt = utc();
                     parsed.UpdatedAt = utc();
                     this.AddMessage(parsed, state.Selected.Message);

@@ -13,5 +13,7 @@ export class Storage {
 }
 
 export class DomainState {
-    public Storages: Storage[];
+    public Contexts: Map<string, Readonly<Context>>;
+    public Messages: Map<string, Readonly<Message>>;
+    // public Storages: Storage[];
 }

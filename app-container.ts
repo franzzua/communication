@@ -13,9 +13,11 @@ import {ManagementService} from "./services/management.service";
 import {ProxyDomainContainer} from "@hypertype/domain";
 import {InfrContainer} from "@infr/infr.container";
 import {DomainContainer} from "@domain";
+import {RouterService} from "./app/services/router.service";
 
 export const AppContainer = Container.withProviders(
     StorageService,
+    RouterService,
     ContextService,
     AccountManager,
     LogService,

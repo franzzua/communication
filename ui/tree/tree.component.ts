@@ -25,14 +25,11 @@ export class TreeComponent extends HyperComponent<IState, IEvents> {
 
 
     public StorageURI$ = this.uri$.pipe(
-        h.switchMap(uri => this.stateService.LoadStorage(uri)),
+        h.switchMap(uri => this.stateService.LoadStorageForContext(uri)),
     );
 
-    public Root$ = h.combineLatest([
-        this.StorageURI$,
-        this.stateService.State$
-    ]).pipe(
-        h.map(([uri, state])=> state?.Root),
+    public Root$ = this.StorageURI$.pipe(
+        h.switchMap(uri => this.stateService.getContext$(uri)),
         // h.tap(console.log),
         h.filter(x => x != null)
     );

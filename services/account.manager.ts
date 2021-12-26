@@ -15,7 +15,10 @@ export class AccountManager {
     private providerSubject$ = new BehaviorSubject<string[]>([]);
     public Providers$: Observable<string[]> = this.providerSubject$.asObservable();
 
+    private providers = new Map<string, IAccountProvider>();
+
     public async Register(provider: IAccountProvider) {
+        this.providers.set(provider.type, provider);
         provider.Check().then(res => res && this.addAccount(res));
         this.actionService.Register(`accounts.${provider.type}.add`, async () => {
             const result = await provider.Login();
@@ -29,6 +32,10 @@ export class AccountManager {
     private async addAccount(info: IAccountInfo){
         this.accountsSubject$.next([...this.accountsSubject$.value, info]);
         this.eventBus.Notify('OnNewAccount', info);
+    }
+
+    Login(provider: "google") {
+        this.providers.get(provider)?.Login();
     }
 }
 

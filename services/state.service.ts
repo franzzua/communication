@@ -1,17 +1,19 @@
 import * as h from "@hypertype/core";
 import {BehaviorSubject, filter, first, Fn, DateTime, Injectable, map, Observable, shareReplay, tap, utc} from "@hypertype/core";
-import {Context, Message, Storage} from "@model";
+import {Context, DomainState, Message, Storage} from "@model";
 import {LogService} from "./log.service";
-import {DomainProxy} from "@domain";
+import {DomainProxy, IDomainActions} from "@domain";
 import {ProxyProvider} from "./proxy-provider.service";
 import {ulid} from "ulid";
 import {AccountManager} from "./account.manager";
+import {IFactory, Model} from "@common/domain";
+import type {DomainModel} from "@domain/model";
 
 @Injectable()
 export class StateService {
 
     constructor(
-        private domainProxy: DomainProxy,
+        private factory: IFactory<Model<DomainState, IDomainActions>>,
         private proxyProvider: ProxyProvider,
         private accManager: AccountManager,
         private logService: LogService
@@ -27,8 +29,7 @@ export class StateService {
 
 
     async CreateContext(context: Context) {
-        const proxy = await this.proxyProvider.GetStorageProxy(context.Storage);
-        await proxy.Actions.CreateContext(context);
+        await this.factory.Root.Actions.CreateContext(context);
         this._subject$.next();
     }
 
@@ -44,7 +45,8 @@ export class StateService {
             CreatedAt: utc(),
             IsRoot: false,
             URI: undefined
-        }
+        };
+        message.SubContext.URI = `${message.Context.URI.split('/').slice(0,-1).join('/')}/${message.SubContext.id}`;
         await this.CreateContext(message.SubContext);
         //
         // this.ContextStore.Create(message.SubContext)
@@ -70,7 +72,7 @@ export class StateService {
 
     public async AddMessage(message: Message) {
         message.Order = message.Context.Messages.length;
-        const proxy = await this.proxyProvider.GetStorageProxy(message.Context.Storage);
+        const proxy = await this.proxyProvider.GetContextProxy(message.Context);
         await proxy.Actions.CreateMessage(message);
     }
 
@@ -112,32 +114,17 @@ export class StateService {
         // this.eventBus.Notify('OnUpdateContent', message, content);
     }
 
-    public async LoadStorage(uri: string): Promise<string> {
+    public async LoadStorageForContext(uri: string): Promise<string> {
         // const existed = this.StorageStore.getByURI(uri);
         // if (existed) return uri;
         if (!uri) {
             const accounts = await this.accManager.Accounts$.pipe(filter(x => x.length > 0), first()).toPromise();
             const defaultStorage = accounts[0].defaultStorage;
-            await this.domainProxy.Actions.CreateStorage({
-                URI: defaultStorage,
-                Type: accounts[0].type,
-                Root: null,
-                Trash: [],
-                Messages: new Map(),
-                Contexts: new Map()
-            });
+            await this.factory.Root.Actions.LoadContext(defaultStorage);
             history.replaceState(null, defaultStorage, `${location.href}${btoa(defaultStorage).replaceAll('=','')}`)
             return defaultStorage;
         }
-        const type = uri.startsWith('local://') ? 'local' : 'solid';
-        await this.domainProxy.Actions.CreateStorage({
-            URI: uri,
-            Type: type,
-            Root: null,
-            Trash: [],
-            Messages: new Map(),
-            Contexts: new Map()
-        });
+        await this.factory.Root.Actions.LoadContext(uri);
         return uri;
     }
 
@@ -147,9 +134,9 @@ export class StateService {
     //
     public getContext$(uri: string): Observable<Context> {
         return this.State$.pipe(
-            tap(x => console.log('root:', x)),
+            // tap(x => console.log('root:', x)),
             filter(Fn.Ib),
-            map(x => x.Root),
+            map(x => x.Contexts.get(uri)),
         );
     }
 
@@ -165,11 +152,9 @@ export class StateService {
     // )
 
 
-    public State$: Observable<Storage> = this.domainProxy.State$.pipe(
-        // tap(x => console.log('root:', x)),
-        map(x => x.Storages[0]),
-        shareReplay(1)
-    )
+    public State$: Observable<DomainState> = new Observable<DomainState>(subscr => {
+        this.factory.Root.$state.subscribe((err, evt) => subscr.next(evt.data.value));
+    })
 
 }
 

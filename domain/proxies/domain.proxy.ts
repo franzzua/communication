@@ -8,17 +8,13 @@ import {DomainState, Storage} from "@model";
 export class DomainProxy extends ModelProxy<DomainState, IDomainActions>{
 
     @Fn.cache()
-    public GetStorageProxy(uri: string){
-        return this.GetSubProxy(StorageProxy, 'Storages', uri) as StorageProxy;
+    public GetContextProxy(uri: string){
+        return this.GetSubProxy(ContextProxy, 'Contexts' as any, uri) as ContextProxy;
     }
 }
 
-export class StorageProxy extends ModelProxy<Storage, IStorageActions>{
+export class ContextProxy extends ModelProxy<ContextJSON, IContextActions>{
 
-    @Fn.cache()
-    public GetContextProxy(uri: string){
-        return this.GetSubProxy(ModelProxy, 'Contexts' as any, uri) as ModelProxy<ContextJSON, IContextActions>;
-    }
 
     @Fn.cache()
     public GetMessageProxy(uri: string){

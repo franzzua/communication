@@ -1,138 +1,128 @@
-import {StorageModel} from "./storage-model";
 import {MessageModel} from "./message-model";
 import {IContextActions} from "../contracts/actions";
-import {IFactory} from "@domain/model/i-factory";
 import {ContextJSON} from "@domain/contracts/json";
 import {Permutation} from "@domain/helpers/permutation";
-import {Context} from "@model";
-import {Model} from "@hypertype/domain";
+import {Context, Message} from "@model";
 import {utc} from "@hypertype/core";
+import {cellx} from "cellx";
+import {Factory} from "./factory";
+import {Model} from "@common/domain";
+import {ContextStore} from "@infr/y/contextStore";
 
-export class ContextModel extends Model<Context, IContextActions> implements IContextActions {
+export class ContextModel extends Model<Context, IContextActions> {
 
-    public get State(): Readonly<Omit<Context, keyof { Messages, Parents, Storage }>> {
-        return this._state;
+    constructor(public URI: string,
+                public contextStore: ContextStore,
+                private factory: Factory) {
+        super();
+        // this.$state.subscribe((err, evt) => this.Update());
+        cellx(() => this.State.Messages).subscribe((event, data) => {
+            this.Messages = new Map(this._messages.map(x => [x.id, x]));
+        })
     }
 
-    private _messages: Array<MessageModel> = [];
+    public get State(): Readonly<Context> {
+        const state = this.contextStore.State();
+        const context = Context.FromJSON(state.Context);
+        context.Messages = state.Messages.map(Message.FromJSON);
+        return context;
+    }
+
+    public set State(value: Readonly<Context>) {
+        this.contextStore.State({
+            Context: Context.ToJSON(value),
+            Messages: value.Messages.map(Message.ToJSON),
+        });
+    }
+
+    public Messages: ReadonlyMap<string, MessageModel> = new Map();
+
+    private get _messages(): ReadonlyArray<MessageModel> {
+        return this.State.Messages.map(x => this.factory.GetOrCreateMessage(x))
+    }
 
     private get DefaultOrderedMessages(): ReadonlyArray<MessageModel> {
-        return this._messages.orderBy(x => x.State.id);
+        return this._messages.orderBy(x => x.id);
     }
 
-    private get OrderedMessages(): ReadonlyArray<MessageModel> {
+    public get OrderedMessages(): ReadonlyArray<MessageModel> {
         if (!this._messages.length)
             return [];
-        if (!this._state.Permutation)
+        if (!this.State.Permutation)
             return this.DefaultOrderedMessages;
-        return this._state.Permutation.Invoke(this.DefaultOrderedMessages)
+        return this.State.Permutation.Invoke(this.DefaultOrderedMessages)
             .filter(x => x != null);
     }
 
-    private _parents: Array<MessageModel> = [];
+    //
+    // private _parents: Array<MessageModel> = [];
+    //
+    // public get Parents(): ReadonlyArray<MessageModel> {
+    //     return this._parents;
+    // }
 
-    public get Messages(): ReadonlyArray<MessageModel> {
-        return this.OrderedMessages;
-    }
 
-    public get Parents(): ReadonlyArray<MessageModel> {
-        return this._parents;
-    }
-
-    public get URI(): string {
-        return this._state.URI;
-    }
-
-    constructor(private readonly factory: IFactory,
-                public readonly Storage: StorageModel,
-                private _state: Context) {
-        super();
-    }
-
-    public FromServer(state: ContextJSON) {
-        Object.assign(this._state, Context.FromJSON(state));
-    }
+    // public FromServer(state: ContextJSON) {
+    //     Object.assign(this.St, Context.FromJSON(state));
+    // }
 
     public ToJSON(): Context {
+        const state = this.State;
         return {
-            ...this._state,
+            ...state,
             Storage: null,
-            equals: Context.equals(this._state)
-            // Messages: []
+            equals: Context.equals(state),
+            Messages: []
         };
     }
 
     public FromJSON(state: Context): any {
-        Object.assign(this._state, state);
+        throw new Error('not implemented');
+        // Object.assign(this.State, state);
     }
 
     public ToServer(): ContextJSON {
-        return Context.ToJSON(this._state);
+        return Context.ToJSON(this.State);
     }
 
-    public DetachMessage(msg: MessageModel, force: 'force' | false = false) {
-        if (force) {
-            this._messages.remove(msg);
-            return;
-        }
-        this.UpdateMessagesPermutation(this.OrderedMessages.filter(x => x.id != msg.id));
-    }
+    public Actions = Object.assign(Object.create(this), {
 
-    public AttachMessage(message: MessageModel, index: number) {
-        const messages = [...this.OrderedMessages]
-        messages.splice(index, 0, message);
-        this.UpdateMessagesPermutation(messages);
-    }
 
-    public async RemoveMessage(uri: string): Promise<void> {
-        const msg = this.Storage.Messages.get(uri);
-        // if (msg.SubContext)
-        //     msg.SubContext.DetachFrom(msg)
-        await this.Storage.repository.Messages.Delete(msg.ToServer());
-        this.DetachMessage(msg);
-        this.Storage.Messages.delete(uri);
-        await this.Save();
-    }
+        DetachMessage(msg: MessageModel) {
+            this.UpdateMessagesPermutation(this.OrderedMessages.filter(x => x.id != msg.id));
+        },
 
-    private UpdateMessagesPermutation(orderedMessages: Array<MessageModel>) {
-        this._messages = orderedMessages;
-        this._state.Permutation = Permutation.Diff(this.DefaultOrderedMessages, orderedMessages);
-    }
+        AttachMessage(message: MessageModel, index: number) {
+            const messages = [...this.OrderedMessages]
+            messages.splice(index, 0, message);
+            this.UpdateMessagesPermutation(messages);
+        },
 
-    public SetOrder(): void {
+        async CreateMessage(message: Message): Promise<void> {
+            const messageModel = this.factory.GetOrCreateMessage(message);
+            // const messages = [...this.OrderedMessages, messageModel];
+            // this.UpdateMessagesPermutation(messages);
+        },
 
-    }
+        ReorderMessage(message: MessageModel, toIndex) {
+            const messages = [...this.OrderedMessages.filter(x => x !== message)];
+            messages.splice(toIndex, 0, message);
+            this.UpdateMessagesPermutation(messages);
+        },
 
-    AddParent(message: MessageModel, force: 'force' | false = false) {
-        if (this._parents.includes(message))
-            return;
-        if (force) {
-            this._parents.push(message);
-            return;
-        }
-        this._parents.push(message);
-    }
+        async RemoveMessage(id: string): Promise<void> {
+            const messages = this.OrderedMessages.filter(x => x.id !== id);
+            this.UpdateMessagesPermutation(messages);
+        },
 
-    AddChild(message: MessageModel, force: 'force' | false = false) {
-        if (this._messages.includes(message))
-            return;
-        if (force) {
-            this._messages.push(message);
-            return;
-        }
-        this.UpdateMessagesPermutation([...this.OrderedMessages, message]);
-    }
+        UpdateMessagesPermutation(orderedMessages: Array<MessageModel>) {
+            this.State = {
+                ...this.State,
+                UpdatedAt: utc(),
+                Permutation: Permutation.Diff(orderedMessages.orderBy(x => x.id), orderedMessages),
+                Messages: orderedMessages.map(x => x.State)
+            };
+        },
+    });
 
-    Save() {
-        this._state.UpdatedAt = utc();
-        this.Storage.repository.Contexts.Update(this.ToServer());
-    }
-
-    public DetachFrom(msg: MessageModel, force: 'force' | false = false) {
-        this._parents.remove(msg);
-    }
-
-    public AttachToParent(msg: MessageModel) {
-        this._parents.push(msg);
-    }
 }

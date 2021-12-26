@@ -14,7 +14,6 @@ import {DomainProxy} from "@domain";
 export class SettingsComponent extends HyperComponent<IState, IEvents>{
 
     constructor(private accountManger: AccountManager,
-                private domainProxy: DomainProxy,
                 private actionsService: ActionService) {
         super();
     }
@@ -33,11 +32,11 @@ export class SettingsComponent extends HyperComponent<IState, IEvents>{
             this.actionsService.Invoke(`accounts.${provider}.add`);
         },
         clear: async (account: IAccountInfo) => {
-            const state = await this.domainProxy.State$.pipe(first()).toPromise();
-            for (let storage of state.Storages) {
-                const proxy = this.domainProxy.GetStorageProxy(storage.URI);
-                await proxy.Actions.Clear();
-            }
+            throw new Error('not implemented');
+            // for (let storage of state.Storages) {
+            //     const proxy = this.domainProxy.GetStorageProxy(storage.URI);
+            //     await proxy.Actions.Clear();
+            // }
         }
     }
 }

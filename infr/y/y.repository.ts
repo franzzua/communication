@@ -1,13 +1,15 @@
 import {ContextJSON, IRepository, MessageJSON, StorageJSON} from "@domain";
 import {CRD} from "@domain/sync/item-sync";
-import {first, Observable, utc} from "@hypertype/core";
-import {ContextStore} from "./contextStore";
+import {from, NEVER, Observable, switchMap} from "@hypertype/core";
+import {ContextStore, IState} from "./contextStore";
 import {StorageStore} from "@infr/y/storageStore";
+import {cellx, ICellx} from "cellx";
+import {Context, Message} from "@model";
 
 export class YRepository implements IRepository {
-    private storageStore = new StorageStore(this.uri);
+    private storageStore = new StorageStore();
 
-    constructor(private uri) {
+    constructor() {
     }
 
     Contexts: CRD<ContextJSON> = {
@@ -37,25 +39,47 @@ export class YRepository implements IRepository {
         }
     }
 
-    State$: Observable<StorageJSON> = this.storageStore.State$;
+    State$: Observable<StorageJSON> = NEVER;
 
     async Clear(): Promise<void> {
         ContextStore.clear()
     }
 
-    async Load(): Promise<StorageJSON> {
-        await this.storageStore.IsLoaded$;
-        const state = await this.State$.pipe(
-            first()
-        ).toPromise();
-        if (state.Contexts.length != 0) {
-            return state;
-        } else {
-            await this.storageStore.IsSynced$;
-            return await this.State$.pipe(
-                first()
-            ).toPromise();
-        }
+    LoadContext(uri: string): ContextStore {
+        const store = this.storageStore.GetOrAdd(uri);
+        return store;
+    }
+
+    LoadContext$(uri: string) {
+        const store = this.storageStore.GetOrAdd(uri);
+        return from(store.IsLoaded$.then(() => {
+            const state = store.GetState();
+            if (state.Context.CreatedAt)
+                return state;
+            return store.IsSynced$;
+        })).pipe(
+            switchMap(x => store.State$)
+        );
+    }
+
+    async Load(uri: string = null): Promise<StorageJSON> {
+        return new Promise<StorageJSON>(r => ({}));
+        // if (uri) {
+        //     const store = this.storageStore.Add(uri)
+        //     await store.IsSynced$;
+        // }
+        // await this.storageStore.IsLoaded$;
+        // const state = await this.State$.pipe(
+        //     first()
+        // ).toPromise();
+        // if (state.Contexts.length != 0) {
+        //     return state;
+        // } else {
+        //     await this.storageStore.IsSynced$;
+        //     return await this.State$.pipe(
+        //         first()
+        //     ).toPromise();
+        // }
     }
 
 }

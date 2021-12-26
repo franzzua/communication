@@ -1,7 +1,8 @@
 import {Map as YMap} from "yjs";
 import {ContextJSON, MessageJSON} from "@domain";
-import {from, map, merge, shareReplay} from "@hypertype/core";
+import {from, map, merge, shareReplay, tap} from "@hypertype/core";
 import {fromYjs, YjsStore} from "@infr/y/yjsStore";
+import {cellx} from "cellx";
 
 
 export class ContextStore extends YjsStore {
@@ -14,16 +15,18 @@ export class ContextStore extends YjsStore {
         fromYjs(this.contextMap),
         fromYjs(this.messageArray),
         from(this.IsLoaded$),
+        from(this.IsSynced$),
     ).pipe(
         map((event) => {
             console.log(event);
-            return {
-                Context: this.readContext(),
-                Messages: this.readMessages()
-            }
+            return this.GetState();
         }),
+        tap(state => this.State(state)),
+        tap(console.log),
         shareReplay(1)
     )
+
+    subscr2 = this.State$.subscribe();
 
     UpdateContext(item: Partial<ContextJSON>) {
         this.doc.transact(() => {
@@ -84,5 +87,47 @@ export class ContextStore extends YjsStore {
 
     static clear() {
     }
+
+    State = cellx(this.GetState());
+
+    subscr = this.State.subscribe((err, data) => {
+        const { value} = data.data as { prevValue: IState, value: IState };
+        const prevValue = this.GetState();
+        this.doc.transact(() => {
+            if (value.Context.UpdatedAt && prevValue.Context.UpdatedAt !== value.Context.UpdatedAt) {
+                this.UpdateContext(value.Context);
+                console.log('update context', value.Context.id);
+            }
+            const toDelete = new Map(prevValue.Messages.map(x => [x.id, x]));
+            for (let message of value.Messages) {
+                const old = toDelete.get(message.id)
+                if (old) {
+                    toDelete.delete(message.id);
+                    if (message.UpdatedAt && message.UpdatedAt !== old.UpdatedAt) {
+                        this.UpdateMessage(message);
+                        console.log('update message', message.id);
+                    }
+                } else {
+                    console.log('add message', message.id);
+                    this.AddMessage(message);
+                }
+            }
+            for (let message of toDelete.values()) {
+                this.DeleteMessage(message);
+                console.log('delete message', message.id);
+            }
+        });
+    })
+
+    GetState(): IState {
+        return {
+            Context: this.readContext(),
+            Messages: this.readMessages()
+        }
+    }
 }
 
+export type IState = {
+    Context: Readonly<ContextJSON>;
+    Messages: ReadonlyArray<Readonly<MessageJSON>>;
+};

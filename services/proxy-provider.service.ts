@@ -1,45 +1,29 @@
-import {filter, first, Injectable, map} from "@hypertype/core";
-import {DomainProxy} from "@domain";
-import {Context, Message, Storage} from "@model";
+import {Injectable} from "@hypertype/core";
+import {Context, Message} from "@model";
+import {IFactory, Model} from "@common/domain";
+import {DomainModel} from "@domain/model";
+import {IContextActions, IMessageActions} from "@domain";
 
 @Injectable()
 export class ProxyProvider {
-    constructor(private domainProxy: DomainProxy) {
-    }
-
-    public async GetStorageProxy(storage: {URI}) {
-        await this.domainProxy.State$.pipe(
-            map(x => x.Storages.find(x => x.URI == storage.URI)),
-            filter(x => x != null),
-            first()
-        ).toPromise()
-        return this.domainProxy
-            .GetStorageProxy(storage.URI);
+    constructor(private factory: IFactory<DomainModel>) {
     }
 
     public async GetContextProxy(context: Context) {
-        await this.domainProxy.State$.pipe(
-            map(x => x.Storages.find(x => x.URI == context.Storage.URI)),
-            filter(x => x != null),
-            map(x => x.Contexts.get(context.URI)),
-            filter(x => x != null),
-            first()
-        ).toPromise()
-        return this.domainProxy
-            .GetStorageProxy(context.Storage.URI)
-            .GetContextProxy(context.URI)
+        // await this.domainProxy.State$.pipe(
+        //     map(x => x.Contexts.get(context.URI)),
+        //     filter(x => x != null),
+        //     first()
+        // ).toPromise()
+        return this.factory.GetModel<Model<Context, IContextActions>>('Context', context.URI);
     }
 
     public async GetMessageProxy(message: Message) {
-        await this.domainProxy.State$.pipe(
-            map(x => x.Storages.find(x => x.URI == message.Context.Storage.URI)),
-            filter(x => x != null),
-            map(x => x.Messages.get(message.id)),
-            filter(x => x != null),
-            first()
-        ).toPromise()
-        return this.domainProxy
-            .GetStorageProxy(message.Context.Storage.URI)
-            .GetMessageProxy(message.id)
+        // await this.domainProxy.State$.pipe(
+        //     map(x => x.Contexts.get(message.Context.URI).Messages.get(message.id)),
+        //     filter(x => x != null),
+        //     first()
+        // ).toPromise()
+        return this.factory.GetModel<Model<Message, IMessageActions>>('Message', message.id);
     }
 }

@@ -12,7 +12,8 @@ import {PanelComponent} from "./panels/panel.component";
 import {DomainProxy} from "@domain";
 import {CrdtComponent} from "../crdt/ui/crdt/crdt.component";
 import {ConcordComponent} from "../crdt/ui/concord/concord.component";
-import {AppInitComponent} from "./app-init.component";
+import {AppInitComponent} from "./init/app-init.component";
+import {FakeLoginService} from "./services/fake-login.service";
 
 UIContainer.provide([
     AppRootComponent,
@@ -30,7 +31,7 @@ export class Application {
         private actionService: ActionService,
         private accountManager: AccountManager,
         // private localRepository: LocalRepository,
-        private domainProxy: DomainProxy,
+        // private domainProxy: DomainProxy,
         private base: BaseApplication) {
 
     }
@@ -62,6 +63,7 @@ export class Application {
     }
 
     private async registerAccounts() {
+        await this.accountManager.Register(new FakeLoginService());
         // await this.accountManager.Register(this.base.get<SolidLoginService>(SolidLoginService));
     }
 

@@ -1,6 +1,4 @@
 import {Context, Message, Storage} from "@model";
-import {ContextJSON, MessageJSON, StorageJSON} from "@domain/contracts/json";
-import {StorageModel} from "@domain/model";
 
 
 export interface IMessageActions {
@@ -12,10 +10,14 @@ export interface IMessageActions {
 
 export interface IContextActions {
     RemoveMessage(uri: string): Promise<void>;
+
+    CreateMessage(message: Message): Promise<void>;
 }
 
 export interface IDomainActions {
-    CreateStorage(storage: Storage): Promise<Storage>;
+    LoadContext(uri: string): Promise<void>;
+
+    CreateContext(context: Context): Promise<void>;
 }
 
 export interface IStorageActions {
@@ -24,4 +26,5 @@ export interface IStorageActions {
 
     Clear(): Promise<void>;
 }
+
 

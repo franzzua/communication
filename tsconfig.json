@@ -21,6 +21,12 @@
       "DOM"
     ],
     "paths": {
+      "@common/domain": [
+        "./common/domain"
+      ],
+      "@common/core": [
+        "./common/core"
+      ],
       "@model": [
         "./model"
       ],

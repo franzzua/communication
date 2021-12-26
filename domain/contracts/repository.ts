@@ -6,7 +6,7 @@ export interface IRepository {
 
     State$: Observable<StorageJSON>;
 
-    Load(): Promise<StorageJSON>;
+    Load(contextURI?): Promise<StorageJSON>;
 
     Contexts: CRD<ContextJSON>;
     Messages: CRD<MessageJSON>;
