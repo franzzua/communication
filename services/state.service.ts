@@ -78,39 +78,29 @@ export class StateService {
 
     public MoveMessage(message: Message, to: Context, toIndex: number = to.Messages.length): void {
         const fromURI = message.Context.URI;
-        // message.Context.Messages.remove(message);
-        // to.Messages.splice(toIndex, 0, message);
-        // message.Context = to;
-        Promise.all([this.proxyProvider.GetContextProxy(message.Context), this.proxyProvider.GetContextProxy(to)])
-            .then(() => this.proxyProvider.GetMessageProxy(message))
-            .then(proxy => proxy.Actions.Move(fromURI, to.URI, toIndex))
+        this.proxyProvider.GetMessageProxy(message).Actions.Move(fromURI, to.URI, toIndex);
     }
 
     public DeleteMessage(message: Message) {
         message.Context.Messages.remove(message);
-        this.proxyProvider.GetMessageProxy(message)
-            .then(() => this.proxyProvider.GetContextProxy(message.Context))
-            .then(proxy => proxy.Actions.RemoveMessage(message.id))
-            .catch(err => console.log(err));
+        this.proxyProvider.GetContextProxy(message.Context).Actions.RemoveMessage(message.id);
     }
 
     public Reorder(message: Message, newIndex: number): void {
         message.Context.Messages.remove(message);
         message.Context.Messages.splice(newIndex, 0, message);
         message.Context.Messages.remove(message);
-        this.proxyProvider.GetMessageProxy(message)
-            .then(proxy => proxy.Actions.Reorder(newIndex))
-            .catch(err => console.log(err));
+        this.proxyProvider.GetMessageProxy(message).Actions.Reorder(newIndex);
     }
 
     public UpdateContent(message: Message, content: any) {
         message.Content = content;
         this._subject$.next();
-        this.proxyProvider.GetMessageProxy(message)
-            .then(proxy => proxy.Actions.UpdateText(message.Content))
-            .catch(err => {
-                console.log(err);
-            })
+        this.proxyProvider.GetMessageProxy(message).Actions.UpdateText(content);
+            // .then(proxy => proxy.Actions.UpdateText(message.Content))
+            // .catch(err => {
+            //     console.log(err);
+            // })
         // this.eventBus.Notify('OnUpdateContent', message, content);
     }
 

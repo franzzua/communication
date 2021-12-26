@@ -3,7 +3,7 @@ import {cellx} from "cellx";
 export abstract class Model<TState, TActions> {
 
     public $state = cellx(() => this.State, {
-        put(cell, value) {
+        put: (cell, value) => {
             this.State = value;
         }
     })

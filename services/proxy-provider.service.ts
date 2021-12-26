@@ -9,7 +9,7 @@ export class ProxyProvider {
     constructor(private factory: IFactory<DomainModel>) {
     }
 
-    public async GetContextProxy(context: Context) {
+    public GetContextProxy(context: Context) {
         // await this.domainProxy.State$.pipe(
         //     map(x => x.Contexts.get(context.URI)),
         //     filter(x => x != null),
@@ -18,7 +18,7 @@ export class ProxyProvider {
         return this.factory.GetModel<Model<Context, IContextActions>>('Context', context.URI);
     }
 
-    public async GetMessageProxy(message: Message) {
+    public GetMessageProxy(message: Message) {
         // await this.domainProxy.State$.pipe(
         //     map(x => x.Contexts.get(message.Context.URI).Messages.get(message.id)),
         //     filter(x => x != null),

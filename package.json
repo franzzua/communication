@@ -16,7 +16,6 @@
     "server": "http-server ./dist -p 8080",
     "server:watch": "nodemon ./dist/server.js",
     "signal": "y-webrtc-signaling",
-    "publish": "cp -r ./dist/* /var/www/html/ ",
     "start": "node dist/server.js",
     "bundle&publish": "ttsc && npm run build:client:prod && npm run publish"
   },

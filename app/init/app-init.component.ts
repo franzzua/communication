@@ -38,8 +38,9 @@ export class AppInitComponent extends HyperComponent {
     }
 
     public Events = {
-        login: (provider: 'google') => {
-            this.accManager.Login(provider)
+        login: async (provider: 'google') => {
+            await this.accManager.Login(provider);
+            await this.init();
         }
     }
 }

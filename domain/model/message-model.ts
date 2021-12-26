@@ -26,9 +26,14 @@ export class MessageModel extends Model<Message, IMessageActions> {
 
     public set State(value: Readonly<Message>) {
         const cur = this.contextStore.State();
+        if (Message.equals(this.State)(value))
+            return;
         this.contextStore.State({
             Context: cur.Context,
-            Messages: [...cur.Messages.filter(x => x.id !== value.id), Message.ToJSON(value)]
+            Messages: [...cur.Messages.filter(x => x.id !== value.id), Message.ToJSON({
+                ...value,
+                UpdatedAt: utc()
+            })]
         });
     }
 

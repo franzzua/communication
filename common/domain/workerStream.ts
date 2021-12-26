@@ -27,6 +27,9 @@ export class WorkerStream extends Stream {
                 return next.with([lastMessage.data.model, old]);
             }
             return next;
+        },
+        put: (cell, value) => {
+
         }
     })
 
@@ -39,6 +42,14 @@ export class WorkerStream extends Stream {
         return cellx(() => {
             const map = this.Models();
             return map.get(`${model}`)?.get(`${id}`);
+        }, {
+            put: (cell, state) => {
+                this.Worker.postMessage({
+                    type: 'state',
+                    model, id,
+                    state
+                })
+            }
         })
     }
 
