@@ -1,5 +1,4 @@
 import {BehaviorSubject, Injectable} from "@hypertype/core";
-import {wire} from "@hypertype/ui";
 
 @Injectable()
 export class PanelService {

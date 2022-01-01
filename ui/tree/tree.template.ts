@@ -1,5 +1,5 @@
 import { Fn } from "@hypertype/core";
-import {IEventHandler, wire} from "@hypertype/ui";
+import {IEventHandler} from "@hypertype/ui";
 import {Context, Message} from "@model";
 import {TreeItem} from "../../presentors/tree.presentor";
 import type {Reducer} from "./tree.component";
@@ -13,15 +13,15 @@ export const Template = (html, state: IState, events: IEventHandler<IEvents>) =>
     <div item style=${{'--level': item.Path.length - 1}} class=${`level-${item.Path.length} ${item.Path.length > 3 ? 'li' : ''}` }>
         <ctx-text-content 
                 content=${item.Message.Content}
-                data=${{item,index}}
-                onchange=${events.updateMessage(e => ({item: e.target.data.item, content: e.detail}))}
-                onfocus=${events.focus(e => e.target.data)} 
+                .item=${{item,index}}
+                onchange=${events.updateMessage(e => ({item: e.target.item.item, content: e.detail}))}
+                onfocus=${events.focus(e => e.target.item)} 
                 active=${Fn.arrayEqual(item.Path, state.Selected?.Path ?? [])} />
     </div>
     `)}
     </div>
     <span style="display: none;">${state?.Selected?.Path?.join(' / ')}</span>
-    ${mobile ? html('toolbar')`<ctx-mobile-toolbar state=${state} onreduce=${events.reduce(x => x.detail)}></ctx-mobile-toolbar>` : ''}
+    <ctx-mobile-toolbar state=${state} onreduce=${events.reduce(x => x.detail)}></ctx-mobile-toolbar>
  
 `;
 

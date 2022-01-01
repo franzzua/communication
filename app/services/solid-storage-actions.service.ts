@@ -1,5 +1,4 @@
 import {Injectable} from "@hypertype/core";
-import { wire } from "@hypertype/ui";
 import {BaseActions} from "../../services/actions/base.actions";
 import {PanelService} from "./panel.service";
 
@@ -14,9 +13,6 @@ export class SolidStorageActions extends BaseActions {
         join: {
             solid: async () => {
                 console.log('join solid');
-                this.panelService.ShowPanel(wire(wire,'solid-add-panel')`
-                    <solid-add-panel></solid-add-panel>
-                `, 'Top');
             }
         }
     }

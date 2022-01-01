@@ -49,16 +49,6 @@ export class Factory implements IFactory<DomainModel> {
         return message;
     }
 
-    //
-    // public GetOrCreateStorage(state: Storage, domain: DomainModel): StorageModel {
-    //     if (this.StorageMap.has(state.URI))
-    //         return this.StorageMap.get(state.URI);
-    //     let storage: StorageModel = new StorageModel(this, state, domain)
-    //     storage.Update = domain.Update;
-    //     this.StorageMap.set(state.URI, storage);
-    //     return storage;
-    // }
-
     public GetOrCreateContext(uri: string): ContextModel {
         const existed = this.ContextMap.get(uri);
         if (existed)
@@ -93,6 +83,10 @@ export class Factory implements IFactory<DomainModel> {
 
     public GetMessage(uri: string): MessageModel {
         return this.MessageMap.get(uri);
+    }
+
+    RemoveMessage(id: string) {
+        this.MessageMap.delete(id);
     }
 }
 

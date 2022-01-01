@@ -9,7 +9,7 @@ import {Factory} from "./factory";
 import {Model} from "@common/domain";
 import {ContextStore} from "@infr/y/contextStore";
 
-export class ContextModel extends Model<Context, IContextActions> {
+export class ContextModel extends Model<Context, IContextActions> implements IContextActions {
 
     constructor(public URI: string,
                 public contextStore: ContextStore,
@@ -24,14 +24,14 @@ export class ContextModel extends Model<Context, IContextActions> {
     public get State(): Readonly<Context> {
         const state = this.contextStore.State();
         const context = Context.FromJSON(state.Context);
-        context.Messages = state.Messages.map(Message.FromJSON);
+        context.Messages = Array.from(state.Messages.values()).map(Message.FromJSON);
         return context;
     }
 
     public set State(value: Readonly<Context>) {
         this.contextStore.State({
             Context: Context.ToJSON(value),
-            Messages: value.Messages.map(Message.ToJSON),
+            Messages: new Map(value.Messages.map(x => [x.id, Message.ToJSON(x)])),
         });
     }
 
@@ -85,44 +85,43 @@ export class ContextModel extends Model<Context, IContextActions> {
         return Context.ToJSON(this.State);
     }
 
-    public Actions = Object.assign(Object.create(this), {
+    DetachMessage(msg: MessageModel) {
+        this.UpdateMessagesPermutation(this.OrderedMessages.filter(x => x.id != msg.id));
+    };
 
+    AttachMessage(message: MessageModel, index: number) {
+        const messages = [...this.OrderedMessages]
+        messages.splice(index, 0, message);
+        this.UpdateMessagesPermutation(messages);
+    };
 
-        DetachMessage(msg: MessageModel) {
-            this.UpdateMessagesPermutation(this.OrderedMessages.filter(x => x.id != msg.id));
-        },
+    async CreateMessage(message: Message): Promise<void> {
+        const messageModel = this.factory.GetOrCreateMessage(message);
+        // const messages = [...this.OrderedMessages, messageModel];
+        // this.UpdateMessagesPermutation(messages);
+    };
 
-        AttachMessage(message: MessageModel, index: number) {
-            const messages = [...this.OrderedMessages]
-            messages.splice(index, 0, message);
-            this.UpdateMessagesPermutation(messages);
-        },
+    ReorderMessage(message: MessageModel, toIndex) {
+        const messages = [...this.OrderedMessages.filter(x => x !== message)];
+        messages.splice(toIndex, 0, message);
+        this.UpdateMessagesPermutation(messages);
+    };
 
-        async CreateMessage(message: Message): Promise<void> {
-            const messageModel = this.factory.GetOrCreateMessage(message);
-            // const messages = [...this.OrderedMessages, messageModel];
-            // this.UpdateMessagesPermutation(messages);
-        },
+    async RemoveMessage(id: string): Promise<void> {
+        const messages = this.OrderedMessages.filter(x => x.id !== id);
+        this.UpdateMessagesPermutation(messages);
+        this.factory.RemoveMessage(id);
+    };
 
-        ReorderMessage(message: MessageModel, toIndex) {
-            const messages = [...this.OrderedMessages.filter(x => x !== message)];
-            messages.splice(toIndex, 0, message);
-            this.UpdateMessagesPermutation(messages);
-        },
+    UpdateMessagesPermutation(orderedMessages: Array<MessageModel>) {
+        this.State = {
+            ...this.State,
+            UpdatedAt: utc(),
+            Permutation: Permutation.Diff(orderedMessages.orderBy(x => x.id), orderedMessages),
+            Messages: orderedMessages.map(x => x.State)
+        };
+    };
 
-        async RemoveMessage(id: string): Promise<void> {
-            const messages = this.OrderedMessages.filter(x => x.id !== id);
-            this.UpdateMessagesPermutation(messages);
-        },
-
-        UpdateMessagesPermutation(orderedMessages: Array<MessageModel>) {
-            this.State = {
-                ...this.State,
-                UpdatedAt: utc(),
-                Permutation: Permutation.Diff(orderedMessages.orderBy(x => x.id), orderedMessages),
-                Messages: orderedMessages.map(x => x.State)
-            };
-        },
-    });
+    Actions = this;
 
 }

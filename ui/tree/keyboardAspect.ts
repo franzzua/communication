@@ -7,9 +7,9 @@ export class KeyboardAspect {
     public static GetEvents$<TComponent extends HyperComponent>(element$: Observable<HTMLElement>) {
         return h.merge(
             element$.pipe(
-                h.switchMap(element => h.fromEvent(element, 'keydown')),
+                h.switchMap(element => h.fromEvent<KeyboardEvent>(element, 'keydown')),
+                h.filter(event => !(event.target instanceof HTMLInputElement)),
                 h.mergeMap(async (event: KeyboardEvent) => {
-
                     const modifiers = ['Alt', 'Ctrl', 'Shift'].filter(x => event[x.toLowerCase() + 'Key']);
                     const modKey = modifiers.join('') + event.code;
                     return {

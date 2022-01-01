@@ -78,7 +78,7 @@ export class TextContentComponent extends HyperComponent<string, IEvents> {
             distinctUntilChanged(),
             withLatestFrom(this.contentEditable$),
             tap(async ([isActive, div]) => {
-                const textNode = div.firstChild as Text;
+
                 if (!isActive) {
                     div.classList.remove('focus');
                     return;
@@ -87,6 +87,9 @@ export class TextContentComponent extends HyperComponent<string, IEvents> {
                 div.classList.add('focus');
                 await new Promise(x => setTimeout(x, 0));
                 const selection = window.getSelection();
+                const textNode = div.firstChild as Text;
+                if (!textNode)
+                    return;
                 if (selection.containsNode(textNode))
                     return;
                 const range = document.createRange();

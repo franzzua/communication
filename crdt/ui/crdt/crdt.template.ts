@@ -1,4 +1,4 @@
-import {IEventHandler, wire} from "@hypertype/ui";
+import {IEventHandler} from "@hypertype/ui";
 import {AworSet} from "../../delta/awor-set";
 
 const replica = (html, state: IReplicaState[], events:IEventHandler<IEvents>, name) => html(name)`
@@ -23,10 +23,10 @@ const replica = (html, state: IReplicaState[], events:IEventHandler<IEvents>, na
         <header>${s.action}</header>
         <div style="display: flex; flex-flow: row; margin: .3em 0; padding: .5em; background: #333;">
             <div>
-            ${s.set.kernel.toString().split('\n').map(x => wire()`<div>${x}</div>`)}
+            ${s.set.kernel.toString().split('\n').map(x => html('')`<div>${x}</div>`)}
             </div>
             <div>
-            ${s.set.delta?.toString().split('\n').map(x => wire()`<div>${x}</div>`)}
+            ${s.set.delta?.toString().split('\n').map(x => html('2')`<div>${x}</div>`)}
             </div>
         </div>
         `)}

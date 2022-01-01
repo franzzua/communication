@@ -1,4 +1,4 @@
-import express from "express";
+import * as express from "express";
 import { podApp } from "./pod.app";
 import {useSignalling} from "./webrtc";
 

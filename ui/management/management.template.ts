@@ -1,4 +1,4 @@
-import {IEventHandler, wire} from "@hypertype/ui";
+import {IEventHandler} from "@hypertype/ui";
 
 export const Template = (html, state: IState, events: IEventHandler<IEvents>) => html`
     <ctx-tree context=${state}></ctx-tree>

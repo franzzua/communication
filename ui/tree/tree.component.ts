@@ -66,7 +66,7 @@ export class TreeComponent extends HyperComponent<IState, IEvents> {
             Selected: null,
             ItemsMap: new Map<string, TreeItem>()
         } as IState),
-        h.tap(x => console.table(x.Items.map(x => ({Message: x.Message.Content, level: x.Path.length})))),
+        // h.tap(x => console.table(x.Items.map(x => ({Message: x.Message.Content, level: x.Path.length})))),
         h.shareReplay(1),
     )
 

@@ -42,8 +42,8 @@ export class ContextStore extends YjsStore {
         });
     }
 
-    private readMessages(): MessageJSON[] {
-        return this.messageArray.toArray().map(yMap => yMap.toJSON());
+    private readMessages(): Map<string, MessageJSON> {
+        return new Map(this.messageArray.toArray().map(yMap => yMap.toJSON()).map(x => [x.id, x]));
     }
 
     private readContext(): ContextJSON {
@@ -92,29 +92,29 @@ export class ContextStore extends YjsStore {
 
     subscr = this.State.subscribe((err, data) => {
         const { value} = data.data as { prevValue: IState, value: IState };
-        const prevValue = this.GetState();
         this.doc.transact(() => {
-            if (value.Context.UpdatedAt && prevValue.Context.UpdatedAt !== value.Context.UpdatedAt) {
+            const prevContext = this.readContext();
+            if (value.Context.UpdatedAt && prevContext.UpdatedAt !== value.Context.UpdatedAt) {
                 this.UpdateContext(value.Context);
                 console.log('update context', value.Context.id);
             }
-            const toDelete = new Map(prevValue.Messages.map(x => [x.id, x]));
-            for (let message of value.Messages) {
-                const old = toDelete.get(message.id)
+            const prevMessages = this.readMessages();
+            for (let message of value.Messages.values()) {
+                const old = prevMessages.get(message.id)
                 if (old) {
-                    toDelete.delete(message.id);
+                    prevMessages.delete(message.id);
                     if (message.UpdatedAt && message.UpdatedAt !== old.UpdatedAt) {
                         this.UpdateMessage(message);
-                        console.log('update message', message.id);
+                        console.log('update message', message.id, message.Content);
                     }
                 } else {
-                    console.log('add message', message.id);
+                    console.log('add message', message.id, message.Content);
                     this.AddMessage(message);
                 }
             }
-            for (let message of toDelete.values()) {
+            for (let message of prevMessages.values()) {
                 this.DeleteMessage(message);
-                console.log('delete message', message.id);
+                console.log('delete message', message.id, message.Content);
             }
         });
     })
@@ -123,11 +123,11 @@ export class ContextStore extends YjsStore {
         return {
             Context: this.readContext(),
             Messages: this.readMessages()
-        }
+        };
     }
 }
 
 export type IState = {
     Context: Readonly<ContextJSON>;
-    Messages: ReadonlyArray<Readonly<MessageJSON>>;
+    Messages: ReadonlyMap<string, Readonly<MessageJSON>>;
 };

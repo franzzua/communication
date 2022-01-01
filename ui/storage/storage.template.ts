@@ -1,7 +1,7 @@
-import {IEventHandler, wire} from "@hypertype/ui";
+import {IEventHandler} from "@hypertype/ui";
 
 export const Template = (html, state: IState, events: IEventHandler<IEvents>) => html`
-    This is Storage. ${wire(html, 'state')`
+    This is Storage. ${html('state')`
         <code>${JSON.stringify(state)}</code>
     `}
 `;

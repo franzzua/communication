@@ -1,6 +1,6 @@
-import {IEventHandler, wire} from "@hypertype/ui";
+import {IEventHandler} from "@hypertype/ui";
 
-const icon = wire(wire,'svg:settings-icon')([require('./settings.icon.svg')]);
+const icon = html => html('svg:settings-icon')([require('./settings.icon.svg')]);
 
 export const Template = (html, state: IState, events: IEventHandler<IEvents>) => html`
     <div class=${`panel ${state.isOpen ? '' : 'closed'}`}>
@@ -9,7 +9,7 @@ export const Template = (html, state: IState, events: IEventHandler<IEvents>) =>
     <svg class=${`settings-icon ${state.isOpen ? 'opened': ""}`} 
          viewBox="0 0 16 16"
          onmousedown=${events.switchOpen(x => x)}>
-        ${icon}
+        ${icon(html)}
     </div>
 `;
 

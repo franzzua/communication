@@ -1,4 +1,4 @@
-import {IEventHandler, wire} from "@hypertype/ui";
+import {IEventHandler} from "@hypertype/ui";
 import {Concord} from "./concord";
 
 const replica = (html, state: IReplicaState, events:IEventHandler<IEvents>, name) => html(name)`

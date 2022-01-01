@@ -1,13 +1,11 @@
-import * as h from "@hypertype/core";
-import {BehaviorSubject, filter, first, Fn, DateTime, Injectable, map, Observable, shareReplay, tap, utc} from "@hypertype/core";
-import {Context, DomainState, Message, Storage} from "@model";
+import {filter, first, Fn, Injectable, map, Observable, utc} from "@hypertype/core";
+import {Context, DomainState, Message} from "@model";
 import {LogService} from "./log.service";
-import {DomainProxy, IDomainActions} from "@domain";
+import {IDomainActions} from "@domain";
 import {ProxyProvider} from "./proxy-provider.service";
 import {ulid} from "ulid";
 import {AccountManager} from "./account.manager";
 import {IFactory, Model} from "@common/domain";
-import type {DomainModel} from "@domain/model";
 
 @Injectable()
 export class StateService {
@@ -30,7 +28,6 @@ export class StateService {
 
     async CreateContext(context: Context) {
         await this.factory.Root.Actions.CreateContext(context);
-        this._subject$.next();
     }
 
     async CreateSubContext(message: Message) {
@@ -46,7 +43,7 @@ export class StateService {
             IsRoot: false,
             URI: undefined
         };
-        message.SubContext.URI = `${message.Context.URI.split('/').slice(0,-1).join('/')}/${message.SubContext.id}`;
+        message.SubContext.URI = `${message.Context.URI.split('/').slice(0, -1).join('/')}/${message.SubContext.id}`;
         await this.CreateContext(message.SubContext);
         //
         // this.ContextStore.Create(message.SubContext)
@@ -57,23 +54,14 @@ export class StateService {
     }
 
     async AttachContext(context: Context, to: Message) {
-        // const subContext = this.ContextStore.getById(contextId);
-        // const existed = this.MessagesStore.getById(to.id);
-        // if (!existed)
-        //     throw new Error("Attach context to unknown message");
-        // if (!subContext)
-        //     throw new Error("Attach not loaded context to message");
-        // existed.SubContext = subContext;
-        // this._subject$.next();
-        (await this.proxyProvider.GetMessageProxy(to))
-            .Actions.Attach(context.URI)
-            .catch(err => console.log(err));
+        await this.proxyProvider.GetMessageProxy(to).Actions.Attach(context.URI);
     }
 
     public async AddMessage(message: Message) {
+        await Promise.resolve();
         message.Order = message.Context.Messages.length;
         const proxy = await this.proxyProvider.GetContextProxy(message.Context);
-        await proxy.Actions.CreateMessage(message);
+        proxy.Actions.CreateMessage(message);
     }
 
     public MoveMessage(message: Message, to: Context, toIndex: number = to.Messages.length): void {
@@ -93,14 +81,14 @@ export class StateService {
         this.proxyProvider.GetMessageProxy(message).Actions.Reorder(newIndex);
     }
 
-    public UpdateContent(message: Message, content: any) {
+    public async UpdateContent(message: Message, content: any) {
+        await Promise.resolve();
         message.Content = content;
-        this._subject$.next();
         this.proxyProvider.GetMessageProxy(message).Actions.UpdateText(content);
-            // .then(proxy => proxy.Actions.UpdateText(message.Content))
-            // .catch(err => {
-            //     console.log(err);
-            // })
+        // .then(proxy => proxy.Actions.UpdateText(message.Content))
+        // .catch(err => {
+        //     console.log(err);
+        // })
         // this.eventBus.Notify('OnUpdateContent', message, content);
     }
 
@@ -111,15 +99,12 @@ export class StateService {
             const accounts = await this.accManager.Accounts$.pipe(filter(x => x.length > 0), first()).toPromise();
             const defaultStorage = accounts[0].defaultStorage;
             await this.factory.Root.Actions.LoadContext(defaultStorage);
-            history.replaceState(null, defaultStorage, `${location.href}${btoa(defaultStorage).replaceAll('=','')}`)
+            history.replaceState(null, defaultStorage, `${location.href}${btoa(defaultStorage).replaceAll('=', '')}`)
             return defaultStorage;
         }
         await this.factory.Root.Actions.LoadContext(uri);
         return uri;
     }
-
-    // @ts-ignorem
-    private _subject$ = new BehaviorSubject<void>();
 
     //
     public getContext$(uri: string): Observable<Context> {

@@ -154,14 +154,14 @@ export class TreeStore {
         return newMessage;
     }
 
-    private CreateMessage(getParentPath: (state: IState) => string[]): Reducer<IState> {
+    private CreateMessage(getParentPath: (state: IState) => string[], text = ''): Reducer<IState> {
         return state => {
             const parentPath = getParentPath(state);
             const newMessage: Message = {
                 id: ulid(),
                 CreatedAt: utc(),
                 UpdatedAt: utc(),
-                Content: '',
+                Content: text,
                 Order: 0
             };
             if (parentPath.length > 0) {
@@ -190,13 +190,15 @@ export class TreeStore {
     }
 
     @logReducer
-    async AddChild(event: KeyboardEvent): Promise<Reducer<IState>> {
-        return this.CreateMessage(state => state.Selected.Path);
+    async AddChild(event: KeyboardEvent | InputEvent): Promise<Reducer<IState>> {
+        const text = (event.target instanceof HTMLInputElement) ? event.target.value : '';
+        return this.CreateMessage(state => state.Selected?.Path ?? [], text);
     }
 
     @logReducer
     async AddNext(event: KeyboardEvent): Promise<Reducer<IState>> {
-        return this.CreateMessage(state => state.Selected.Path.slice(0, -1));
+        const text = (event.target instanceof HTMLInputElement) ? event.target.value : '';
+        return this.CreateMessage(state => state.Selected?.Path?.slice(0, -1) ?? [], text);
     }
 
     @logReducer

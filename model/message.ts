@@ -20,20 +20,12 @@ export class Message {
         return message.Context.Messages[message.Context.Messages.length - 1].id == message.id;
     }
 
-    static equals(message: Message): (message2: Message) => boolean;
-    static equals(message: Message, message2: Message): boolean;
-    static equals(...messages: Message[]) {
-        if (messages.length == 1) {
-            return message2 => {
-                if (message2.URI && message2.URI !== messages[0].id)
-                    return false;
-                if (messages[0].id && messages[0].id !== message2.id)
-                    return false;
-                return message2.UpdatedAt.equals(messages[0].UpdatedAt);
-            }
-        } else {
-            return Message.equals(messages[0])(messages[0]);
-        }
+    static equals(message1: Message, message2: Message): boolean{
+        if (!message2 && message1 || !message1 && message2)
+            return false;
+        if (message2.id !== message1.id)
+            return false;
+        return message2.UpdatedAt.equals(message1.UpdatedAt);
     }
 
     static FromJSON(m: MessageJSON): Message{
@@ -58,8 +50,8 @@ export class Message {
             Content: m.Content,
             id: m.id,
             Description: m.Description,
-            CreatedAt: m.CreatedAt.set({millisecond: 0}).toISO(),
-            UpdatedAt: m.UpdatedAt.set({millisecond: 0}).toISO(),
+            CreatedAt: m.CreatedAt.toISO(),
+            UpdatedAt: m.UpdatedAt.toISO(),
             StorageURI: m.Context?.Storage?.URI,
             ContextURI: m.Context?.URI,
             SubContextURI: m.SubContext?.URI,

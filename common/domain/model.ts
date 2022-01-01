@@ -14,5 +14,6 @@ export abstract class Model<TState, TActions> {
     public set State(value: Readonly<TState>){
         this.$state(value);
     }
-    public abstract Actions: TActions;
+
+    public Actions: TActions = this as any;
 }

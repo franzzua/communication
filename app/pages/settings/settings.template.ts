@@ -1,4 +1,4 @@
-import {IEventHandler, wire} from "@hypertype/ui";
+import {IEventHandler} from "@hypertype/ui";
 import {IAccountInfo, IAccountProvider} from "@services";
 import {Icons} from "../../../icons/Icons";
 

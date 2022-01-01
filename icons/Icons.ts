@@ -1,5 +1,3 @@
-import {wire} from "@hypertype/ui";
-
 const  getIcon = ( name, file) => (html, style: object, classes: string[], on: {
     click?, hover?
 }) => {

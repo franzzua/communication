@@ -14,6 +14,10 @@ export class DomainModel extends Model<DomainState, IDomainActions> {
         // this.useLastUpdate = true;
     }
 
+    public get Root(){
+        return [...this.Contexts.values()].find(x => x.State.IsRoot);
+    }
+
     public set State(state: DomainState) {
     }
 
@@ -48,7 +52,12 @@ export class DomainModel extends Model<DomainState, IDomainActions> {
         },
 
         async CreateContext(context: Context): Promise<void> {
-            const model = await this.factory.GetOrCreateContext(context.URI);
+            const model: ContextModel = this.factory.GetOrCreateContext(context.URI);
+            model.State = context;
+            for (const parent of context.Parents) {
+                const messageModel = this.factory.GetModel('Message', parent.id);
+                messageModel.Actions.Attach(model.URI);
+            }
         }
     });
 
