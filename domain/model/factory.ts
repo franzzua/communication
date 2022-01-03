@@ -1,38 +1,36 @@
-import {Context, Message} from "@model";
-import {Container, Injectable} from "@hypertype/core";
+import {Message} from "@model";
+import {Container, Injectable} from "@common/core";
 import {ContextModel} from "./context-model";
-import {IFactory } from "@common/domain";
+import type {IFactory} from "@common/domain/worker";
 import {MessageModel} from "@domain/model/message-model";
-import {YRepository} from "@infr/y/y.repository";
-import {cellx} from "cellx";
+import {YjsRepository} from "@infr/y/yjsRepository";
 import {DomainModel} from "@domain/model/domain-model";
 
 @Injectable()
 export class Factory implements IFactory<DomainModel> {
-
-    private repository = new YRepository();
 
     private MessageMap = new Map<string, MessageModel>();
     private ContextMap = new Map<string, ContextModel>();
 
     // private StorageMap = new Map<string, StorageModel>();
 
-    constructor(private container: Container) {
+    constructor(private container: Container,
+                private repository: YjsRepository) {
     }
 
-    public get Root(){
+    public get Root() {
         return this.container.get<DomainModel>(DomainModel);
     }
 
     public GetModel(model: string, id: any) {
-        if (model == 'Domain') {
-            return this.container.get<DomainModel>(DomainModel);
-        }
-        if (model == 'Context') {
-            return this.GetOrCreateContext(id) as any;
-        }
-        if (model == 'Message') {
-            return this.GetMessage(id) as any;
+        switch (model.toLowerCase()) {
+            case 'root':
+            case 'domain':
+                return this.container.get<DomainModel>(DomainModel);
+            case 'context':
+                return this.GetOrCreateContext(id) as any;
+            case 'message':
+                return this.GetMessage(id) as any;
         }
         throw new Error();
     }

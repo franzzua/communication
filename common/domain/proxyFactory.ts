@@ -1,9 +1,11 @@
-import {IFactory} from "./factory";
-import {Model} from "./model";
+import {IFactory} from "./shared/factory";
+import {Model} from "./worker/model";
 import {ModelProxy} from "./modelProxy";
 import {Stream} from "./stream";
 import * as stream from "stream";
+import {Injectable} from "@hypertype/core";
 
+@Injectable()
 export class ProxyFactory extends IFactory<any> {
 
     constructor(private stream: Stream) {

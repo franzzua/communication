@@ -8,7 +8,6 @@ import {LogService} from "./log.service";
 export class StorageService {
 
     constructor(private contextService: ContextService,
-                private logService: LogService,
                 private eventBus: EventBus) {
     }
 

@@ -1,3 +1,5 @@
+import {registerSerializer} from "@common/core";
+
 export class Permutation {
 
     constructor(public values: ReadonlyArray<number>) {
@@ -28,13 +30,14 @@ export class Permutation {
         const arr = JSON.parse(ordering);
         return new Permutation(arr);
     }
-    public toString(){
+
+    public toString() {
         return JSON.stringify(this.values);
     }
 
-    public Invoke<T>(arr: ReadonlyArray<T>){
+    public Invoke<T>(arr: ReadonlyArray<T>) {
         const result: T[] = new Array(arr.length);
-        for (let i = 0; i < arr.length; i++){
+        for (let i = 0; i < arr.length; i++) {
             result[i] = arr[this.values[i] ?? i];
         }
         return result;
@@ -44,7 +47,7 @@ export class Permutation {
 
     static Diff<T>(from: ReadonlyArray<T>, to: ReadonlyArray<T>) {
         const arr = new Array(to.length);
-        for (let i = 0; i < to.length; i++){
+        for (let i = 0; i < to.length; i++) {
             arr[i] = from.indexOf(to[i]);
             if (arr[i] == -1) arr[i] = i;
         }
@@ -55,3 +58,8 @@ export class Permutation {
         return undefined;
     }
 }
+
+registerSerializer<Permutation, ReadonlyArray<number>>(10, Permutation,
+    perm => perm.ToArray(),
+    array => new Permutation(array)
+);

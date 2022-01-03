@@ -1,5 +1,5 @@
 import {ICellx} from "cellx";
-import {Model} from "./model";
+import {Model} from "./worker/model";
 import {Stream} from "./stream";
 
 export class ModelProxy<TState, TActions extends object> extends Model<TState, TActions> {
@@ -23,7 +23,7 @@ export class ModelProxy<TState, TActions extends object> extends Model<TState, T
             if (key in target)
                 return target[key];
             return target[key] = function () {
-                return this.Invoke(key, arguments)
+                return this.Invoke(key, Array.from(arguments))
             }.bind(this);
         }
     });

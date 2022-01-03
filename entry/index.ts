@@ -1,7 +1,7 @@
 // @ts-ignore
 window.global = self;
 // @ts-ignore
-Object.assign(crypto, require('crypto-browserify'));
+// Object.assign(crypto, require('crypto-browserify'));
 
 
 import {fromEvent, takeUntil } from "@hypertype/core";

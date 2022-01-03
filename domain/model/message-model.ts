@@ -1,11 +1,10 @@
-import {Injectable, utc} from "@hypertype/core";
 import {IMessageActions} from "@domain/contracts/actions";
 import {Context, Message} from "@model";
 import {Factory} from "./factory";
-import {Model} from "@common/domain";
+import {Model} from "@common/domain/worker";
 import {ContextStore} from "@infr/y/contextStore";
+import {utc} from "@common/core";
 
-@Injectable(true)
 export class MessageModel extends Model<Message, IMessageActions> implements IMessageActions{
 
     public get Context() {
@@ -32,7 +31,7 @@ export class MessageModel extends Model<Message, IMessageActions> implements IMe
         const messages = new Map(cur.Messages);
         messages.set(value.id, Message.ToJSON({
             ...value,
-            UpdatedAt: utc()
+            UpdatedAt: utc(),
         }));
         this.contextStore.State({
             Context: cur.Context,

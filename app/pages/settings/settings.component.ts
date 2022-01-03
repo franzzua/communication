@@ -1,9 +1,8 @@
 import {Component, HyperComponent} from "@hypertype/ui";
 import {IEvents, IState, Template} from "./settings.template";
-import {first, Injectable} from "@hypertype/core";
 import * as h from "@hypertype/core";
-import {AccountManager, ActionService, IAccountInfo} from "@services";
-import {DomainProxy} from "@domain";
+import {Injectable} from "@hypertype/core";
+import {AccountManager, IAccountInfo} from "@services";
 
 @Injectable(true)
 @Component({
@@ -11,10 +10,9 @@ import {DomainProxy} from "@domain";
     template: Template,
     style: require('./settings.style.less')
 })
-export class SettingsComponent extends HyperComponent<IState, IEvents>{
+export class SettingsComponent extends HyperComponent<IState, IEvents> {
 
-    constructor(private accountManger: AccountManager,
-                private actionsService: ActionService) {
+    constructor(private accountManger: AccountManager) {
         super();
     }
 
@@ -29,7 +27,6 @@ export class SettingsComponent extends HyperComponent<IState, IEvents>{
 
     public Events = {
         addAccount: async (provider) => {
-            this.actionsService.Invoke(`accounts.${provider}.add`);
         },
         clear: async (account: IAccountInfo) => {
             throw new Error('not implemented');

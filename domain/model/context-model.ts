@@ -3,11 +3,11 @@ import {IContextActions} from "../contracts/actions";
 import {ContextJSON} from "@domain/contracts/json";
 import {Permutation} from "@domain/helpers/permutation";
 import {Context, Message} from "@model";
-import {utc} from "@hypertype/core";
 import {cellx} from "cellx";
 import {Factory} from "./factory";
-import {Model} from "@common/domain";
+import {Model} from "@common/domain/worker";
 import {ContextStore} from "@infr/y/contextStore";
+import {DateTime} from "luxon";
 
 export class ContextModel extends Model<Context, IContextActions> implements IContextActions {
 
@@ -71,7 +71,6 @@ export class ContextModel extends Model<Context, IContextActions> implements ICo
         return {
             ...state,
             Storage: null,
-            equals: Context.equals(state),
             Messages: []
         };
     }
@@ -116,7 +115,7 @@ export class ContextModel extends Model<Context, IContextActions> implements ICo
     UpdateMessagesPermutation(orderedMessages: Array<MessageModel>) {
         this.State = {
             ...this.State,
-            UpdatedAt: utc(),
+            UpdatedAt: DateTime.utc(),
             Permutation: Permutation.Diff(orderedMessages.orderBy(x => x.id), orderedMessages),
             Messages: orderedMessages.map(x => x.State)
         };

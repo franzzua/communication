@@ -1,12 +1,8 @@
-import {Entity, entity, field, ValuesSet} from "solidocity";
+import {Entity, entity, field} from "solidocity";
 import {Schema} from "./schema";
-import {Context, Message} from "@model";
 import {Reference} from "solidocity/dist/typings/contracts";
 import {utc} from "@hypertype/core";
-import {ContextCollection} from "@infr/solid/data/context.collection";
-import {ContextDocument} from "@infr/solid/data/context.document";
 import {MessageJSON} from "@domain";
-import {DateTime} from "luxon";
 
 @entity(Schema.Message)
 export class MessageEntity extends Entity {
@@ -32,7 +28,7 @@ export class MessageEntity extends Entity {
     @field(Schema.isDeleted, {type: "string"})
     public IsDeleted: '' | 'deleted';
 
-    public FromJSON(json: Partial<MessageJSON>){
+    public FromJSON(json: Partial<MessageJSON>) {
         if ('Content' in json)
             this.Content = json.Content;
         if ('Order' in json)
@@ -44,7 +40,8 @@ export class MessageEntity extends Entity {
         if ('UpdatedAt' in json)
             this.UpdatedAt = utc(json.UpdatedAt).toJSDate();
     }
-    public ToJSON(): MessageJSON{
+
+    public ToJSON(): MessageJSON {
         return {
             CreatedAt: this.CreatedAt && utc(this.CreatedAt).toISO(),
             UpdatedAt: this.UpdatedAt && utc(this.UpdatedAt).toISO(),

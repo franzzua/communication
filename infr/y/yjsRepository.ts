@@ -1,12 +1,9 @@
 import {ContextJSON, IRepository, MessageJSON, StorageJSON} from "@domain";
 import {CRD} from "@domain/sync/item-sync";
-import {from, NEVER, Observable, switchMap} from "@hypertype/core";
-import {ContextStore, IState} from "./contextStore";
+import {ContextStore} from "./contextStore";
 import {StorageStore} from "@infr/y/storageStore";
-import {cellx, ICellx} from "cellx";
-import {Context, Message} from "@model";
 
-export class YRepository implements IRepository {
+export class YjsRepository implements IRepository {
     private storageStore = new StorageStore();
 
     constructor() {
@@ -39,7 +36,7 @@ export class YRepository implements IRepository {
         }
     }
 
-    State$: Observable<StorageJSON> = NEVER;
+    State$ = null;
 
     async Clear(): Promise<void> {
         ContextStore.clear()
@@ -50,17 +47,18 @@ export class YRepository implements IRepository {
         return store;
     }
 
-    LoadContext$(uri: string) {
-        const store = this.storageStore.GetOrAdd(uri);
-        return from(store.IsLoaded$.then(() => {
-            const state = store.GetState();
-            if (state.Context.CreatedAt)
-                return state;
-            return store.IsSynced$;
-        })).pipe(
-            switchMap(x => store.State$)
-        );
-    }
+    //
+    // LoadContext$(uri: string) {
+    //     const store = this.storageStore.GetOrAdd(uri);
+    //     return from(store.IsLoaded$.then(() => {
+    //         const state = store.GetState();
+    //         if (state.Context.CreatedAt)
+    //             return state;
+    //         return store.IsSynced$;
+    //     })).pipe(
+    //         switchMap(x => store.State$)
+    //     );
+    // }
 
     async Load(uri: string = null): Promise<StorageJSON> {
         return new Promise<StorageJSON>(r => ({}));

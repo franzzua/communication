@@ -1,12 +1,16 @@
-import {Injectable} from "@hypertype/core";
-import {IFactory, Model} from "@common/domain";
+import {Injectable} from "@common/core";
+import {IFactory, Model} from "@common/domain/worker";
 import {IDomainActions} from "../contracts/actions";
 import {Context, DomainState, Message} from "@model";
 import {ContextModel} from "@domain/model/context-model";
+import {ObservableMap} from "cellx-collections";
+import {cellx} from "cellx";
 
 @Injectable()
 export class DomainModel extends Model<DomainState, IDomainActions> {
-    public Contexts: Map<string, ContextModel> = new Map<string, ContextModel>();
+    public Contexts: ObservableMap<string, ContextModel> = new ObservableMap<string, ContextModel>();
+    private _contextsCell = cellx(this.Contexts);
+
 
     constructor(private factory: IFactory) {
         super();
@@ -26,7 +30,7 @@ export class DomainModel extends Model<DomainState, IDomainActions> {
             Contexts: new Map<string, Readonly<Context>>(),
             Messages: new Map<string, Readonly<Message>>()
         };
-        for (let context of this.Contexts.values()) {
+        for (let context of this._contextsCell().values()) {
             this.toJSON(context, state);
         }
         return state;

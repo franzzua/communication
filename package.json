@@ -9,6 +9,7 @@
     "build:client": "hypertype client --watch",
     "build:client:prod": "hypertype client --prod",
     "build:run": "hypertype client --watch --run",
+    "build:worker": "hypertype worker --watch",
     "build:server": "hypertype server --watch",
     "build:server:prod": "hypertype server --prod",
     "build": "ttsc && hypertype client --prod && cp ./.github/workflows/staticwebapp.config.json ./dist/prod",
@@ -54,6 +55,8 @@
     "@hypertype/infr-browser": "^3.7.0",
     "@hypertype/tools": "^3.7.0",
     "@hypertype/ui": "^3.7.0",
+    "@js-temporal/polyfill": "^0.3.0",
+    "@msgpack/msgpack": "^2.7.1",
     "@types/luxon": "^1.25.0",
     "@types/node": "^14.14.14",
     "babel-jest": "^26.6.3",
@@ -61,6 +64,8 @@
     "handlebars": "^4.7.6",
     "jest": "^26.6.3",
     "luxon": "^1.25.0",
+    "mol_time_all": "^1.1.66",
+    "msgpackr": "^1.5.2",
     "raw-loader": "^4.0.2",
     "solidocity": "^1.2.9",
     "ts-jest": "^26.4.4",
@@ -81,6 +86,11 @@
       "type": "node",
       "index": "./server/index.ts",
       "target": "server.js"
+    },
+    "worker": {
+      "type": "worker",
+      "index": "./entry/worker.ts",
+      "target": "worker.js"
     }
   }
 }

@@ -5,8 +5,7 @@ import {EventBus} from "./event.bus";
 @Injectable()
 export class AccountManager {
 
-    constructor(private actionService: ActionService,
-                private eventBus: EventBus) {
+    constructor() {
 
     }
 
@@ -20,18 +19,11 @@ export class AccountManager {
     public async Register(provider: IAccountProvider) {
         this.providers.set(provider.type, provider);
         provider.Check().then(res => res && this.addAccount(res));
-        this.actionService.Register(`accounts.${provider.type}.add`, async () => {
-            const result = await provider.Login();
-            if (result){
-                await this.addAccount(result);
-            }
-        })
         this.providerSubject$.next([...this.providerSubject$.value, provider.type]);
     }
 
     private async addAccount(info: IAccountInfo){
         this.accountsSubject$.next([...this.accountsSubject$.value, info]);
-        this.eventBus.Notify('OnNewAccount', info);
     }
 
     Login(provider: "google") {

@@ -1,6 +1,5 @@
 import {first, Injectable, mapTo, of, switchMap} from "@hypertype/core";
 import {Component, HyperComponent} from "@hypertype/ui";
-import {DomainProxy} from "@domain";
 import {AccountManager, EventBus} from "@services";
 import {AppInitTemplate} from "./app-init.template";
 import { RouterService } from "../services/router.service";
@@ -15,7 +14,6 @@ export class AppInitComponent extends HyperComponent {
 
     constructor(
         private accManager: AccountManager,
-        private eventBus: EventBus,
         private routerService: RouterService
     ) {
         super();

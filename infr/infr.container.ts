@@ -1,12 +1,9 @@
-import {Container} from "@hypertype/core";
-// import {YjsConnector} from "@infr/rtc";
-// import {SolidRepository} from "@infr/solid";
-// import {LocalRepository} from "@infr/local/local.repository";
-import {MeldRepository} from "@infr/m-ld/meld.repository";
+import {Container} from "@common/core";
+import {YjsRepository} from "@infr/y/yjsRepository";
 
 export const InfrContainer = Container.withProviders(
-    // YjsConnector,
+    YjsRepository
     // SolidRepository,
-    MeldRepository,
+    // MeldRepository,
     // LocalRepository
 )

@@ -1,3 +1,5 @@
+import {Action} from "./shared/types";
+
 export abstract class Stream {
     public abstract Invoke(action: Action);
 
@@ -5,13 +7,3 @@ export abstract class Stream {
 
 }
 
-export type Action = {
-    // Model name, unique
-    model: string;
-    // Model id, unique
-    id: any;
-    // Subpath of internal entity of model
-    path: (string | number)[];
-    action: string;
-    args: any[]
-}

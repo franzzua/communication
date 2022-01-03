@@ -1,6 +1,7 @@
 import {Injectable} from "@hypertype/core";
-import {Action, Stream} from "./stream";
-import {IFactory} from "./factory";
+import {Stream} from "./stream";
+import {IFactory} from "./shared/factory";
+import {Action} from "./shared/types";
 
 @Injectable()
 export class DirectStream extends Stream {

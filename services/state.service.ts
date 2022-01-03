@@ -5,7 +5,7 @@ import {IDomainActions} from "@domain";
 import {ProxyProvider} from "./proxy-provider.service";
 import {ulid} from "ulid";
 import {AccountManager} from "./account.manager";
-import {IFactory, Model} from "@common/domain";
+import {IFactory, Model} from "@common/domain/worker";
 
 @Injectable()
 export class StateService {
@@ -14,7 +14,6 @@ export class StateService {
         private factory: IFactory<Model<DomainState, IDomainActions>>,
         private proxyProvider: ProxyProvider,
         private accManager: AccountManager,
-        private logService: LogService
     ) {
         // this.domainProxy.State$.subscribe(x => console.log('storage', x.Storages[0]));
         // @ts-ignore

@@ -11,22 +11,30 @@ export class ContextStore extends YjsStore {
 
     private messageArray = this.doc.getArray<YMap<any>>('messages');
 
-    public State$ = merge(
-        fromYjs(this.contextMap),
-        fromYjs(this.messageArray),
-        from(this.IsLoaded$),
-        from(this.IsSynced$),
-    ).pipe(
-        map((event) => {
-            console.log(event);
-            return this.GetState();
-        }),
-        tap(state => this.State(state)),
-        tap(console.log),
-        shareReplay(1)
-    )
+    constructor(uri: string) {
+        super(uri);
+        this.contextMap.observeDeep(() => this.State(this.GetState()))
+        this.messageArray.observeDeep(() => this.State(this.GetState()));
+        this.IsLoaded$.then(() => this.State(this.GetState()));
+        this.IsSynced$.then(() => this.State(this.GetState()));
+    }
 
-    subscr2 = this.State$.subscribe();
+    // public State$ = merge(
+    //     fromYjs(this.contextMap),
+    //     fromYjs(this.messageArray),
+    //     from(this.IsLoaded$),
+    //     from(this.IsSynced$),
+    // ).pipe(
+    //     map((event) => {
+    //         console.log(event);
+    //         return this.GetState();
+    //     }),
+    //     tap(state => this.State(state)),
+    //     tap(console.log),
+    //     shareReplay(1)
+    // )
+
+    // subscr2 = this.State$.subscribe();
 
     UpdateContext(item: Partial<ContextJSON>) {
         this.doc.transact(() => {
@@ -87,6 +95,7 @@ export class ContextStore extends YjsStore {
 
     static clear() {
     }
+
 
     State = cellx(this.GetState());
 

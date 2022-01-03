@@ -1,7 +1,6 @@
 import {DateTime} from "luxon";
 import {User} from "./user";
 import {Context} from "./context";
-import {utc} from "@hypertype/core";
 import {MessageJSON} from "@domain";
 
 export class Message {
@@ -29,11 +28,11 @@ export class Message {
     }
 
     static FromJSON(m: MessageJSON): Message{
-        return  {
+        return Object.assign(new Message(), {
             Content: m.Content,
             Description: m.Description,
-            CreatedAt: utc(m.CreatedAt),
-            UpdatedAt: utc(m.UpdatedAt),
+            CreatedAt: DateTime.fromISO(m.CreatedAt, {zone: 'utc'}),
+            UpdatedAt: DateTime.fromISO(m.UpdatedAt, {zone: 'utc'}),
             Order: m.Order,
             id: m.id,
             Context: m.ContextURI && {
@@ -42,7 +41,7 @@ export class Message {
             SubContext: m.SubContextURI && {
                 URI: m.SubContextURI
             } as Context,
-        };
+        });
     }
 
     static ToJSON(m: Message): MessageJSON {

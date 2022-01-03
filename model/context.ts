@@ -1,8 +1,7 @@
 import {Message} from "./message";
 import {Storage} from "./storage";
-import { DateTime } from "@hypertype/core";
+import { DateTime } from "luxon";
 import {ContextJSON} from "@domain";
-import { utc } from "@hypertype/core";
 import { Permutation } from "@domain/helpers/permutation";
 
 export class Context {
@@ -21,17 +20,17 @@ export class Context {
 
 
     static FromJSON(c: ContextJSON): Context{
-        return  {
+        return  Object.assign(new Context(), {
             URI: c.URI,
             id: c.id,
             Storage: null,
             Parents: [],
             IsRoot: c.IsRoot,
-            UpdatedAt: utc(c.UpdatedAt),
-            CreatedAt: utc(c.CreatedAt),
+            UpdatedAt: DateTime.fromISO(c.UpdatedAt, {zone: 'utc'}),
+            CreatedAt: DateTime.fromISO(c.CreatedAt, {zone: 'utc'}),
             Permutation: c.Permutation ? Permutation.Parse(c.Permutation) : null,
             Messages: [],
-        };
+        });
     }
 
     static ToJSON(c: Context): ContextJSON {
