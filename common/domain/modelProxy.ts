@@ -4,7 +4,7 @@ import {Stream} from "./stream";
 
 export class ModelProxy<TState, TActions extends object> extends Model<TState, TActions> {
 
-    constructor(private model: string, private id: any, private stream: Stream) {
+    constructor(private stream: Stream, private model: string, private id: any, private path = []) {
         super();
     }
 
@@ -30,9 +30,14 @@ export class ModelProxy<TState, TActions extends object> extends Model<TState, T
 
     private Invoke(action: string, args: any[]): Promise<any> {
         return this.stream.Invoke({
+            path: this.path,
             model: this.model,
             id: this.id,
             args, action
         });
+    }
+
+    public QueryModel(path: (string | number)[], current: any = this): any {
+        return new ModelProxy(this.stream, this.model, this.id, [this.path, path].flat());
     }
 }

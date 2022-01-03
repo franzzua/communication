@@ -11,11 +11,11 @@ export class ProxyFactory extends IFactory<any> {
     }
 
     public get Root(): any {
-        return new ModelProxy('root', null, this.stream);
+        return new ModelProxy(this.stream, 'root', null);
     }
 
     public GetModel<TModel extends Model<any, any>>(model: string, id: any): TModel {
-        return new ModelProxy(model, id, this.stream) as any as TModel;
+        return new ModelProxy(this.stream, model, id) as any as TModel;
     }
 
 }

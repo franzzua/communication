@@ -1,0 +1,33 @@
+{
+  "compilerOptions": {
+    "module": "commonjs",
+    "target": "ES2019",
+    "sourceMap": true,
+    "baseUrl": "./",
+    "experimentalDecorators": true,
+    "checkJs": false,
+    "outDir": "./dist/esm",
+    "skipLibCheck": true,
+    "skipDefaultLibCheck": true,
+    "emitDecoratorMetadata": true,
+    "declarationDir": "./dist/typings",
+    "declaration": true,
+    "lib": [
+      "WebWorker",
+    ],
+    "paths": {
+      "@common/domain": [
+        "../common/domain"
+      ],
+      "@common/core": [
+        "../common/core"
+      ]
+    }
+  },
+  "exclude": [
+    "node_modules",
+    "specs",
+    "**/*.spec.ts",
+    "dist"
+  ]
+}

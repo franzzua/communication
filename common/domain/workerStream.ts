@@ -2,6 +2,7 @@ import {cell} from "@common/core";
 import {cellx} from "cellx";
 import {ObservableMap} from "cellx-collections";
 import {Action, Stream} from "./stream";
+import {IAction} from "@hypertype/domain";
 
 export class WorkerStream extends Stream {
     constructor(private workerUrl: string) {
@@ -35,26 +36,40 @@ export class WorkerStream extends Stream {
 
 
     async Invoke(action: Action) {
-        this.Worker.postMessage(action);
+        this.postMessage({type: 'action', action});
     }
 
-    getCell(model: string, id: any) {
+    getCell(model: string, id: any, path: string[] = []) {
         return cellx(() => {
             const map = this.Models();
             return map.get(`${model}`)?.get(`${id}`);
         }, {
             put: (cell, state) => {
-                this.Worker.postMessage({
+                this.postMessage({
                     type: 'state',
-                    model, id,
+                    model, id, path,
                     state
                 })
             }
         })
     }
 
+    private postMessage(msg: WorkerMessage){
+        this.Worker.postMessage(msg);
+    }
+
 }
 
-export type WorkerAction = Action & {
 
+export type WorkerAction = {
+    type: 'action';
+    action: Action;
 }
+export type WorkerState = {
+    type: 'state';
+    model: string;
+    id: number;
+    path: string[];
+    state: any;
+}
+export type WorkerMessage = WorkerState | WorkerAction;
