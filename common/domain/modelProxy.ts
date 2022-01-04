@@ -1,6 +1,7 @@
 import {ICellx} from "cellx";
 import {Model} from "./worker/model";
 import {Stream} from "./stream";
+import {Injectable} from "@common/core";
 
 export class ModelProxy<TState, TActions extends object> extends Model<TState, TActions> {
 

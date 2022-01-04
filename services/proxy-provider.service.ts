@@ -9,7 +9,7 @@ export class ProxyProvider {
     constructor(private factory: IFactory<Model<DomainState, IDomainActions>>) {
     }
 
-    public GetContextProxy(context: Context) {
+    public GetContextProxy(context: Context): Model<Context, IContextActions> {
         // await this.domainProxy.State$.pipe(
         //     map(x => x.Contexts.get(context.URI)),
         //     filter(x => x != null),

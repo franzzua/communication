@@ -1,0 +1,35 @@
+import {Container} from "@common/core";
+import {IRouterOptions, Router} from "./router";
+import {setDefaultContainer} from "@common/ui";
+
+export class Builder{
+    private container: Container = new Container();
+
+    constructor() {
+
+    }
+
+    public withUI(...components){
+        this.container.provide(components);
+        return this;
+    }
+    public with(container: Container){
+        this.container.provide(container);
+        return this;
+    }
+
+    public withRoutes(options: IRouterOptions){
+        this.container.provide([{
+            provide: IRouterOptions, useValue: options
+        }, Router]);
+        return this;
+    }
+
+    build<T>(app: {
+        new(...args): T
+    }):T {
+        setDefaultContainer(this.container);
+        this.container.provide([app]);
+        return this.container.get<T>(app)
+    }
+}

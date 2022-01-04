@@ -12,7 +12,6 @@ export class MessageJSON{
     public UpdatedAt: string;
     public Action?: string;
     public id?: string;
-    public Order: number;
 }
 
 export class ContextJSON {

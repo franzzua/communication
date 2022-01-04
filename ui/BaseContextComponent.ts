@@ -21,15 +21,4 @@ export abstract class BaseContextComponent<TState = {}, TEvents = any> extends H
         filter(Fn.Ib),
         // tap(console.log),
     );
-
-    private contextByURI$: Observable<Context> = merge(this.uri$, this.contextURI$).pipe(
-        filter(Fn.Ib),
-        switchMap(x => this.stateService.getContext$(x)),
-    );
-
-    protected Context$ = merge(this.contextByURI$, this.context$).pipe(
-        filter(Fn.Ib),
-        shareReplay(1),
-    );
-
 }

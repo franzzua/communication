@@ -1,11 +1,10 @@
-import {filter, first, Fn, Injectable, map, Observable, utc} from "@hypertype/core";
 import {Context, DomainState, Message} from "@model";
-import {LogService} from "./log.service";
-import {IDomainActions} from "@domain";
+import {IContextActions, IDomainActions} from "@domain";
 import {ProxyProvider} from "./proxy-provider.service";
 import {ulid} from "ulid";
 import {AccountManager} from "./account.manager";
 import {IFactory, Model} from "@common/domain/worker";
+import {Injectable, utc} from "@common/core";
 
 @Injectable()
 export class StateService {
@@ -13,7 +12,6 @@ export class StateService {
     constructor(
         private factory: IFactory<Model<DomainState, IDomainActions>>,
         private proxyProvider: ProxyProvider,
-        private accManager: AccountManager,
     ) {
         // this.domainProxy.State$.subscribe(x => console.log('storage', x.Storages[0]));
         // @ts-ignore
@@ -58,7 +56,6 @@ export class StateService {
 
     public async AddMessage(message: Message) {
         await Promise.resolve();
-        message.Order = message.Context.Messages.length;
         const proxy = await this.proxyProvider.GetContextProxy(message.Context);
         proxy.Actions.CreateMessage(message);
     }
@@ -92,43 +89,13 @@ export class StateService {
     }
 
     public async LoadStorageForContext(uri: string): Promise<string> {
-        // const existed = this.StorageStore.getByURI(uri);
-        // if (existed) return uri;
-        if (!uri) {
-            const accounts = await this.accManager.Accounts$.pipe(filter(x => x.length > 0), first()).toPromise();
-            const defaultStorage = accounts[0].defaultStorage;
-            await this.factory.Root.Actions.LoadContext(defaultStorage);
-            history.replaceState(null, defaultStorage, `${location.href}${btoa(defaultStorage).replaceAll('=', '')}`)
-            return defaultStorage;
-        }
+
         await this.factory.Root.Actions.LoadContext(uri);
         return uri;
     }
 
-    //
-    public getContext$(uri: string): Observable<Context> {
-        return this.State$.pipe(
-            // tap(x => console.log('root:', x)),
-            filter(Fn.Ib),
-            map(x => x.Contexts.get(uri)),
-        );
+    public getContext(uri: string): Model<Context, IContextActions> {
+        return uri && this.factory.GetModel('Context', uri);
     }
-
-    //
-    // private DomainState$: Observable<void> = this.domainProxy.State$.pipe(
-    //     h.map(model => {
-    //         for (const storageState of model.Storages) {
-    //             this.StorageStore.SetOrUpdate(storageState);
-    //             storageState.Contexts.forEach(m => this.ContextStore.SetOrUpdate(m));
-    //             storageState.Messages.forEach(m => this.MessagesStore.SetOrUpdate(m));
-    //         }
-    //     })
-    // )
-
-
-    public State$: Observable<DomainState> = new Observable<DomainState>(subscr => {
-        this.factory.Root.$state.subscribe((err, evt) => subscr.next(evt.data.value));
-    })
-
 }
 

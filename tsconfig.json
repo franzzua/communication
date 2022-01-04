@@ -31,6 +31,12 @@
       "@common/core": [
         "./common/core"
       ],
+      "@common/ui": [
+        "./common/ui"
+      ],
+      "@common/app": [
+        "./common/app"
+      ],
       "@model": [
         "./model"
       ],

@@ -1,23 +1,25 @@
-import {distinctUntilChanged, filter, Injectable, map} from "@hypertype/core";
-import {Router} from "@hypertype/app";
+import {Router} from "@common/app";
+import {Injectable} from "@common/core";
 
 @Injectable()
-export class RouterService{
+export class RouterService {
 
     constructor(private router: Router) {
     }
 
 
-    toContext(contextURI: string){
-        const uri = encodeURIComponent(btoa(contextURI).replaceAll('=',''));
-        this.router.Actions.navigate('context', {uri});
+    goToContext(contextURI: string) {
+        const uri = encodeURIComponent(btoa(contextURI).replaceAll('=', ''));
+        this.router.Route = {
+            name: 'context',
+            params: {uri}
+        };
     }
 
-    public ContextURI$ = this.router.State$.pipe(
-        filter(x => x.name == 'context'),
-        map(x => x.params.get('uri')),
-        distinctUntilChanged(),
-        map(decodeURIComponent),
-        map(atob)
-    );
+    public get ContextURI() {
+        if (this.router.RouteName !== 'context')
+            return null;
+        const uriBase64 = this.router.Query.uri;
+        return atob(decodeURIComponent(uriBase64));
+    }
 }

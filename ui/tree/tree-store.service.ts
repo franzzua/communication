@@ -1,12 +1,9 @@
-import {Injectable, utc} from "@hypertype/core";
 import {StateService} from "@services";
 import {IState} from "./tree.template";
 import {Context, Message} from "@model";
 import {TreeItem, TreePresenter} from "../../presentors/tree.presentor";
 import type {Reducer} from "./tree.component";
-import {log} from "@hypertype/infr";
-import {MessageJSON} from "@domain";
-import { ulid } from "ulid";
+import {Fn, Injectable, utc} from "@common/core";
 
 
 export type ReducerStore<TState> = {
@@ -28,9 +25,7 @@ export class TreeStore {
         }
     }
 
-
-    @logReducer
-    async Init(root: Context): Promise<Reducer<IState>> {
+    Init(root: Context): Reducer<IState> {
         return state => {
             // if (root.Messages.length == 0) {
             //     const message: Message = {
@@ -120,11 +115,10 @@ export class TreeStore {
                 const paragraphs = clipboard.split('\n');
                 for (let paragraph of paragraphs) {
                     this.AddMessage({
-                        id: ulid(),
+                        id: Fn.ulid(),
                         Content: paragraph,
                         CreatedAt: utc(),
                         UpdatedAt: utc(),
-                        Order: state.Selected.Message.Context.Messages.length
                     }, state.Selected.Message);
                 }
             }
@@ -158,11 +152,10 @@ export class TreeStore {
         return state => {
             const parentPath = getParentPath(state);
             const newMessage: Message = {
-                id: ulid(),
+                id: Fn.ulid(),
                 CreatedAt: utc(),
                 UpdatedAt: utc(),
                 Content: text,
-                Order: 0
             };
             if (parentPath.length > 0) {
                 this.AddMessage(newMessage, state.ItemsMap.get(parentPath.join('/')).Message);

@@ -6,7 +6,7 @@ export function utc(millis: number);
 export function utc(iso: string);
 export function utc(input?: string | number) {
     if (input === undefined) {
-        return new DateTime();
+        return DateTime.utc();
     }
     if (typeof input === "string") {
         return DateTime.fromISO(input);

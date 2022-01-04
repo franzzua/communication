@@ -6,7 +6,7 @@ export class TreePresenter{
     public static Separator = '/'
 
     public static ToTree(context: Context, itemsMap: Map<string, TreeItem>, path = []): TreeItem[]{
-        if (!context)
+        if (!context || !context.Messages)
             return [];
         // if (this.contexts.has(context.id)){
         //     return [{

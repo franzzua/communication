@@ -11,7 +11,10 @@ export class WorkerStream extends Stream {
             const message = evt.data.value.data as WorkerMessage;
             if (message.type !== WorkerMessageType.State)
                 return;
-            this.models.getOrAdd(this.pathToStr(message), x => new Cell(undefined)).set(deserialize(message.state));
+            const cell = this.models.getOrAdd(this.pathToStr(message), x => new Cell(undefined));
+            const state = deserialize(message.state);
+            // console.log(this.pathToStr(message), state);
+            cell.set(state);
         })
     }
 
@@ -53,13 +56,14 @@ export class WorkerStream extends Stream {
 
     getCell(model: string, id: any, path: string[] = []) {
         const modelPath = {model, id, path};
-        this.postMessage({
-            type: WorkerMessageType.Subscribe,
-            ...modelPath
+        const cell = this.models.getOrAdd(this.pathToStr(modelPath), x => {
+            this.postMessage({
+                type: WorkerMessageType.Subscribe,
+                ...modelPath
+            });
+            return new Cell(undefined);
         });
-        return cellx(() => {
-            return this.models.getOrAdd(this.pathToStr(modelPath), x => new Cell(undefined)).get();
-        }, {
+        return cellx(() => cell.get(), {
             put: (cell, state) => {
                 this.postMessage({
                     type: WorkerMessageType.State,

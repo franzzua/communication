@@ -40,9 +40,9 @@ export class ManagementService{
     )
 
     public State$ = combineLatest([
-        this.Accounts$, this.Storages$, this.stateService.State$
+        this.Accounts$, this.Storages$
     ]).pipe(
-        map(([accounts, storages, state]) => ({
+        map(([accounts, storages]) => ({
             id: 'Root',
             Messages: [{
                 id: 'Management',

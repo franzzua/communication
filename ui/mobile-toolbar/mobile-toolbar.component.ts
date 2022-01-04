@@ -20,7 +20,7 @@ export class MobileToolbarComponent extends HyperComponent<IState, IEvents>{
 
     public State$ = this.state$;
     public Actions$ = this.Events$.pipe(
-        switchMap(x => this.treeStore[x.type](x.args)),
+        // switchMap(x => this.treeStore[x.type](x.args)),
         withLatestFrom(this.Element$),
         tap(([reducer,element]) => {
             element.dispatchEvent(new CustomEvent("reduce", {

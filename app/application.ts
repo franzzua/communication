@@ -12,6 +12,9 @@ import {CrdtComponent} from "../crdt/ui/crdt/crdt.component";
 import {ConcordComponent} from "../crdt/ui/concord/concord.component";
 import {AppInitComponent} from "./init/app-init.component";
 import {FakeLoginService} from "./services/fake-login.service";
+import {setDefaultContainer} from "@common/ui";
+import {Container as CommonContainer} from "@common/core";
+import {useWorkerDomain} from "@common/domain";
 
 UIContainer.provide([
     AppRootComponent,
@@ -45,6 +48,9 @@ export class Application {
                 AppInitComponent,
             ))
             .build();
+        setDefaultContainer(CommonContainer.withProviders(
+            ...useWorkerDomain('./worker.js').getProviders(),
+        ));
         return base.get<Application>(Application);
     }
 

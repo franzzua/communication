@@ -1,5 +1,5 @@
 import {IFactory} from "./shared/factory";
-import {Container} from "@hypertype/core";
+import {Container} from "@common/core";
 import {ProxyFactory} from "./proxyFactory";
 import {Stream} from "./stream";
 import {DirectStream} from "./direct-stream.service";

@@ -32,7 +32,7 @@ export class AppInitComponent extends HyperComponent {
             return;
         }
         const contextURI = `${accounts[0].defaultStorage}/root`;
-        this.routerService.toContext(contextURI);
+        this.routerService.goToContext(contextURI);
     }
 
     public Events = {

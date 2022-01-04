@@ -13,7 +13,6 @@ export class Message {
     public SubContext?: Context;
     public Action?: string;
     public id: string;
-    public Order: number;
     public equals?(m: Message): boolean;
     static isLast(message: Message) {
         return message.Context.Messages[message.Context.Messages.length - 1].id == message.id;
@@ -33,7 +32,6 @@ export class Message {
             Description: m.Description,
             CreatedAt: DateTime.fromISO(m.CreatedAt, {zone: 'utc'}),
             UpdatedAt: DateTime.fromISO(m.UpdatedAt, {zone: 'utc'}),
-            Order: m.Order,
             id: m.id,
             Context: m.ContextURI && {
                 URI: m.ContextURI
@@ -43,6 +41,7 @@ export class Message {
             } as Context,
         });
     }
+
 
     static ToJSON(m: Message): MessageJSON {
         return {
@@ -55,7 +54,6 @@ export class Message {
             ContextURI: m.Context?.URI,
             SubContextURI: m.SubContext?.URI,
             AuthorURI: m.Author?.URI,
-            Order: m.Order
         };
     }
 }

@@ -29,30 +29,22 @@ export class ContextComponent extends BaseContextComponent<IState> {
     constructor(state: StateService) {
         super(state);
     }
-
-    public State$ = combineLatest([this.Context$]).pipe(
-        map(([context]) => ({
-            context,
-            isSelected: false,
-            addMessage: {
-                Context: context,
-                Content: '',
-                Action: 'add.message'
-            }
-        })),
-        filter(Fn.Ib),
-    );
+    //
+    // public State$ = combineLatest([this.Context$]).pipe(
+    //     map(([context]) => ({
+    //         context,
+    //         isSelected: false,
+    //         addMessage: {
+    //             Context: context,
+    //             Content: '',
+    //             Action: 'add.message'
+    //         }
+    //     })),
+    //     filter(Fn.Ib),
+    // );
 
     public Events = {
         addMessage:  async (text) => {
-            await this.stateService.AddMessage({
-                Context: await this.Context$.pipe(first()).toPromise(),
-                Content: text,
-                CreatedAt: utc(),
-                UpdatedAt: utc(),
-                id: `message.${Id()}`,
-                Order: 0
-            })
         }
     };
 }

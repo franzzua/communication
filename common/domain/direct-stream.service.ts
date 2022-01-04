@@ -1,4 +1,4 @@
-import {Injectable} from "@hypertype/core";
+import {Injectable} from "@common/core";
 import {Stream} from "./stream";
 import {IFactory} from "./shared/factory";
 import {Action} from "./shared/types";

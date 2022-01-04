@@ -31,8 +31,6 @@ export class MessageEntity extends Entity {
     public FromJSON(json: Partial<MessageJSON>) {
         if ('Content' in json)
             this.Content = json.Content;
-        if ('Order' in json)
-            this.Order = json.Order;
         if ('SubContextURI' in json)
             this.SubContext = json.SubContextURI;
         if ('CreatedAt' in json)
@@ -48,7 +46,6 @@ export class MessageEntity extends Entity {
             Content: this.Content,
             id: this.Id,
             SubContextURI: this.SubContext,
-            Order: this.Order,
             StorageURI: null,
             ContextURI: null
         }
