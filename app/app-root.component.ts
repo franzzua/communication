@@ -1,4 +1,4 @@
-import {Router, RouterState} from "@common/app";
+import {Router} from "@common/app";
 import {Routes} from "./routes";
 import {Injectable} from "@common/core";
 import {component, HtmlComponent} from "@common/ui";

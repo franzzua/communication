@@ -48,20 +48,16 @@ export class Context {
         };
     }
 
-    static equals(context: Context): (context1: Context) => boolean;
-    static equals(context: Context, context1: Context): boolean;
-    static equals(...contexts: Context[]) {
-        if (contexts.length == 1) {
-            return (context2: Context) => {
-                if (context2.URI && context2.URI !== contexts[0].URI)
-                    return false;
-                if (contexts[0].id && contexts[0].id !== context2.id)
-                    return false;
-                return context2.UpdatedAt.equals(contexts[0].UpdatedAt);
-            }
-        } else {
-            return Context.equals(contexts[0])(contexts[1]);
-        }
+    static equals(x: Context, y: Context): boolean{
+        if (x == null && y == null)
+            return true;
+        if (!x && y || !y && x)
+            return false;
+        if (y.URI && y.URI !== x.URI)
+            return false;
+        if (x.id && x.id !== y.id)
+            return false;
+        return y.UpdatedAt.equals(x.UpdatedAt);
     }
 
 }

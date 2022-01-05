@@ -8,7 +8,7 @@ import {TextContentComponent} from "../ui/content/text-content.component";
 import {RouterService} from "./services/router.service";
 import {TreeComponent} from "../ui/tree/tree.component";
 import {ProxyProvider, StateService} from "@services";
-import {TreeStore} from "../ui/tree/tree-store.service";
+import {TreeReducers} from "../ui/tree/tree-reducers";
 
 @Injectable()
 export class App2 extends Application{
@@ -21,7 +21,7 @@ export class App2 extends Application{
         return new Builder()
             .with(useWorkerDomain('./worker.js'))
             .with(Container.withProviders(
-                RouterService, StateService, ProxyProvider, TreeStore
+                RouterService, StateService, ProxyProvider, TreeReducers
             ))
             .withUI(AppRootComponent, TextContentComponent, TreeComponent)
             .withRoutes({

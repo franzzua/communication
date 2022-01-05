@@ -8,7 +8,7 @@ import {ManagementComponent} from "./management/management.component";
 import {StorageComponent} from "./storage/storage.component";
 import {AddStorageComponent} from "./add-storage/add-storage.component";
 import {TreeComponent} from "./tree/tree.component";
-import {TreeStore} from "./tree/tree-store.service";
+import {TreeReducers} from "./tree/tree-reducers";
 import {MobileToolbarComponent} from "./mobile-toolbar/mobile-toolbar.component";
 import {StateService} from "@services";
 
@@ -23,7 +23,7 @@ export const UIContainer = Container.withProviders(
     ManagementComponent,
     TreeComponent,
     StateService,
-    TreeStore,
+    TreeReducers,
     MobileToolbarComponent
 );
 

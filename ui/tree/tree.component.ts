@@ -1,10 +1,15 @@
 import {component, HtmlComponent, property} from "@common/ui";
 import {IEvents, IState, Template} from "./tree.template";
 import {StateService} from "@services";
-import {TreeStore} from "./tree-store.service";
+import {keyMap, TreeReducers} from "./tree-reducers";
 import {TreeItem} from "../../presentors/tree.presentor";
 import {RouterService} from "../../app/services/router.service";
-import {Injectable} from "@common/core";
+import {AsyncQueue, Injectable} from "@common/core";
+import {Cell, cellx} from "cellx";
+import {KeyboardAspect} from "./keyboardAspect";
+import {Context} from "@model";
+import {Model} from "@common/domain";
+import bind from "bind-decorator";
 
 @Injectable(true)
 @component({
@@ -12,96 +17,93 @@ import {Injectable} from "@common/core";
     template: Template,
     style: require('./tree.style.less')
 })
-export class TreeComponent extends HtmlComponent<IState, IEvents> implements IEvents{
+export class TreeComponent extends HtmlComponent<IState, IEvents> implements IEvents {
+
 
     constructor(private stateService: StateService,
                 private routerService: RouterService,
-                private treeStore: TreeStore) {
+                private treeStore: TreeReducers) {
         super();
     }
 
-    setFocus({ item: Item, index: number }: { item: any; index: any; }) {
-        throw new Error("Method not implemented.");
-    }
-
-    updateMessage({ item: Item, content: string }: { item: any; content: any; }) {
-        throw new Error("Method not implemented.");
-    }
-    addMessage(text: string) {
-        throw new Error("Method not implemented.");
-    }
-    reduce(reducer: Reducer<IState>) {
-        throw new Error("Method not implemented.");
-    }
+    private keyboard = new Cell(new KeyboardAspect(this));
     @property()
     private uri!: string;
 
-    get Context() {
+    // @distinctUntilChanged<Model<Context>>((a, b) => a.State?.URI === b.State?.URI)
+    get ContextModel() {
         return this.stateService.getContext(this.uri);
     }
 
-    // public StorageURI$ = this.uri$.pipe(
-    //     h.switchMap(uri => this.stateService.LoadStorageForContext(uri)),
-    // );
-    //
-    // public Root$ = this.StorageURI$.pipe(
-    //     h.switchMap(uri => this.stateService.getContext$(uri)),
-    //     // h.tap(console.log),
-    //     h.filter(x => x != null)
-    // );
-    //
-    // protected reducers$: Observable<Reducer<IState>> = h.merge(
-    //     this.Events$.pipe(
-    //         h.filter(x => x.type == "reduce"),
-    //         h.map(x => x.args as Reducer<IState>),
-    //     ),
-    //     this.Events$.pipe(
-    //         h.filter(x => x.type == "focus"),
-    //         h.map(x => x.args.item as TreeItem),
-    //         h.concatMap(item => this.treeStore.Focus(item) as Promise<Reducer<IState>>)
-    //     ),
-    //     this.Events$.pipe(
-    //         h.filter(x => x.type == "updateMessage"),
-    //         h.map(x => x.args as {item: TreeItem, content: string}),
-    //         h.concatMap(x => this.treeStore.UpdateContent(x) as Promise<Reducer<IState>>)
-    //     ),
-    //     KeyboardAspect.GetEvents$(this.Element$).pipe(
-    //         h.filter(x => x.modKey in keyMap),
-    //         h.tap(x => x.event.preventDefault()),
-    //         h.concatMap(x => this.treeStore[keyMap[x.modKey]](x.event as any) as Promise<Reducer<IState>>)
-    //     ),
-    //     this.Root$.pipe(
-    //         h.switchMap(root => this.treeStore.Init(root) as Promise<Reducer<IState>>),
-    //     ),
-    // );
+    @distinctUntilChanged(Context.equals)
+    get Context() {
+        return this.ContextModel?.State;
+    }
 
-    private initialState = {
+    public $state = new ReducerQueueState({
         Items: [],
         Root: null,
         Selected: null,
         ItemsMap: new Map<string, TreeItem>()
+    });
+
+    async setFocus({item, index}: { item: TreeItem; index: number; }) {
+        this.$state.Invoke(this.treeStore.Focus(item));
     }
 
-    get State() {
-        if (!this.Context)
-            return this.initialState;
-        return this.treeStore.Init(this.Context.State)(this.initialState);
+    updateMessage(x: { item: any; content: any; }) {
+        this.$state.Invoke(this.treeStore.UpdateContent(x));
     }
 
-    //
-    // public State$: Observable<IState> = this.reducers$.pipe(
-    //     h.scan((state, reducer) => reducer(state), {
-    //         Items: [],
-    //         Root: null,
-    //         Selected: null,
-    //         ItemsMap: new Map<string, TreeItem>()
-    //     } as IState),
-    //     // h.tap(x => console.table(x.Items.map(x => ({Message: x.Message.Content, level: x.Path.length})))),
-    //     h.shareReplay(1),
-    // )
+    addMessage(text: string) {
+        throw new Error("Method not implemented.");
+    }
+
+    reduce(reducer: Reducer<IState>) {
+        this.$state.Invoke(reducer);
+    }
+    @bind
+    private InitAction(){
+        this.Context && this.$state.Invoke(this.treeStore.Init(this.Context))
+    }
+
+    @bind
+    private KeyboardActions(){
+        const eventQueue = this.keyboard.get().EventQueue;
+        eventQueue.forEach(({event, modKey}: { event: KeyboardEvent, modKey: string }) => {
+            if (modKey in keyMap) {
+                event.preventDefault();
+                const reducer = this.treeStore[keyMap[modKey]](event as any);
+                this.$state.Invoke(reducer);
+            }
+        })
+    }
 
 
+    public Actions = [this.InitAction, this.KeyboardActions];
 }
 
 // export type TransformResult<T> = T | Promise<T>;
 export type Reducer<T> = (t: T) => T;
+
+export class ReducerQueueState<TState> extends Cell<TState> {
+    private asyncQueue = new AsyncQueue()
+
+    public Invoke(reducer: Promise<Reducer<TState>> | Reducer<TState>) {
+        this.asyncQueue.Invoke(() => Promise.resolve(reducer).then(reducer => this.set(reducer(this.get()))));
+    }
+}
+
+export function distinctUntilChanged<T>(comparator: (x: T, y: T) => boolean) {
+    return (target, key, descr) => {
+        const symbol = Symbol(key + 'distinct');
+        return {
+            get() {
+                const cell = this[symbol] ?? (this[symbol] = cellx(() => descr.get.call(this), {
+                    compareValues: comparator
+                }));
+                return cell();
+            }
+        }
+    }
+}

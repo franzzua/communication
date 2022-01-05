@@ -58,18 +58,14 @@ export class TextContentComponent extends HtmlComponent<string, IEvents> {
     }
 
     @bind
-    private setContent(rt) {
+    private setContent() {
         const div = this.contentElement;
-        if (!div)
-            return;
         div.textContent = this.message?.Content;
     }
 
     @bind
     private async setSelection(rt) {
         const div = this.contentElement;
-        if (!div)
-            return;
         if (!this.active) {
             div.classList.remove('focus');
             return;
@@ -90,7 +86,7 @@ export class TextContentComponent extends HtmlComponent<string, IEvents> {
         selection.addRange(range);
     }
 
-    public Actions = [
+    public Effects = [
         this.setContent,
         this.setSelection
     ]

@@ -1,5 +1,5 @@
 import {IEventHandler} from "@hypertype/ui";
-import type {TreeStore} from "../tree/tree-store.service";
+import type {TreeReducers} from "../tree/tree-reducers";
 import {Icons} from "../../icons/Icons";
 
 export const Template = (html, state: IState, events: IEventHandler<IEvents>) => html`
@@ -15,5 +15,5 @@ export interface IState {
 }
 
 export type IEvents = {
-    [action in keyof TreeStore]: (event: Event) => void;
+    [action in keyof TreeReducers]: (event: Event) => void;
 }

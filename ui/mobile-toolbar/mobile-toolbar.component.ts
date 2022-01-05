@@ -1,6 +1,6 @@
 import {Component, HyperComponent, property} from "@hypertype/ui";
 import {IEvents, IState, Template} from "./mobile-toolbar.template";
-import {TreeStore} from "../tree/tree-store.service";
+import {TreeReducers} from "../tree/tree-reducers";
 import {Injectable, map, mapTo, Observable, switchMap, tap, withLatestFrom} from "@hypertype/core";
 
 @Injectable(true)
@@ -11,7 +11,7 @@ import {Injectable, map, mapTo, Observable, switchMap, tap, withLatestFrom} from
 })
 export class MobileToolbarComponent extends HyperComponent<IState, IEvents>{
 
-    constructor(private treeStore: TreeStore) {
+    constructor(private treeStore: TreeReducers) {
         super();
     }
 

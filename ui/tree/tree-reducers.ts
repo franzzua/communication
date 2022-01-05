@@ -11,7 +11,7 @@ export type ReducerStore<TState> = {
 };
 
 @Injectable()
-export class TreeStore {
+export class TreeReducers {
 
     constructor(private stateService: StateService) {
     }
@@ -25,7 +25,7 @@ export class TreeStore {
         }
     }
 
-    Init(root: Context): Reducer<IState> {
+    async Init(root: Context): Promise<Reducer<IState>> {
         return state => {
             // if (root.Messages.length == 0) {
             //     const message: Message = {
@@ -62,7 +62,6 @@ export class TreeStore {
         }
     }
 
-    @logReducer
     async Focus(x: TreeItem): Promise<Reducer<IState>> {
         return (state: IState) => ({
             ...state,
@@ -333,7 +332,7 @@ export class TreeStore {
 
 
 export const keyMap: {
-    [key: string]: keyof TreeStore
+    [key: string]: keyof TreeReducers
 } = {
     CtrlArrowLeft: "MoveLeft",
     CtrlArrowRight: "MoveRight",

@@ -5,18 +5,24 @@ import {HtmlComponent} from "./htmlComponent";
 import {IEvents, ITemplate} from "./types";
 import {Fn} from "@common/core";
 import {EventHandlerProvider} from "./eventHandlerProvider";
+import {IEvent} from "cellx/src/EventEmitter";
 
 export class CellRenderer<TState, TEvents extends IEvents> {
-    private stateCell = cellx(() => this.component.State);
+    private stateCell: Cell<TState> = this.component.$state ?? cellx(() => this.component.State).cell;
     private actionsCells = this.component.Actions.map(action => cellx(() => {
-        const renderTime = this.renderCell.get();
-        action(renderTime);
+        // const renderTime = this.renderCell.get();
+        action();
+    }));
+    private effectCells = this.component.Effects.map(action => cellx(() => {
+        if (!this.component.$render.get())
+            return;
+        action();
     }));
     private eventHandler = new EventHandlerProvider(this.component);
-    private renderCell = new Cell(Fn.ulid());
 
     constructor(private component: HtmlComponent<TState, TEvents>,
                 private template: ITemplate<TState, TEvents>) {
+        this.component.$render = new Cell(undefined);
     }
 
     private html = (strings: TemplateStringsArray | string, ...args) => {
@@ -43,9 +49,9 @@ export class CellRenderer<TState, TEvents extends IEvents> {
     });
 
     @bind
-    render() {
-        this.template.call(this.component, this.html, this.component.State, this.handlerProxy);
-        this.renderCell.set(Fn.ulid());
+    render(err, event: IEvent) {
+        this.template.call(this.component, this.html, event.data.value, this.handlerProxy);
+        this.component.$render.set(Fn.ulid());
     }
 
     Start() {
@@ -53,12 +59,23 @@ export class CellRenderer<TState, TEvents extends IEvents> {
         for (const c of this.actionsCells) {
             c.subscribe(Fn.I);
         }
-        this.render();
+        for (const c of this.effectCells) {
+            c.subscribe(Fn.I);
+        }
+        this.render(null, {
+            data: {value: this.stateCell.get()},
+            bubbles: false,
+            type: 'init',
+            target: this.stateCell
+        } as IEvent);
     }
 
     Stop() {
         this.stateCell.unsubscribe(this.render);
         for (const c of this.actionsCells) {
+            c.unsubscribe(Fn.I);
+        }
+        for (const c of this.effectCells) {
             c.unsubscribe(Fn.I);
         }
     }
