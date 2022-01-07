@@ -5,6 +5,7 @@ import {ulid} from "ulid";
 import {AccountManager} from "./account.manager";
 import {IFactory, Model} from "@common/domain/worker";
 import {Injectable, utc} from "@common/core";
+import {ContextProxy} from "./context.proxy";
 
 @Injectable()
 export class StateService {
@@ -30,7 +31,7 @@ export class StateService {
     async CreateSubContext(message: Message) {
         // if (context.URI && this.State.has(context.URI))/**/
         //     return;
-        message.SubContext = {
+        const subContext = {
             id: ulid(),
             Messages: [],
             Parents: [message],
@@ -40,8 +41,9 @@ export class StateService {
             IsRoot: false,
             URI: undefined
         };
-        message.SubContext.URI = `${message.Context.URI.split('/').slice(0, -1).join('/')}/${message.SubContext.id}`;
-        await this.CreateContext(message.SubContext);
+        subContext.URI = `${message.Context.URI.split('/').slice(0, -1).join('/')}/${subContext.id}`;
+        message.SubContext = subContext;
+        await this.CreateContext(subContext);
         //
         // this.ContextStore.Create(message.SubContext)
         //     .then(x => this.proxyProvider.GetMessageProxy(message))
@@ -56,7 +58,7 @@ export class StateService {
 
     public async AddMessage(message: Message) {
         await Promise.resolve();
-        const proxy = await this.proxyProvider.GetContextProxy(message.Context);
+        const proxy = await this.proxyProvider.GetContextProxy(message.Context.URI);
         proxy.Actions.CreateMessage(message);
     }
 
@@ -67,7 +69,7 @@ export class StateService {
 
     public DeleteMessage(message: Message) {
         message.Context.Messages.remove(message);
-        this.proxyProvider.GetContextProxy(message.Context).Actions.RemoveMessage(message.id);
+        this.proxyProvider.GetContextProxy(message.Context.URI).Actions.RemoveMessage(message.id);
     }
 
     public Reorder(message: Message, newIndex: number): void {
@@ -94,8 +96,8 @@ export class StateService {
         return uri;
     }
 
-    public getContext(uri: string): Model<Context, IContextActions> {
-        return uri && this.factory.GetModel('Context', uri);
+    public getContext(uri: string): ContextProxy {
+        return uri && this.proxyProvider.GetContextProxy(uri);
     }
 }
 

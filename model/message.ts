@@ -42,7 +42,6 @@ export class Message {
         });
     }
 
-
     static ToJSON(m: Message): MessageJSON {
         return {
             Content: m.Content,

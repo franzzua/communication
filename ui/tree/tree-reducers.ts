@@ -13,11 +13,12 @@ export type ReducerStore<TState> = {
 @Injectable()
 export class TreeReducers {
 
-    constructor(private stateService: StateService) {
+    constructor(private stateService: StateService,
+                private treePresenter: TreePresenter) {
     }
 
     @logReducer
-    async UpdateContent(data: {item: TreeItem, content: string}): Promise<Reducer<IState>> {
+    async UpdateContent(data: { item: TreeItem, content: string }): Promise<Reducer<IState>> {
         return state => {
             this.stateService.UpdateContent(data.item.Message, data.content);
             data.item.Message.Content = data.content;
@@ -25,7 +26,7 @@ export class TreeReducers {
         }
     }
 
-    async Init(root: Context): Promise<Reducer<IState>> {
+    Init(root: Context): Reducer<IState> {
         return state => {
             // if (root.Messages.length == 0) {
             //     const message: Message = {
@@ -40,7 +41,7 @@ export class TreeReducers {
             //     root.Messages.push(message);
             // }
             // state.ItemsMap = new Map<string, TreeItem>();
-            const items = TreePresenter.ToTree(root, state.ItemsMap);
+            const items = this.treePresenter.ToTree(root, state.ItemsMap);
             // const items = TreePresenter.ToTree(root, new Map());
             const selected = (() => {
                 if (state?.Selected) {
@@ -95,7 +96,7 @@ export class TreeReducers {
     @logReducer
     async Paste(event: ClipboardEvent): Promise<Reducer<IState>> {
         const clipboard = event.clipboardData.getData("text/plain")
-                        ?? await navigator.clipboard.readText();
+            ?? await navigator.clipboard.readText();
         return (state: IState) => {
             try {
                 const parsed = JSON.parse(clipboard) as Message;
@@ -131,7 +132,7 @@ export class TreeReducers {
             state.Selected.IsOpened = !state.Selected.IsOpened;
             return {
                 ...state,
-                Items: TreePresenter.ToTree(state.Root, state.ItemsMap)
+                Items: this.treePresenter.ToTree(state.Root, state.ItemsMap)
             };
         }
     }
@@ -173,7 +174,7 @@ export class TreeReducers {
                 IsOpened: true
             } as TreeItem;
             state.ItemsMap.set(newPath.join('/'), newItem);
-            state.Items = TreePresenter.ToTree(state.Root, state.ItemsMap);
+            state.Items = this.treePresenter.ToTree(state.Root, state.ItemsMap);
             return {
                 ...state,
                 Selected: newItem
@@ -352,7 +353,7 @@ export const keyMap: {
     CtrlPeriod: "Switch"
 }
 
-function logReducer(target, key, descr){
+function logReducer(target, key, descr) {
     return {
         async value(data) {
             const instance = this;

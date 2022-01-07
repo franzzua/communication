@@ -4,11 +4,10 @@ import {StateService} from "@services";
 import {keyMap, TreeReducers} from "./tree-reducers";
 import {TreeItem} from "../../presentors/tree.presentor";
 import {RouterService} from "../../app/services/router.service";
-import {AsyncQueue, Injectable} from "@common/core";
+import {AsyncQueue, Fn, Injectable} from "@common/core";
 import {Cell, cellx} from "cellx";
 import {KeyboardAspect} from "./keyboardAspect";
 import {Context} from "@model";
-import {Model} from "@common/domain";
 import bind from "bind-decorator";
 
 @Injectable(true)
@@ -35,7 +34,7 @@ export class TreeComponent extends HtmlComponent<IState, IEvents> implements IEv
         return this.stateService.getContext(this.uri);
     }
 
-    @distinctUntilChanged(Context.equals)
+    @Fn.distinctUntilChanged(Context.equals)
     get Context() {
         return this.ContextModel?.State;
     }
@@ -62,13 +61,14 @@ export class TreeComponent extends HtmlComponent<IState, IEvents> implements IEv
     reduce(reducer: Reducer<IState>) {
         this.$state.Invoke(reducer);
     }
+
     @bind
-    private InitAction(){
+    private InitAction() {
         this.Context && this.$state.Invoke(this.treeStore.Init(this.Context))
     }
 
     @bind
-    private KeyboardActions(){
+    private KeyboardActions() {
         const eventQueue = this.keyboard.get().EventQueue;
         eventQueue.forEach(({event, modKey}: { event: KeyboardEvent, modKey: string }) => {
             if (modKey in keyMap) {
@@ -90,20 +90,10 @@ export class ReducerQueueState<TState> extends Cell<TState> {
     private asyncQueue = new AsyncQueue()
 
     public Invoke(reducer: Promise<Reducer<TState>> | Reducer<TState>) {
-        this.asyncQueue.Invoke(() => Promise.resolve(reducer).then(reducer => this.set(reducer(this.get()))));
-    }
-}
-
-export function distinctUntilChanged<T>(comparator: (x: T, y: T) => boolean) {
-    return (target, key, descr) => {
-        const symbol = Symbol(key + 'distinct');
-        return {
-            get() {
-                const cell = this[symbol] ?? (this[symbol] = cellx(() => descr.get.call(this), {
-                    compareValues: comparator
-                }));
-                return cell();
-            }
+        if (reducer instanceof Promise) {
+            this.asyncQueue.Invoke(() => reducer.then(reducer => this.set(reducer(this.get()))));
+        } else {
+            this.set(reducer(this.get()));
         }
     }
 }
