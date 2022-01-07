@@ -1,4 +1,4 @@
-import {useCustomHandler} from "uhtml";
+import {useCustomHandler} from "@common/uhtml";
 
 useCustomHandler(style);
 

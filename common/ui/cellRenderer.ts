@@ -1,5 +1,5 @@
 import {Cell, cellx} from "cellx";
-import {html, render} from "uhtml";
+import {html, render} from "@common/uhtml";
 import bind from "bind-decorator";
 import {HtmlComponent} from "./htmlComponent";
 import {IEvents, ITemplate} from "./types";
