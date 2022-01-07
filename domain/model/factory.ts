@@ -5,6 +5,7 @@ import type {IFactory} from "@common/domain/worker";
 import {MessageModel} from "@domain/model/message-model";
 import {YjsRepository} from "@infr/y/yjsRepository";
 import {DomainModel} from "@domain/model/domain-model";
+import {ModelPath} from "../../common/domain/shared/types";
 
 @Injectable()
 export class Factory implements IFactory<DomainModel> {
@@ -22,17 +23,8 @@ export class Factory implements IFactory<DomainModel> {
         return this.container.get<DomainModel>(DomainModel);
     }
 
-    public GetModel(model: string, id: any) {
-        switch (model.toLowerCase()) {
-            case 'root':
-            case 'domain':
-                return this.container.get<DomainModel>(DomainModel);
-            case 'context':
-                return this.GetOrCreateContext(id) as any;
-            case 'message':
-                return this.GetMessage(id) as any;
-        }
-        throw new Error();
+    public GetModel(path: ModelPath) {
+        return this.Root.QueryModel(path);
     }
 
     public GetOrCreateMessage(state: Message): MessageModel {

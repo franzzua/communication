@@ -1,4 +1,5 @@
 import {cellx} from "cellx";
+import {ModelPath} from "../shared/types";
 
 export abstract class Model<TState, TActions = {}> {
 
@@ -18,7 +19,7 @@ export abstract class Model<TState, TActions = {}> {
 
     public Actions: TActions = this as any;
 
-    private _queryModel(path: (string | number)[], current: any) {
+    private _queryModel(path: ModelPath, current: any) {
         if (path.length == 0)
             return current;
         const first = path.shift();
@@ -33,7 +34,7 @@ export abstract class Model<TState, TActions = {}> {
             return this._queryModel(path, current[first]);
     }
 
-    public QueryModel(path: (string | number)[]): Model<any, any> {
+    public QueryModel(path: ModelPath): Model<any, any> {
         return this._queryModel(path, this);
     }
 }

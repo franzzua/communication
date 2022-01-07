@@ -12,16 +12,9 @@ export type WorkerResponse = {
     error?: any,
     actionId: string;
 };
-export type ModelPath = {
-
-    // Model name, unique
-    model: string;
-    // Model id, unique
-    id: any;
-    // Subpath of internal entity of model
-    path: (string | number)[];
-}
-export type Action = ModelPath & {
+export type ModelPath = (string | number)[];
+export type Action = {
+    path: ModelPath;
     action: string;
     args: any[]
 }
@@ -30,15 +23,21 @@ export type WorkerAction = {
     actionId: string;
 } & Action;
 export type WorkerSubscribe = {
+    path: ModelPath;
     type: WorkerMessageType.Subscribe;
-} & ModelPath;
+};
 export type WorkerState = {
+    path: ModelPath;
     type: WorkerMessageType.State;
     state: any;
-} & ModelPath;
-export type WorkerConnected = {
-    type: WorkerMessageType.Connected
 };
+export type WorkerConnected = {
+    type: WorkerMessageType.Connected;
+    structure: ModelStructure;
+};
+export type ModelStructure = {
+
+}
 export type WorkerMessage = WorkerState
     | WorkerAction
     | WorkerResponse

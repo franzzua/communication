@@ -1,28 +1,40 @@
 import {IFactory} from "../shared/factory";
-import {AsyncQueue, cell, deserialize, serialize} from "@common/core";
-import {Injectable} from "@common/core";
+import {AsyncQueue, cell, deserialize, Injectable, serialize} from "@common/core";
 import {ModelPath, WorkerAction, WorkerMessage, WorkerMessageType} from "../shared/types";
 
 @Injectable()
 export class WorkerEntry {
 
     constructor(private factory: IFactory) {
-        self.postMessage({type: WorkerMessageType.Connected});
+        this.postMessage({
+            type: WorkerMessageType.Connected,
+            structure: {
+                Messages: {
+                    Context: 'Contexts',
+                    SubContext: 'Contexts',
+                },
+                Contexts: {
+                    Messages: 'Messages',
+                    Parents: 'Messages'
+                }
+            }
+        });
         this.$messages.subscribe((err, actions) => {
             const event = actions.data.value as MessageEvent<WorkerMessage>;
             switch (event.data.type) {
                 case WorkerMessageType.Subscribe:
-                    this.getModel(event.data).$state.subscribe((err, evt) => {
+                    const path = event.data.path;
+                    this.getModel(path).$state.subscribe((err, evt) => {
                         const state = evt.data.value;
                         this.postMessage({
-                            ...(event.data as ModelPath),
+                            path,
                             type: WorkerMessageType.State,
                             state: serialize(state)
                         });
                     })
                     break;
                 case WorkerMessageType.State:
-                    this.getModel(event.data).$state(deserialize(event.data.state));
+                    this.getModel(event.data.path).$state(deserialize(event.data.state));
                     break;
                 case WorkerMessageType.Action:
                     this.Action(event.data);
@@ -34,7 +46,7 @@ export class WorkerEntry {
     private asyncQueue = new AsyncQueue();
 
     private Action(action: WorkerAction) {
-        const result = this.asyncQueue.Invoke(() => this.getModel(action).Actions[action.action](...action.args.map(deserialize)));
+        const result = this.asyncQueue.Invoke(() => this.getModel(action.path).Actions[action.action](...action.args.map(deserialize)));
         result.then(response => {
             return ({response: serialize(response)});
         })
@@ -54,8 +66,8 @@ export class WorkerEntry {
         self.postMessage(message);
     }
 
-    private getModel(event: ModelPath) {
-        return this.factory.GetModel(event.model, event.id).QueryModel(event.path);
+    private getModel(path: ModelPath) {
+        return this.factory.GetModel(path);
     }
 
     $messages = cell.fromEvent<MessageEvent<WorkerMessage>>(self, 'message');

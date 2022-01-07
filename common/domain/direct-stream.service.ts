@@ -10,12 +10,10 @@ export class DirectStream extends Stream {
     }
 
     Invoke(action: Action) {
-        return this.factory.GetModel(action.model, action.id)
-            .QueryModel(action.path)
-            .Actions[action.action](...action.args);
+        return this.factory.GetModel(action.path).Actions[action.action](...action.args);
     }
 
-    getCell(model: string, id: any) {
-        return this.factory.GetModel(model, id).$state;
+    getCell(path: (string|number)[]) {
+        return this.factory.GetModel(path).$state;
     }
 }

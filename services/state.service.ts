@@ -1,11 +1,10 @@
 import {Context, DomainState, Message} from "@model";
-import {IContextActions, IDomainActions} from "@domain";
+import {IDomainActions} from "@domain";
 import {ProxyProvider} from "./proxy-provider.service";
 import {ulid} from "ulid";
-import {AccountManager} from "./account.manager";
 import {IFactory, Model} from "@common/domain/worker";
 import {Injectable, utc} from "@common/core";
-import {ContextProxy} from "./context.proxy";
+import {ContextModel} from "@domain/model";
 
 @Injectable()
 export class StateService {
@@ -53,36 +52,36 @@ export class StateService {
     }
 
     async AttachContext(context: Context, to: Message) {
-        await this.proxyProvider.GetMessageProxy(to).Actions.Attach(context.URI);
+        await this.proxyProvider.GetMessage(to).Actions.Attach(context.URI);
     }
 
     public async AddMessage(message: Message) {
         await Promise.resolve();
-        const proxy = await this.proxyProvider.GetContextProxy(message.Context.URI);
+        const proxy = await this.proxyProvider.GetContext(message.Context.URI);
         proxy.Actions.CreateMessage(message);
     }
 
     public MoveMessage(message: Message, to: Context, toIndex: number = to.Messages.length): void {
         const fromURI = message.Context.URI;
-        this.proxyProvider.GetMessageProxy(message).Actions.Move(fromURI, to.URI, toIndex);
+        this.proxyProvider.GetMessage(message).Actions.Move(fromURI, to.URI, toIndex);
     }
 
     public DeleteMessage(message: Message) {
         message.Context.Messages.remove(message);
-        this.proxyProvider.GetContextProxy(message.Context.URI).Actions.RemoveMessage(message.id);
+        this.proxyProvider.GetContext(message.Context.URI).Actions.RemoveMessage(message.id);
     }
 
     public Reorder(message: Message, newIndex: number): void {
         message.Context.Messages.remove(message);
         message.Context.Messages.splice(newIndex, 0, message);
         message.Context.Messages.remove(message);
-        this.proxyProvider.GetMessageProxy(message).Actions.Reorder(newIndex);
+        this.proxyProvider.GetMessage(message).Actions.Reorder(newIndex);
     }
 
     public async UpdateContent(message: Message, content: any) {
         await Promise.resolve();
         message.Content = content;
-        this.proxyProvider.GetMessageProxy(message).Actions.UpdateText(content);
+        this.proxyProvider.GetMessage(message).Actions.UpdateText(content);
         // .then(proxy => proxy.Actions.UpdateText(message.Content))
         // .catch(err => {
         //     console.log(err);
@@ -96,8 +95,8 @@ export class StateService {
         return uri;
     }
 
-    public getContext(uri: string): ContextProxy {
-        return uri && this.proxyProvider.GetContextProxy(uri);
+    public getContext(uri: string): ContextModel {
+        return uri && this.proxyProvider.GetContext(uri);
     }
 }
 

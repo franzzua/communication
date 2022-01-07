@@ -3,6 +3,8 @@ import {Cell, cellx} from "cellx";
 import {Stream} from "./stream";
 import {ulid} from "ulid";
 import {Action, ModelPath, WorkerMessage, WorkerMessageType} from "./shared/types";
+import {ModelProxy} from "./modelProxy";
+import {ProxyFactory} from "./proxyFactory";
 
 export class WorkerStream extends Stream {
     constructor(private workerUrl: string) {
@@ -11,7 +13,7 @@ export class WorkerStream extends Stream {
             const message = evt.data.value.data as WorkerMessage;
             if (message.type !== WorkerMessageType.State)
                 return;
-            const cell = this.models.getOrAdd(this.pathToStr(message), x => new Cell(undefined));
+            const cell = this.models.getOrAdd(this.pathToStr(message.path), x => new Cell(undefined));
             const state = deserialize(message.state);
             // console.log(this.pathToStr(message), state);
             cell.set(state);
@@ -19,14 +21,16 @@ export class WorkerStream extends Stream {
     }
 
     private pathToStr(path: ModelPath) {
-        return `${path.model}:${path.id}:${path.path.join(':')}`;
+        return path.join(':');
     }
 
     private _worker: Worker;
     private _connect = new Promise<void>(resolve => {
-        this.Worker.addEventListener('message', msg => {
-            if (msg.data.type === WorkerMessageType.Connected)
+        this.Worker.addEventListener('message', (msg: MessageEvent<WorkerMessage>) => {
+            if (msg.data.type === WorkerMessageType.Connected) {
+                ModelProxy.useStructure(msg.data.structure);
                 resolve();
+            }
         })
     })
 
@@ -54,12 +58,11 @@ export class WorkerStream extends Stream {
         }))
     }
 
-    getCell(model: string, id: any, path: string[] = []) {
-        const modelPath = {model, id, path};
-        const cell = this.models.getOrAdd(this.pathToStr(modelPath), x => {
+    getCell(path: ModelPath) {
+        const cell = this.models.getOrAdd(this.pathToStr(path), x => {
             this.postMessage({
                 type: WorkerMessageType.Subscribe,
-                ...modelPath
+                path,
             });
             return new Cell(undefined);
         });
@@ -67,7 +70,7 @@ export class WorkerStream extends Stream {
             put: (cell, state) => {
                 this.postMessage({
                     type: WorkerMessageType.State,
-                    ...modelPath,
+                    path,
                     state: serialize(state)
                 });
             }
