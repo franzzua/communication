@@ -4,6 +4,7 @@ import {TreeItem, TreePresenter} from "../../presentors/tree.presentor";
 import type {Reducer} from "./tree.component";
 import {Fn, Injectable, utc} from "@common/core";
 import {ContextProxy} from "@services";
+import {ulid} from "ulid";
 
 
 export type ReducerStore<TState> = {
@@ -105,6 +106,7 @@ export class TreeReducers {
                     //
                     //         .find(x => x.URI == parsed.SubContext.URI);
                     // }
+                    parsed.id = Fn.ulid();
                     parsed.CreatedAt = utc();
                     parsed.UpdatedAt = utc();
                     state.Selected.Message.Context.Actions.CreateMessage(parsed);

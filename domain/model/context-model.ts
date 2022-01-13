@@ -10,6 +10,7 @@ import {ContextStore} from "@infr/y/contextStore";
 import {DateTime} from "luxon";
 import {Me} from "rdf-namespaces/dist/vcard";
 import {proxy} from "@common/domain";
+import {Fn} from "@common/core";
 
 export class ContextModel extends Model<Context, IContextActions> implements IContextActions {
 
@@ -91,6 +92,8 @@ export class ContextModel extends Model<Context, IContextActions> implements ICo
     }
 
     async CreateMessage(message: Message, index: number = this.Messages.size): Promise<void> {
+        if (!message.id)
+            message.id = Fn.ulid();
         if (message.ContextURI && message.ContextURI !== this.URI){
             this.factory.GetContext(message.ContextURI).RemoveMessage(message.id);
         }
