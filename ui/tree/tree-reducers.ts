@@ -214,11 +214,11 @@ export class TreeReducers {
     async Remove(event: KeyboardEvent): Promise<Reducer<IState>> {
         return (state: IState) => {
             const message = state.Selected.Message;
-            message.Actions.Remove();
             const selectedIndex = state.Items.indexOf(state.Selected);
             const next = state.Items[selectedIndex + 1];
             const items = state.Items.filter(x => x != state.Selected);
             if (next && next.Message.Context == message.Context) {
+                message.Actions.Remove();
                 return {
                     ...state,
                     Items: items,
@@ -226,6 +226,7 @@ export class TreeReducers {
                 };
             } else {
                 const prev = state.Items[selectedIndex - 1];
+                message.Actions.Remove();
                 return {
                     ...state,
                     Items: items,
