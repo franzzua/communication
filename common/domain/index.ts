@@ -2,10 +2,9 @@ import {IFactory} from "./shared/factory";
 import {Container} from "@common/core";
 import {ProxyFactory} from "./proxyFactory";
 import {Stream} from "./stream";
-import {DirectStream} from "./direct-stream.service";
+import {DirectStream} from "./direct-stream";
 import {WorkerStream} from "./workerStream";
 import {Action} from "./shared/types";
-
 export {proxy} from "./shared/domain.structure";
 export type {Model} from "./worker/model";
 export {IFactory} from "./shared/factory";
@@ -20,11 +19,11 @@ export function useDomain(factory: IFactory) {
         provide: IFactory, useValue: factory
     });
 }
-export function useStreamDomain(factory: IFactory) {
+export function useStreamDomain(Factory: {new(...args):IFactory}) {
     return Container.withProviders({
         provide: IFactory, useClass: ProxyFactory
-    }, {
-        provide: Stream, useValue: new DirectStream(factory)
+    }, Factory, {
+        provide: Stream, useClass: DirectStream, deps: [Factory]
     });
 }
 

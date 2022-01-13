@@ -1,16 +1,18 @@
 import {Application, Builder} from "@common/app";
-import {useWorkerDomain} from "@common/domain";
+import {useStreamDomain, useWorkerDomain} from "@common/domain";
 import {Routes} from "./routes";
 import {Container, Injectable} from "@common/core";
 import {AppRootComponent} from "./app-root.component";
 import {TextContentComponent} from "../ui/content/text-content.component";
 import {RouterService} from "./services/router.service";
 import {TreeComponent} from "../ui/tree/tree.component";
-import {ProxyProvider} from "@services";
+import {DomainProxy, ProxyProvider} from "@services";
 import {TreeReducers} from "../ui/tree/tree-reducers";
 import {TreePresenter} from "../presentors/tree.presentor";
 import {MobileToolbarComponent} from "../ui/mobile-toolbar/mobile-toolbar.component";
-import {DomainProxy} from "@services";
+import {Factory} from "@domain/model/factory";
+import {DomainContainer} from "@domain";
+import {InfrContainer} from "@infr/infr.container";
 
 @Injectable()
 export class App2 extends Application {
@@ -20,9 +22,10 @@ export class App2 extends Application {
     }
 
     public static async Build() {
-        const workerDomain = await useWorkerDomain('./worker.js');
         return new Builder()
-            .with(workerDomain)
+            .with(InfrContainer)
+            .with(DomainContainer)
+            .with(useStreamDomain(Factory))
             .with(Container.withProviders(
                 RouterService, ProxyProvider, TreeReducers, TreePresenter, DomainProxy
             ))

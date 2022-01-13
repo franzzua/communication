@@ -1,24 +1,23 @@
 import {Injectable} from "@common/core";
-import {IFactory, Model} from "@common/domain/worker";
+import {Model} from "@common/domain/worker";
 import {IDomainActions} from "@domain";
-import {Context, DomainState, Message} from "@model";
+import {DomainState} from "@model";
 import {ContextModel} from "@domain/model/context-model";
-import {Cell, cellx} from "cellx";
-import type {Factory} from "@domain/model/factory";
+import {Cell} from "cellx";
+import {Factory} from "@domain/model/factory";
 import {ObservableMap} from "cellx-collections";
 
 @Injectable()
 export class DomainModel extends Model<DomainState, IDomainActions> {
     public ObsContexts = new ObservableMap<string, ContextModel>();
+
     public get Contexts(): ReadonlyMap<string, ContextModel> {
         return this.ObsContexts._entries;
     }
-    private get factory(): Factory{
-        return  this._factory as Factory;
-    }
+
     private _contextsCell = new Cell(this.ObsContexts);
 
-    constructor(private _factory: IFactory) {
+    constructor(private factory: Factory) {
         super();
         window['domain'] = this;
         // this.useLastUpdate = true;
@@ -41,6 +40,7 @@ export class DomainModel extends Model<DomainState, IDomainActions> {
             // Messages: (this.factory as Factory).MessageMap.map(x => x.State),
         };
     }
+
     //
     // private toJSON(context: ContextModel, output: DomainState) {
     //     if (output.Contexts.has(context.URI))
@@ -52,19 +52,19 @@ export class DomainModel extends Model<DomainState, IDomainActions> {
     // }
 
     public Actions: IDomainActions = this;
-        // async LoadContext(uri: string) {
-        //     const context = this.factory.GetOrCreateContext(uri);
-        // };
-        //
-        // async CreateContext(context: Context): Promise<void> {
-        //     const model: ContextModel = this.factory.GetOrCreateContext(context.URI);
-        //     model.State = context;
-        //     for (const parent of context.Parents) {
-        //         console.warn('TODO:')
-        //         const messageModel = this.factory.GetContext(parent);
-        //         messageModel.Actions.Attach(model.URI);
-        //     }
-        // };
+    // async LoadContext(uri: string) {
+    //     const context = this.factory.GetOrCreateContext(uri);
+    // };
+    //
+    // async CreateContext(context: Context): Promise<void> {
+    //     const model: ContextModel = this.factory.GetOrCreateContext(context.URI);
+    //     model.State = context;
+    //     for (const parent of context.Parents) {
+    //         console.warn('TODO:')
+    //         const messageModel = this.factory.GetContext(parent);
+    //         messageModel.Actions.Attach(model.URI);
+    //     }
+    // };
 
     protected Factory = uri => {
         return (this.factory as Factory).CreateContext(uri);

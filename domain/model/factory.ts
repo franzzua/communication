@@ -20,7 +20,7 @@ export class Factory implements IFactory<DomainModel> {
     }
 
     public get Root() {
-        return this.container.get<DomainModel>(DomainModel);
+        return new DomainModel(this);
     }
 
     public GetModel(path: ModelPath) {
