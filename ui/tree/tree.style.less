@@ -9,7 +9,7 @@ ctx-tree {
   }
 
   [item]{
-    margin-left: calc(var(--level) * 20 - 40px);
+    margin-left: calc(var(--level) * 10px + 20px);
     display: flex;
     flex-flow: row nowrap;
     line-height: 1.6em;
@@ -19,25 +19,14 @@ ctx-tree {
       position: relative;
       margin-left: 0;
       padding-bottom: .3em;
-      &:before{
-        content: '##';
-        color: #888;
-        width: 3rem;
-        text-align: right;
-        display: inline-block;
-        margin-left: -3rem;
-        padding-right: 1rem;
-        box-sizing: border-box;
-      }
     }
     &.level-2{
       position: relative;
       font-size: 1.41em;
       padding-top: .6em;
       padding-bottom: .3em;
-      margin-left: 0;
+      margin-left: 1em;
       &:before{
-        content: '###';
         color: #888;
         width: 3rem;
         margin-left: -3rem;
@@ -50,7 +39,7 @@ ctx-tree {
 
     &.level-3{
       font-size: 1em;
-      margin-left: 0;
+      margin-left: 2em;
       line-height: 1.4em;
       padding-top: .8em;
       padding-bottom: .4em;

@@ -1,16 +1,17 @@
-import {first, Injectable, mapTo, of, switchMap} from "@hypertype/core";
-import {Component, HyperComponent} from "@hypertype/ui";
-import {AccountManager, EventBus} from "@services";
-import {AppInitTemplate} from "./app-init.template";
-import { RouterService } from "../services/router.service";
+import {Injectable} from "@common/core";
+import {AccountManager, IAccountInfo} from "@services";
+import {AppInitTemplate, IEvents} from "./app-init.template";
+import {RouterService} from "../services/router.service";
+import {component, HtmlComponent} from "@common/ui";
+import bind from "bind-decorator";
 
 @Injectable(true)
-@Component({
+@component({
     name: 'app-init',
     template: AppInitTemplate,
     style: require('./app-init.style.less')
 })
-export class AppInitComponent extends HyperComponent {
+export class AppInitComponent extends HtmlComponent<IAccountInfo[], IEvents> {
 
     constructor(
         private accManager: AccountManager,
@@ -19,15 +20,15 @@ export class AppInitComponent extends HyperComponent {
         super();
     }
 
-    public State$ = this.accManager.Accounts$;
+    public $state = this.accManager.$accounts;
 
-    public Actions$ = of(null).pipe(
-        switchMap(() => this.init()),
-        mapTo(null)
-    );
+    public Actions = [
+        this.init
+    ]
 
+    @bind
     private async init() {
-        const accounts = await this.accManager.Accounts$.pipe(first()).toPromise();
+        const accounts = this.accManager.$accounts.get();
         if (!accounts.length) {
             return;
         }

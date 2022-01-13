@@ -1,6 +1,6 @@
 import {AccountManager} from "./account.manager";
 import {StorageService} from "./storage.service";
-import {combineLatest, Injectable, map} from "@hypertype/core";
+import {combineLatest, Injectable, map, of} from "@hypertype/core";
 import {StateService} from "./state.service";
 
 @Injectable()
@@ -11,36 +11,12 @@ export class ManagementService{
                 private storageService: StorageService) {
     }
 
-    private Accounts$ = combineLatest([
-        this.accountManager.Providers$,
-        this.accountManager.Accounts$
-    ]).pipe(
-        map(([providers, accounts]) => {
-            return {
-                Messages: providers.map(x => ({
-                    id: `provider.${x}`,
-                    Content: x,
-                    Action: `accounts.${x}.add`,
-                    SubContext: {
-                        id: 'Management.Accounts',
-                        Messages: accounts
-                            .filter(a => a.type == x)
-                            .map(a => ({
-                                id: a.title,
-                                Content: a.title
-                            }))
-                    }
-                }))
-            }
-        })
-    );
-
     private Storages$ = this.storageService.Storages$.pipe(
 
     )
 
     public State$ = combineLatest([
-        this.Accounts$, this.Storages$
+        of([]), this.Storages$
     ]).pipe(
         map(([accounts, storages]) => ({
             id: 'Root',

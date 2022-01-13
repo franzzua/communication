@@ -1,33 +1,34 @@
-import {BehaviorSubject, Injectable, Observable} from "@hypertype/core";
-import {ActionService} from "./action.service";
-import {EventBus} from "./event.bus";
+import {Injectable} from "@common/core";
+import {Cell} from "cellx";
+import {FakeLoginService} from "../app/services/fake-login.service";
+import {award} from "rdf-namespaces/dist/schema";
 
 @Injectable()
 export class AccountManager {
 
     constructor() {
-
+        this.Register(new FakeLoginService());
     }
 
-    private accountsSubject$ = new BehaviorSubject<IAccountInfo[]>([]);
-    public Accounts$: Observable<IAccountInfo[]> = this.accountsSubject$.asObservable();
-    private providerSubject$ = new BehaviorSubject<string[]>([]);
-    public Providers$: Observable<string[]> = this.providerSubject$.asObservable();
+    public $accounts = new Cell<IAccountInfo[]>([]);
 
     private providers = new Map<string, IAccountProvider>();
 
     public async Register(provider: IAccountProvider) {
         this.providers.set(provider.type, provider);
         provider.Check().then(res => res && this.addAccount(res));
-        this.providerSubject$.next([...this.providerSubject$.value, provider.type]);
     }
 
     private async addAccount(info: IAccountInfo){
-        this.accountsSubject$.next([...this.accountsSubject$.value, info]);
+        this.$accounts.set([
+            ...this.$accounts.get(),
+            info
+        ]);
     }
 
-    Login(provider: "google") {
-        this.providers.get(provider)?.Login();
+    async Login(provider: "google") {
+        const acc = await this.providers.get(provider)?.Login();
+        this.addAccount(acc);
     }
 }
 

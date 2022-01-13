@@ -19,9 +19,8 @@ export class Factory implements IFactory<DomainModel> {
                 private repository: YjsRepository) {
     }
 
-    public get Root() {
-        return new DomainModel(this);
-    }
+
+    public Root = new DomainModel(this);
 
     public GetModel(path: ModelPath) {
         return this.Root.QueryModel(path.slice(1));
