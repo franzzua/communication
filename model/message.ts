@@ -2,6 +2,7 @@ import {DateTime} from "luxon";
 import {User} from "./user";
 import {Context} from "./context";
 import {MessageJSON} from "@domain";
+import {proxy} from "@common/domain";
 
 export class Message {
     public Content: string;
@@ -9,14 +10,14 @@ export class Message {
     public Author?: User;
     public CreatedAt: DateTime;
     public UpdatedAt: DateTime;
-    public Context?: Context;
-    public SubContext?: Context;
+    public ContextURI?: string;
+    public SubContextURI?: string;
     public Action?: string;
     public id: string;
     public equals?(m: Message): boolean;
-    static isLast(message: Message) {
-        return message.Context.Messages[message.Context.Messages.length - 1].id == message.id;
-    }
+    // static isLast(message: Message) {
+    //     return message.Context.Messages[message.Context.Messages.length - 1].id == message.id;
+    // }
 
     static equals(message1: Message, message2: Message): boolean{
         if (!message2 && message1 || !message1 && message2)
@@ -33,12 +34,8 @@ export class Message {
             CreatedAt: DateTime.fromISO(m.CreatedAt, {zone: 'utc'}),
             UpdatedAt: DateTime.fromISO(m.UpdatedAt, {zone: 'utc'}),
             id: m.id,
-            Context: m.ContextURI && {
-                URI: m.ContextURI
-            } as Context,
-            SubContext: m.SubContextURI && {
-                URI: m.SubContextURI
-            } as Context,
+            ContextURI: m.ContextURI,
+            SubContextURI: m.SubContextURI,
         });
     }
 
@@ -49,9 +46,8 @@ export class Message {
             Description: m.Description,
             CreatedAt: m.CreatedAt.toISO(),
             UpdatedAt: m.UpdatedAt.toISO(),
-            StorageURI: m.Context?.Storage?.URI,
-            ContextURI: m.Context?.URI,
-            SubContextURI: m.SubContext?.URI,
+            ContextURI: m.ContextURI,
+            SubContextURI: m.SubContextURI,
             AuthorURI: m.Author?.URI,
         };
     }

@@ -1,27 +1,30 @@
 import {Injectable} from "@common/core";
-import {Context, DomainState, Message} from "@model";
-import type {Model} from "@common/domain";
-import {IFactory} from "@common/domain";
-import type {IContextActions, IDomainActions, IMessageActions} from "@domain";
-import type {ContextModel, MessageModel} from "@domain/model";
+import {IFactory, Model} from "@common/domain";
+import {DomainState, Message} from "@model";
+import {IDomainActions} from "@domain";
+import {ContextProxy} from "./context-proxy";
+import {MessageProxy} from "./message-proxy";
+import {DomainProxy} from "./domain-proxy.service";
 
 @Injectable()
 export class ProxyProvider {
     constructor(private factory: IFactory<Model<DomainState, IDomainActions>>) {
     }
 
-    public GetContext(uri: string): ContextModel {
-        return this.factory.GetModel<Context, IContextActions>(['Root', 'Contexts', uri]) as ContextModel;
+    public get Root(): DomainProxy {
+        return this.factory.Root as DomainProxy;
     }
 
-    public GetMessage(message: Message): MessageModel {
+    public GetContext(uri: string): ContextProxy {
+        return this.Root.ContextsMap.get(uri);
+    }
+
+    public GetMessage(message: Message): MessageProxy {
         // await this.domainProxy.State$.pipe(
         //     map(x => x.Contexts.get(message.Context.URI).Messages.get(message.id)),
         //     filter(x => x != null),
         //     first()
         // ).toPromise()
-        return this.factory.GetModel<Message, IMessageActions>(['Root', 'Contexts', message.Context.URI, 'Messages', message.id]) as MessageModel;
+        return this.GetContext(message.ContextURI).MessageMap.get(message.id);
     }
 }
-
-

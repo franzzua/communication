@@ -4,7 +4,6 @@ import {DateTime} from "luxon";
 export class MessageJSON{
     public ContextURI: string;
     public SubContextURI?: string;
-    public StorageURI: string;
     public Content: string;
     public Description?: string;
     public AuthorURI?: string;

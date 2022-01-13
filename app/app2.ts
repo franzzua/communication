@@ -1,30 +1,32 @@
-import {Builder} from "@common/app";
+import {Application, Builder} from "@common/app";
 import {useWorkerDomain} from "@common/domain";
 import {Routes} from "./routes";
 import {Container, Injectable} from "@common/core";
-import { Application } from "@common/app";
 import {AppRootComponent} from "./app-root.component";
 import {TextContentComponent} from "../ui/content/text-content.component";
 import {RouterService} from "./services/router.service";
 import {TreeComponent} from "../ui/tree/tree.component";
-import {ProxyProvider, StateService} from "@services";
+import {ProxyProvider} from "@services";
 import {TreeReducers} from "../ui/tree/tree-reducers";
 import {TreePresenter} from "../presentors/tree.presentor";
+import {MobileToolbarComponent} from "../ui/mobile-toolbar/mobile-toolbar.component";
+import {DomainProxy} from "@services";
 
 @Injectable()
-export class App2 extends Application{
+export class App2 extends Application {
 
     constructor(container: Container) {
         super(container);
     }
 
-    public static Build() {
+    public static async Build() {
+        const workerDomain = await useWorkerDomain('./worker.js');
         return new Builder()
-            .with(useWorkerDomain('./worker.js'))
+            .with(workerDomain)
             .with(Container.withProviders(
-                RouterService, StateService, ProxyProvider, TreeReducers, TreePresenter
+                RouterService, ProxyProvider, TreeReducers, TreePresenter, DomainProxy
             ))
-            .withUI(AppRootComponent, TextContentComponent, TreeComponent)
+            .withUI(AppRootComponent, TextContentComponent, TreeComponent, MobileToolbarComponent)
             .withRoutes({
                 options: null,
                 routes: Routes

@@ -6,6 +6,7 @@ import {DirectStream} from "./direct-stream.service";
 import {WorkerStream} from "./workerStream";
 import {Action} from "./shared/types";
 
+export {proxy} from "./shared/domain.structure";
 export type {Model} from "./worker/model";
 export {IFactory} from "./shared/factory";
 export {ProxyFactory} from "./proxyFactory";
@@ -27,8 +28,9 @@ export function useStreamDomain(factory: IFactory) {
     });
 }
 
-export function useWorkerDomain(workerUrl: string) {
+export async function useWorkerDomain(workerUrl: string) {
     const stream = new WorkerStream(workerUrl);
+    await stream.Connected;
     return Container.withProviders({
         provide: IFactory, useClass: ProxyFactory
     }, {

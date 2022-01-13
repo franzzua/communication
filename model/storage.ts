@@ -1,5 +1,7 @@
 import {Context} from "./context";
 import {Message} from "./message";
+import {proxy} from "@common/domain";
+import {dom} from "lib0";
 
 export class Storage {
     public Root: Context;
@@ -12,7 +14,5 @@ export class Storage {
 }
 
 export class DomainState {
-    public Contexts: Map<string, Readonly<Context>>;
-    public Messages: Map<string, Readonly<Message>>;
-    // public Storages: Storage[];
+    public Contexts: string[];
 }

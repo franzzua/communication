@@ -46,7 +46,6 @@ export class MessageEntity extends Entity {
             Content: this.Content,
             id: this.Id,
             SubContextURI: this.SubContext,
-            StorageURI: null,
             ContextURI: null
         }
     }

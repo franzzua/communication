@@ -4,6 +4,7 @@ import {ModelProxy} from "./modelProxy";
 import {Stream} from "./stream";
 import {Injectable} from "@common/core";
 import {ModelPath} from "./shared/types";
+import {getRootProxy} from "./shared/domain.structure";
 
 @Injectable()
 export class ProxyFactory extends IFactory<any> {
@@ -12,14 +13,15 @@ export class ProxyFactory extends IFactory<any> {
         super();
     }
 
+    private rootProxy = getRootProxy();
     public get Root(): any {
-        return ModelProxy.Create(this.stream, ['Root']);
+        return new this.rootProxy(this.stream, ['Root']);
     }
     private Instances = new Map<string, ModelProxy<any, any>>();
 
     public GetModel<TModel extends Model<any, any>>(path: ModelPath): TModel {
         return this.Instances.getOrAdd(path.join(':'),
-            key => ModelProxy.Create(this.stream, path)) as any as TModel;
+            key => new ModelProxy(this.stream, path)) as any as TModel;
     }
 
 }

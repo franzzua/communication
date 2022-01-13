@@ -1,5 +1,6 @@
 import {IEventHandler} from "@hypertype/ui";
 import {Message} from "@model";
+import {MessageProxy} from "../../services/message-proxy";
 
 
 export const Template = (html, state: IState, events: IEventHandler<IEvents>) => {
@@ -29,7 +30,7 @@ export const Template = (html, state: IState, events: IEventHandler<IEvents>) =>
 }
 
 export interface IState {
-    message: Message;
+    message: MessageProxy;
     state: string[];
     isSelected: boolean;
 }

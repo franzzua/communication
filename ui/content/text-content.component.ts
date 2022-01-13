@@ -5,6 +5,9 @@ import {Message} from "@model";
 import type {Model} from "@common/domain";
 import {IMessageActions} from "@domain";
 import {IFactory} from "@common/domain";
+import {ProxyProvider} from "@services";
+import {MessageModel} from "@domain/model";
+import {MessageProxy} from "../../services/message-proxy";
 
 @Injectable(true)
 @component<string, IEvents>({
@@ -19,12 +22,12 @@ import {IFactory} from "@common/domain";
 })
 export class TextContentComponent extends HtmlComponent<string, IEvents> {
 
-    constructor(private factory: IFactory) {
+    constructor(private proxy: ProxyProvider) {
         super();
     }
 
     @property()
-    private message!: Message;
+    private message!: MessageProxy;
 
     @property()
     private active!: boolean;
@@ -33,7 +36,7 @@ export class TextContentComponent extends HtmlComponent<string, IEvents> {
 
     async input(text) {
         this.lastTextEdited = text;
-        this.factory.GetModel<Message, IMessageActions>(['message', this.message.id]).Actions.UpdateText(text);
+        this.message.Actions.UpdateText(text);
         // this.dispatchEvent(new CustomEvent('change', {
         //     bubbles: true,
         //     cancelable: true,
@@ -60,7 +63,7 @@ export class TextContentComponent extends HtmlComponent<string, IEvents> {
     @bind
     private setContent() {
         const div = this.contentElement;
-        div.textContent = this.message?.Content;
+        div.textContent = this.message?.State?.Content;
     }
 
     @bind

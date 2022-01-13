@@ -1,6 +1,6 @@
 import * as crc32 from "crc-32";
 import {ulid} from "ulid";
-import {cellx} from "cellx";
+import {Cell, cellx} from "cellx";
 
 export const Fn = {
     I<T>(x: T): T {
@@ -62,10 +62,10 @@ export const Fn = {
             const symbol = Symbol(key + 'distinct');
             return {
                 get() {
-                    const cell = this[symbol] ?? (this[symbol] = cellx(() => descr.get.call(this), {
+                    const cell: Cell<T> = this[symbol] ?? (this[symbol] = new Cell(descr.get.bind(this), {
                         compareValues: comparator
                     }));
-                    return cell();
+                    return cell.get();
                 }
             }
         }

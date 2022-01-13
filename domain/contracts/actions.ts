@@ -6,18 +6,20 @@ export interface IMessageActions {
     UpdateText(text: string): Promise<void>;
     Reorder(newOrder: number): Promise<void>;
     Move(fromURI: string, toURI: string, toIndex: number): Promise<void>;
+
+    Remove(): void;
 }
 
 export interface IContextActions {
     RemoveMessage(uri: string): Promise<void>;
 
-    CreateMessage(message: Message): Promise<void>;
+    CreateMessage(message: Message, index?: number): Promise<void>;
 }
 
 export interface IDomainActions {
-    LoadContext(uri: string): Promise<void>;
-
-    CreateContext(context: Context): Promise<void>;
+    // LoadContext(uri: string): Promise<void>;
+    //
+    // CreateContext(context: Context): Promise<void>;
 }
 
 export interface IStorageActions {

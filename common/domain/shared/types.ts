@@ -12,7 +12,8 @@ export type WorkerResponse = {
     error?: any,
     actionId: string;
 };
-export type ModelPath = (string | number)[];
+export type ModelKey = string|number;
+export type ModelPath = ModelKey[];
 export type Action = {
     path: ModelPath;
     action: string;
@@ -33,7 +34,6 @@ export type WorkerState = {
 };
 export type WorkerConnected = {
     type: WorkerMessageType.Connected;
-    structure: ModelStructure;
 };
 export type ModelStructure = {
 

@@ -1,9 +1,9 @@
-import {StateService} from "@services";
 import {IState} from "./tree.template";
-import {Context, Message} from "@model";
+import {Message} from "@model";
 import {TreeItem, TreePresenter} from "../../presentors/tree.presentor";
 import type {Reducer} from "./tree.component";
 import {Fn, Injectable, utc} from "@common/core";
+import {ContextProxy} from "@services";
 
 
 export type ReducerStore<TState> = {
@@ -13,20 +13,20 @@ export type ReducerStore<TState> = {
 @Injectable()
 export class TreeReducers {
 
-    constructor(private stateService: StateService,
-                private treePresenter: TreePresenter) {
+    constructor(private treePresenter: TreePresenter) {
     }
 
     @logReducer
     async UpdateContent(data: { item: TreeItem, content: string }): Promise<Reducer<IState>> {
         return state => {
-            this.stateService.UpdateContent(data.item.Message, data.content);
-            data.item.Message.Content = data.content;
+            data.item.Message.Actions.UpdateText(data.content);
+            // this.stateService.UpdateContent(data.item.Message, data.content);
+            // data.item.Message.Content = data.content;
             return ({...state, Selected: data.item});
         }
     }
 
-    Init(root: Context): Reducer<IState> {
+    Init(root: ContextProxy): Reducer<IState> {
         return state => {
             // if (root.Messages.length == 0) {
             //     const message: Message = {
@@ -76,11 +76,9 @@ export class TreeReducers {
             const message = state.Selected?.Message;
             if (message) {
                 const json = {
-                    Content: message.Content,
-                    SubContext: message.SubContext ? {
-                        URI: message.SubContext.URI
-                    } : undefined,
-                };
+                    Content: message.State.Content,
+                    SubContextURI: message.SubContext?.State?.URI
+                } as Message;
                 if (event.clipboardData) {
                     event.clipboardData.setData("text/plain", JSON.stringify(json));
                 } else {
@@ -95,7 +93,7 @@ export class TreeReducers {
 
     @logReducer
     async Paste(event: ClipboardEvent): Promise<Reducer<IState>> {
-        const clipboard = event.clipboardData.getData("text/plain")
+        const clipboard = event.clipboardData?.getData("text/plain")
             ?? await navigator.clipboard.readText();
         return (state: IState) => {
             try {
@@ -109,17 +107,17 @@ export class TreeReducers {
                     // }
                     parsed.CreatedAt = utc();
                     parsed.UpdatedAt = utc();
-                    this.AddMessage(parsed, state.Selected.Message);
+                    state.Selected.Message.Context.Actions.CreateMessage(parsed);
                 }
             } catch (e) {
                 const paragraphs = clipboard.split('\n');
                 for (let paragraph of paragraphs) {
-                    this.AddMessage({
+                    state.Selected.Message.AddMessage({
                         id: Fn.ulid(),
                         Content: paragraph,
                         CreatedAt: utc(),
                         UpdatedAt: utc(),
-                    }, state.Selected.Message);
+                    });
                 }
             }
             return state;
@@ -137,16 +135,6 @@ export class TreeReducers {
         }
     }
 
-    private AddMessage(newMessage: Message, to: Message): Message {
-        if (to.SubContext == null) {
-            this.stateService.CreateSubContext(to);
-        }
-        // newMessage.id = `${+utc()}`;
-        newMessage.Context = to.SubContext;
-        newMessage.Context.Messages.push(newMessage);
-        this.stateService.AddMessage(newMessage);
-        return newMessage;
-    }
 
     private CreateMessage(getParentPath: (state: IState) => string[], text = ''): Reducer<IState> {
         return state => {
@@ -157,19 +145,20 @@ export class TreeReducers {
                 UpdatedAt: utc(),
                 Content: text,
             };
-            if (parentPath.length > 0) {
-                this.AddMessage(newMessage, state.ItemsMap.get(parentPath.join('/')).Message);
-            } else {
-                newMessage.Context = state.Root;
-                state.Root.Messages.push(newMessage);
-                this.stateService.AddMessage(newMessage);
-            }
+            const messageProxy = (() => {
+                if (parentPath.length > 0) {
+                    return state.ItemsMap.get(parentPath.join('/')).Message.AddMessage(newMessage);
+                } else {
+                    state.Root.Actions.CreateMessage(newMessage);
+                    return state.Root.MessageMap.get(newMessage.id);
+                }
+            })();
             const newPath = [
                 ...parentPath,
                 newMessage.id,
             ];
             const newItem = {
-                Message: newMessage,
+                Message: messageProxy,
                 Path: newPath,
                 IsOpened: true
             } as TreeItem;
@@ -179,6 +168,7 @@ export class TreeReducers {
                 ...state,
                 Selected: newItem
             };
+            return state;
         }
     }
 
@@ -224,11 +214,9 @@ export class TreeReducers {
     async Remove(event: KeyboardEvent): Promise<Reducer<IState>> {
         return (state: IState) => {
             const message = state.Selected.Message;
+            message.Actions.Remove();
             const selectedIndex = state.Items.indexOf(state.Selected);
             const next = state.Items[selectedIndex + 1];
-            const prev = state.Items[selectedIndex - 1];
-
-            this.stateService.DeleteMessage(message);
             const items = state.Items.filter(x => x != state.Selected);
             if (next && next.Message.Context == message.Context) {
                 return {
@@ -237,6 +225,7 @@ export class TreeReducers {
                     Selected: next,
                 };
             } else {
+                const prev = state.Items[selectedIndex - 1];
                 return {
                     ...state,
                     Items: items,
@@ -254,12 +243,14 @@ export class TreeReducers {
             if (messageIndex == 0)
                 return state;
             const prevMessage = message.Context.Messages[messageIndex - 1];
-            if (prevMessage.SubContext == null) {
-                this.stateService.CreateSubContext(prevMessage);
-            }
-            this.stateService.MoveMessage(message, prevMessage.SubContext);
-            const newPath = [...state.Selected.Path.slice(0, -1), prevMessage.id, message.id];
+            const newMessage = prevMessage.AddMessage(message.State);
+            // if (prevMessage.SubContext == null) {
+            //     this.stateService.CreateSubContext(prevMessage);
+            // }
+            // this.stateService.MoveMessage(message, prevMessage.SubContext.State);
+            const newPath = [...state.Selected.Path.slice(0, -1), prevMessage.State.id, message.State.id];
             state.Selected.Path = newPath;
+            state.Selected.Message = newMessage;
             state.ItemsMap.delete(state.Selected.Path.join(TreePresenter.Separator));
             state.ItemsMap.set(newPath.join(TreePresenter.Separator), state.Selected);
             const newParentItem = state.ItemsMap.get(state.Selected.Path.slice(0, -1).join(TreePresenter.Separator));
@@ -281,8 +272,8 @@ export class TreeReducers {
             const parent = state.ItemsMap.get(state.Selected.Path.slice(0, -1).join(TreePresenter.Separator));
             const parentIndex = parent.Message.Context.Messages.indexOf(parent.Message);
 
-            this.stateService.MoveMessage(message, parent.Message.Context, parentIndex + 1);
-            const newPath = [...parent.Path.slice(0, -1), message.id];
+            message.Actions.Move(message.State.ContextURI, parent.Message.State.ContextURI, parentIndex + 1);
+            const newPath = [...parent.Path.slice(0, -1), message.State.id];
             state.Selected.Path = newPath;
             state.ItemsMap.delete(state.Selected.Path.join(TreePresenter.Separator));
             state.ItemsMap.set(newPath.join(TreePresenter.Separator), state.Selected);
@@ -303,7 +294,7 @@ export class TreeReducers {
             const messageIndex = message.Context.Messages.indexOf(message);
             if (messageIndex == 0)
                 return state;
-            this.stateService.Reorder(message, messageIndex - 1);
+            message.Actions.Reorder(messageIndex - 1);
             const itemIndex = state.Items.indexOf(state.Selected);
             state.Items.remove(state.Selected);
             state.Items.splice(itemIndex - 1, 0, state.Selected)
@@ -320,7 +311,7 @@ export class TreeReducers {
             const messageIndex = message.Context.Messages.indexOf(message);
             if (messageIndex == message.Context.Messages.length - 1)
                 return state;
-            this.stateService.Reorder(message, messageIndex + 1);
+            message.Actions.Reorder(messageIndex + 1);
             const itemIndex = state.Items.indexOf(state.Selected);
             state.Items.remove(state.Selected);
             state.Items.splice(itemIndex + 1, 0, state.Selected)
@@ -339,8 +330,8 @@ export const keyMap: {
     CtrlArrowRight: "MoveRight",
     CtrlArrowUp: "MoveUp",
     CtrlArrowDown: "MoveDown",
-    CtrlC: "Copy",
-    CtrlV: "Paste",
+    CtrlKeyC: "Copy",
+    CtrlKeyV: "Paste",
     ShiftDelete: "Remove",
     ArrowDown: "Down",
     ArrowUp: "Up",

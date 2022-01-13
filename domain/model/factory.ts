@@ -10,8 +10,8 @@ import {ModelPath} from "../../common/domain/shared/types";
 @Injectable()
 export class Factory implements IFactory<DomainModel> {
 
-    private MessageMap = new Map<string, MessageModel>();
-    private ContextMap = new Map<string, ContextModel>();
+    // public MessageMap = new Map<string, MessageModel>();
+    // public ContextMap = new Map<string, ContextModel>();
 
     // private StorageMap = new Map<string, StorageModel>();
 
@@ -24,41 +24,32 @@ export class Factory implements IFactory<DomainModel> {
     }
 
     public GetModel(path: ModelPath) {
-        return this.Root.QueryModel(path);
+        return this.Root.QueryModel(path.slice(1));
     }
-
-    public GetOrCreateMessage(state: Message): MessageModel {
-        if (this.MessageMap.has(state.id))
-            return this.MessageMap.get(state.id);
-        const contextStore = this.repository.LoadContext(state.Context.URI);
-        const message = new MessageModel(this, contextStore, state.id);
-        message.State = state;
-        // message.Link(this.GetContext(state.Context.URI), state.SubContext ? this.GetContext(state.SubContext.URI) : null);
-        // message.FromJSON(state);
-        this.MessageMap.set(state.id, message);
-        return message;
-    }
+    //
+    // public GetOrCreateMessage(state: Message): MessageModel {
+    //     if (this.MessageMap.has(state.id))
+    //         return this.MessageMap.get(state.id);
+    //     const contextStore = this.repository.LoadContext(state.ContextURI);
+    //     const message = new MessageModel(this, contextStore, state.id);
+    //     message.State = state;
+    //     // message.Link(this.GetContext(state.Context.URI), state.SubContext ? this.GetContext(state.SubContext.URI) : null);
+    //     // message.FromJSON(state);
+    //     this.MessageMap.set(state.id, message);
+    //     return message;
+    // }
 
     public GetOrCreateContext(uri: string): ContextModel {
-        const existed = this.ContextMap.get(uri);
+        const existed = this.Root.ObsContexts.get(uri);
         if (existed)
             return existed;
+        return this.CreateContext(uri);
+    }
+
+    public CreateContext(uri: string) {
         const contextStore = this.repository.LoadContext(uri);
-        // const cell =cellx(() => {
-        //     const state = $context();
-        //     const context = Context.FromJSON(state.Context);
-        //     context.Messages = state.Messages.map(Message.FromJSON);
-        //     return context;
-        // }, {
-        //     put(cell, next: Context, value) {
-        //         $context({
-        //             Context: Context.ToJSON(next),
-        //             Messages: next.Messages.map(Message.ToJSON),
-        //         });
-        //     }
-        // })
         const context = new ContextModel(uri, contextStore, this);
-        this.ContextMap.set(uri, context);
+        this.Root.ObsContexts.set(uri, context);
         return context;
     }
 
@@ -68,15 +59,15 @@ export class Factory implements IFactory<DomainModel> {
     // }
 
     public GetContext(uri: string): ContextModel {
-        return this.ContextMap.get(uri);
+        return this.Root.ObsContexts.get(uri);
     }
-
-    public GetMessage(uri: string): MessageModel {
-        return this.MessageMap.get(uri);
-    }
-
-    RemoveMessage(id: string) {
-        this.MessageMap.delete(id);
-    }
+    //
+    // public GetMessage(id: string): MessageModel {
+    //     return this.MessageMap.get(id);
+    // }
+    //
+    // RemoveMessage(id: string) {
+    //     this.MessageMap.delete(id);
+    // }
 }
 

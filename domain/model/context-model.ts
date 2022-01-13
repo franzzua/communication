@@ -8,6 +8,8 @@ import {Factory} from "./factory";
 import {Model} from "@common/domain/worker";
 import {ContextStore} from "@infr/y/contextStore";
 import {DateTime} from "luxon";
+import {Me} from "rdf-namespaces/dist/vcard";
+import {proxy} from "@common/domain";
 
 export class ContextModel extends Model<Context, IContextActions> implements IContextActions {
 
@@ -15,56 +17,60 @@ export class ContextModel extends Model<Context, IContextActions> implements ICo
                 public contextStore: ContextStore,
                 private factory: Factory) {
         super();
-        // this.$state.subscribe((err, evt) => this.Update());
-        cellx(() => this.State.Messages).subscribe((event, data) => {
-            this.Messages = new Map(this._messages.map(x => [x.id, x]));
-        })
+    }
+
+    private _cache = new Map<string, MessageModel>();
+    private GetOrCreateMessage(id: string){
+        return this._cache.getOrAdd(id,id => new MessageModel(this.factory, this.contextStore, id));
     }
 
     public get State(): Readonly<Context> {
         const state = this.contextStore.State();
         const context = Context.FromJSON(state.Context);
-        context.Messages = Array.from(state.Messages.values()).map(Message.FromJSON);
+
+        if (context.Permutation?.isInvalid()) {
+            console.error("invalid permutation");
+            context.Permutation = null;
+        }
+        context.Messages = Array.from(state.Messages.keys());
         return context;
     }
 
     public set State(value: Readonly<Context>) {
+        if (value.Permutation && (value.Permutation.isInvalid() || value.Permutation.values.length > value.Messages.length))
+            throw new Error("invalid permutation")
         this.contextStore.State({
             Context: Context.ToJSON(value),
-            Messages: new Map(value.Messages.map(x => [x.id, Message.ToJSON(x)])),
+            Messages: new Map(value.Messages.map(x => [x, this.GetOrCreateMessage(x).ToServer()]))
         });
     }
 
-    public Messages: ReadonlyMap<string, MessageModel> = new Map();
+    public *getParents(): IterableIterator<MessageModel> {
+        for (let context of this.factory.Root.Contexts.values()) {
+            for (let message of context.Messages.values()) {
+                if (message.SubContext === this)
+                    yield message;
+            }
+        }
+    }
 
-    private get _messages(): ReadonlyArray<MessageModel> {
-        return this.State.Messages.map(x => this.factory.GetOrCreateMessage(x))
+    public get Messages(): ReadonlyMap<string, MessageModel> {
+        const state = this.contextStore.State();
+        return state.Messages.map(x => this.GetOrCreateMessage(x.id));
     }
 
     private get DefaultOrderedMessages(): ReadonlyArray<MessageModel> {
-        return this._messages.orderBy(x => x.id);
+        return [...this.Messages.values()].orderBy(x => x.id);
     }
 
     public get OrderedMessages(): ReadonlyArray<MessageModel> {
-        if (!this._messages.length)
+        if (!this.Messages.size)
             return [];
         if (!this.State.Permutation)
             return this.DefaultOrderedMessages;
         return this.State.Permutation.Invoke(this.DefaultOrderedMessages)
             .filter(x => x != null);
     }
-
-    //
-    // private _parents: Array<MessageModel> = [];
-    //
-    // public get Parents(): ReadonlyArray<MessageModel> {
-    //     return this._parents;
-    // }
-
-
-    // public FromServer(state: ContextJSON) {
-    //     Object.assign(this.St, Context.FromJSON(state));
-    // }
 
     public ToJSON(): Context {
         const state = this.State;
@@ -84,20 +90,15 @@ export class ContextModel extends Model<Context, IContextActions> implements ICo
         return Context.ToJSON(this.State);
     }
 
-    DetachMessage(msg: MessageModel) {
-        this.UpdateMessagesPermutation(this.OrderedMessages.filter(x => x.id != msg.id));
-    };
-
-    AttachMessage(message: MessageModel, index: number) {
-        const messages = [...this.OrderedMessages]
-        messages.splice(index, 0, message);
-        this.UpdateMessagesPermutation(messages);
-    };
-
-    async CreateMessage(message: Message): Promise<void> {
-        const messageModel = this.factory.GetOrCreateMessage(message);
-        // const messages = [...this.OrderedMessages, messageModel];
-        // this.UpdateMessagesPermutation(messages);
+    async CreateMessage(message: Message, index: number = this.Messages.size): Promise<void> {
+        if (message.ContextURI && message.ContextURI !== this.URI){
+            this.factory.GetContext(message.ContextURI).RemoveMessage(message.id);
+        }
+        message.ContextURI = this.URI;
+        const messageModel = this.GetOrCreateMessage(message.id);
+        messageModel.State = message;
+        const messages = [...this.OrderedMessages, messageModel];
+        this.UpdateMessagesPermutation(messages.distinct());
     };
 
     ReorderMessage(message: MessageModel, toIndex) {
@@ -109,15 +110,17 @@ export class ContextModel extends Model<Context, IContextActions> implements ICo
     async RemoveMessage(id: string): Promise<void> {
         const messages = this.OrderedMessages.filter(x => x.id !== id);
         this.UpdateMessagesPermutation(messages);
-        this.factory.RemoveMessage(id);
     };
 
-    UpdateMessagesPermutation(orderedMessages: Array<MessageModel>) {
+    UpdateMessagesPermutation(orderedMessages: ReadonlyArray<MessageModel>) {
+        const permutation = Permutation.Diff(orderedMessages.orderBy(x => x.id), orderedMessages);
+        if (permutation.isInvalid())
+            throw new Error("invalid permutation")
         this.State = {
             ...this.State,
             UpdatedAt: DateTime.utc(),
-            Permutation: Permutation.Diff(orderedMessages.orderBy(x => x.id), orderedMessages),
-            Messages: orderedMessages.map(x => x.State)
+            Permutation: permutation,
+            Messages: orderedMessages.map(x => x.id)
         };
     };
 

@@ -1,13 +1,13 @@
 import {Fn} from "@hypertype/core";
-import {Context} from "@model";
 import {TreeItem} from "../../presentors/tree.presentor";
 import type {Reducer} from "./tree.component";
 import {isMobile} from "is-mobile";
 import {ITemplate} from "@common/ui";
+import {ContextProxy} from "@services";
 
 const mobile = isMobile({tablet: true})
 
-export const Template: ITemplate<IState, IEvents> = (html, state, events) => html`
+export const Template: ITemplate<Pick<IState, "Items" | "Selected">, IEvents> = (html, state, events) => html`
     <div class="items">
         ${state?.Items.map((item, index) => html(`item.${item.Path.join('.')}`)`
     <div item style=${{'--level': item.Path.length - 1}} class=${`level-${item.Path.length} ${item.Path.length > 3 ? 'li' : ''}`}>
@@ -28,7 +28,7 @@ export const Template: ITemplate<IState, IEvents> = (html, state, events) => htm
 export interface IState {
     Items: TreeItem[];
     Selected: TreeItem;
-    Root: Context;
+    Root: ContextProxy;
     ItemsMap: Map<string, TreeItem>;
 }
 

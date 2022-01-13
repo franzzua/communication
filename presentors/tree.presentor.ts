@@ -2,24 +2,28 @@ import {Context, Message} from "@model";
 import {Injectable} from "@common/core";
 import {ProxyProvider} from "@services";
 import {Permutation} from "@domain/helpers/permutation";
+import {ContextModel, MessageModel} from "@domain/model";
+import {MessageProxy} from "../services/message-proxy";
+import {ContextProxy} from "../services/context-proxy";
 
 @Injectable()
 export class TreePresenter {
 
     public static Separator = '/';
 
-    private toTree(msg: Message, itemsMap: Map<string, TreeItem>, path = []) {
-
+    private toTree(msg: MessageProxy, itemsMap: Map<string, TreeItem>, path = []) {
+        if (!msg.State)
+            return [];
         const level = path.length;
-        const newPath = [...path, msg.id];
+        const newPath = [...path, msg.State.id];
         const pathString = newPath.join(TreePresenter.Separator);
         let existed = itemsMap.get(pathString);
         if (existed == null) {
             // console.log('new item', msg.id, pathString);
             existed = {
                 Message: msg,
-                Path: [...path, msg.id],
-                IsOpened: level < 10,
+                Path: newPath,
+                IsOpened: level < 5,
                 Length: 0
             };
             itemsMap.set(pathString, existed)
@@ -39,21 +43,20 @@ export class TreePresenter {
         ]);
     }
 
-    public ToTree(context: Context, itemsMap: Map<string, TreeItem>, path = []): TreeItem[] {
-        if (!context)
+    public ToTree(context: ContextProxy, itemsMap: Map<string, TreeItem>, path = []): TreeItem[] {
+        if (!context.State)
             return [];
         if (!context.Messages) {
             return [];
         }
-        const result = (context.Permutation ?? Permutation.I(context.Messages.length)).Invoke(context.Messages.orderBy(x => x.id)).flatMap(msg => this.toTree(msg, itemsMap, path));
-        // console.log('tree', result);
+        const result = context.Messages.flatMap(msg => this.toTree(msg, itemsMap, path));
         return result;
     }
 }
 
 export type TreeItem = {
     Path: string[];
-    Message: Message;
+    Message: MessageProxy;
     IsOpened: boolean;
     Length: number;
     // HasSubItems: boolean;

@@ -4,15 +4,16 @@ import {Factory} from "./factory";
 import {Model} from "@common/domain/worker";
 import {ContextStore} from "@infr/y/contextStore";
 import {utc} from "@common/core";
+import {ContextModel} from "./context-model";
 
-export class MessageModel extends Model<Message, IMessageActions> implements IMessageActions{
+export class MessageModel extends Model<Message, IMessageActions> implements IMessageActions {
 
-    public get Context() {
-        return this.factory.GetOrCreateContext(this.$state().Context.URI);
+    public get Context(): ContextModel {
+        return this.factory.GetOrCreateContext(this.$state().ContextURI);
     }
 
     public get SubContext() {
-        return this.$state().SubContext ? this.factory.GetOrCreateContext(this.$state().SubContext.URI) : null;
+        return this.$state().SubContextURI && this.factory.GetOrCreateContext(this.$state().SubContextURI);
     }
 
     constructor(private readonly factory: Factory, private contextStore: ContextStore, public id: string) {
@@ -25,9 +26,9 @@ export class MessageModel extends Model<Message, IMessageActions> implements IMe
     }
 
     public set State(value: Readonly<Message>) {
-        const cur = this.contextStore.State();
         if (Message.equals(this.State, value))
             return;
+        const cur = this.contextStore.State();
         const messages = new Map(cur.Messages);
         messages.set(value.id, Message.ToJSON({
             ...value,
@@ -53,9 +54,7 @@ export class MessageModel extends Model<Message, IMessageActions> implements IMe
         this.State = {
             ...this.State,
             UpdatedAt: utc(),
-            SubContext: {
-                URI: uri
-            } as any
+            SubContextURI: uri
         };
     }
 
@@ -73,9 +72,8 @@ export class MessageModel extends Model<Message, IMessageActions> implements IMe
         if (oldContext) {
             await oldContext.Actions.RemoveMessage(this.id);
         }
-        const model = this.factory.GetOrCreateMessage(state);
         const newContext = this.factory.GetOrCreateContext(toURI);
-        await newContext.Actions.AttachMessage(model, toIndex);
+        await newContext.Actions.CreateMessage(state, toIndex);
     }
 
     async Reorder(newOrder: number): Promise<void> {
@@ -84,5 +82,12 @@ export class MessageModel extends Model<Message, IMessageActions> implements IMe
         this.Context.Actions.ReorderMessage(this, newOrder);
     }
 
+    async Remove(): Promise<void> {
+        await this.Context.RemoveMessage(this.id);
+    }
+
+    public ToServer() {
+        return Message.ToJSON(this.State);
+    }
 }
 

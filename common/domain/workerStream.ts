@@ -25,10 +25,9 @@ export class WorkerStream extends Stream {
     }
 
     private _worker: Worker;
-    private _connect = new Promise<void>(resolve => {
+    public Connected = new Promise<void>(resolve => {
         this.Worker.addEventListener('message', (msg: MessageEvent<WorkerMessage>) => {
             if (msg.data.type === WorkerMessageType.Connected) {
-                ModelProxy.useStructure(msg.data.structure);
                 resolve();
             }
         })
@@ -67,7 +66,8 @@ export class WorkerStream extends Stream {
             return new Cell(undefined);
         });
         return cellx(() => cell.get(), {
-            put: (cell, state) => {
+            put: (_, state) => {
+                cell.set(state);
                 this.postMessage({
                     type: WorkerMessageType.State,
                     path,
@@ -78,7 +78,7 @@ export class WorkerStream extends Stream {
     }
 
     private postMessage(msg: WorkerMessage) {
-        this._connect.then(() => {
+        this.Connected.then(() => {
             try {
                 this.Worker.postMessage(msg);
             } catch (err) {

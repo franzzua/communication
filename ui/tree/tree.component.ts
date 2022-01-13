@@ -1,11 +1,11 @@
 import {component, HtmlComponent, property} from "@common/ui";
 import {IEvents, IState, Template} from "./tree.template";
-import {StateService} from "@services";
+import {ContextProxy, DomainProxy} from "@services";
 import {keyMap, TreeReducers} from "./tree-reducers";
 import {TreeItem} from "../../presentors/tree.presentor";
 import {RouterService} from "../../app/services/router.service";
 import {AsyncQueue, Fn, Injectable} from "@common/core";
-import {Cell, cellx} from "cellx";
+import {Cell} from "cellx";
 import {KeyboardAspect} from "./keyboardAspect";
 import {Context} from "@model";
 import bind from "bind-decorator";
@@ -16,10 +16,10 @@ import bind from "bind-decorator";
     template: Template,
     style: require('./tree.style.less')
 })
-export class TreeComponent extends HtmlComponent<IState, IEvents> implements IEvents {
+export class TreeComponent extends HtmlComponent<Pick<IState, "Items" | "Selected">, IEvents> implements IEvents {
 
 
-    constructor(private stateService: StateService,
+    constructor(private root: DomainProxy,
                 private routerService: RouterService,
                 private treeStore: TreeReducers) {
         super();
@@ -29,17 +29,12 @@ export class TreeComponent extends HtmlComponent<IState, IEvents> implements IEv
     @property()
     private uri!: string;
 
-    // @distinctUntilChanged<Model<Context>>((a, b) => a.State?.URI === b.State?.URI)
-    get ContextModel() {
-        return this.stateService.getContext(this.uri);
+    @Fn.distinctUntilChanged<ContextProxy>((a, b) => a && b && Context.equals(a.State, b.State))
+    get ContextProxy(): ContextProxy {
+        return this.uri && this.root.ContextsMap.get(this.uri);
     }
 
-    @Fn.distinctUntilChanged(Context.equals)
-    get Context() {
-        return this.ContextModel?.State;
-    }
-
-    public $state = new ReducerQueueState({
+    public $reducerState = new ReducerQueueState({
         Items: [],
         Root: null,
         Selected: null,
@@ -47,11 +42,11 @@ export class TreeComponent extends HtmlComponent<IState, IEvents> implements IEv
     });
 
     async setFocus({item, index}: { item: TreeItem; index: number; }) {
-        this.$state.Invoke(this.treeStore.Focus(item));
+        this.$reducerState.Invoke(this.treeStore.Focus(item));
     }
 
     updateMessage(x: { item: any; content: any; }) {
-        this.$state.Invoke(this.treeStore.UpdateContent(x));
+        this.$reducerState.Invoke(this.treeStore.UpdateContent(x));
     }
 
     addMessage(text: string) {
@@ -59,12 +54,14 @@ export class TreeComponent extends HtmlComponent<IState, IEvents> implements IEv
     }
 
     reduce(reducer: Reducer<IState>) {
-        this.$state.Invoke(reducer);
+        this.$reducerState.Invoke(reducer);
     }
 
     @bind
     private InitAction() {
-        this.Context && this.$state.Invoke(this.treeStore.Init(this.Context))
+        const context = this.ContextProxy;
+        if (context)
+            this.$reducerState.Invoke(this.treeStore.Init(context));
     }
 
     @bind
@@ -74,10 +71,19 @@ export class TreeComponent extends HtmlComponent<IState, IEvents> implements IEv
             if (modKey in keyMap) {
                 event.preventDefault();
                 const reducer = this.treeStore[keyMap[modKey]](event as any);
-                this.$state.Invoke(reducer);
+                this.$reducerState.Invoke(reducer);
             }
         })
     }
+
+    get State(){
+        const s = this.$reducerState.get();
+        return {
+            Items: s.Items,
+            Selected: s.Selected
+        }
+    }
+
 
 
     public Actions = [this.InitAction, this.KeyboardActions];

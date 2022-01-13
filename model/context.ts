@@ -3,16 +3,18 @@ import {Storage} from "./storage";
 import { DateTime } from "luxon";
 import {ContextJSON} from "@domain";
 import { Permutation } from "@domain/helpers/permutation";
+import {proxy} from "@common/domain";
 
 export class Context {
     public readonly id: string;
     public URI: string;
-    public Messages: Array<Message> = [];
+
+    public Messages: Array<string> = [];
     // public Access?: Array<AccessRule> = [];
     // public Sorting?: Sorting;
     public Permutation?: Permutation;
     public Storage: Omit<Storage, keyof {Root, Contexts, Messages}>;
-    public Parents: Array<Message> = [];
+    // public Parents: Array<string> = [];
     public IsRoot: boolean;
     public UpdatedAt: DateTime;
     public CreatedAt: DateTime;
@@ -43,8 +45,8 @@ export class Context {
             IsRoot: c.IsRoot,
             // Sorting: Sorting[c.],
             Permutation: c.Permutation?.toString(),
-            // MessageURIs: c.Messages.map(m => m.URI),
-            // ParentsURIs: c.Parents.map(m => m.URI)
+            // MessageURIs: c.Messages,
+            // ParentsURIs: c.Parents
         };
     }
 

@@ -3,6 +3,7 @@ import {IEvents, IState, Template} from "./message.template";
 import {Message} from "@model";
 import {Injectable, map, Observable, tap, utc} from "@hypertype/core";
 import {ActionService, StateService} from "@services";
+import {MessageProxy} from "../../services/message-proxy";
 
 @Injectable(true)
 @Component({
@@ -18,22 +19,16 @@ export class MessageComponent extends HyperComponent<IState, IEvents> {
     }
 
     @property()
-    public message$!: Observable<Message>
-    private message: Message;
+    public message$!: Observable<MessageProxy>
+    private message: MessageProxy;
 
 
     public Events = {
         action: async event => {
-            if (this.message.Action) {
-                this.actionService.Invoke(this.message.Action);
-                event.preventDefault();
-            } else if (this.message.SubContext) {
-                await this.stateService.AddMessage({
-                    Context: this.message.SubContext,
-                    Content: '',
-                    CreatedAt: utc()
-                } as Message)
-            }
+            this.message.Context.Actions.CreateMessage({
+                Content: '',
+                CreatedAt: utc()
+            } as Message);
         }
     }
 

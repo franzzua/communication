@@ -1,5 +1,6 @@
 import {cellx} from "cellx";
 import {ModelPath} from "../shared/types";
+import {ObservableMap} from "cellx-collections";
 
 export abstract class Model<TState, TActions = {}> {
 
@@ -18,13 +19,14 @@ export abstract class Model<TState, TActions = {}> {
     }
 
     public Actions: TActions = this as any;
+    protected Factory
 
     private _queryModel(path: ModelPath, current: any) {
         if (path.length == 0)
             return current;
         const first = path.shift();
         if (current instanceof Map) {
-            return this._queryModel(path, current.get(first));
+            return this._queryModel(path, current.getOrAdd(first, this.Factory));
         }
         if (Array.isArray(current)) {
             const result = current.find(x => x.id === first || x.Id === first);

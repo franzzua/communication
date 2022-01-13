@@ -28,7 +28,7 @@ export class Permutation {
 
     static Parse(ordering: string) {
         const arr = JSON.parse(ordering);
-        return new Permutation(arr);
+        return new Permutation(arr.distinct());
     }
 
     public toString() {
@@ -56,6 +56,13 @@ export class Permutation {
 
     static FromShort(reordering: number[][]) {
         return undefined;
+    }
+
+    public isInvalid(): Boolean {
+        if (!this.values.length)
+            return false;
+        return Math.max(...this.values) > this.values.length - 1 ||
+            this.values.reduce((a, b) => a + b) !== this.values.length * (this.values.length - 1) / 2;
     }
 }
 
