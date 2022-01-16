@@ -3,7 +3,7 @@ import {Storage} from "./storage";
 import { DateTime } from "luxon";
 import {ContextJSON} from "@domain";
 import { Permutation } from "@domain/helpers/permutation";
-import {proxy} from "@common/domain";
+import {proxy} from "@cmmn/domain";
 
 export class Context {
     public readonly id: string;

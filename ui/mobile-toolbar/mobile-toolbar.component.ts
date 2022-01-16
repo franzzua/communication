@@ -1,7 +1,7 @@
 import {IEvents, IState, Template} from "./mobile-toolbar.template";
 import {TreeReducers} from "../tree/tree-reducers";
-import {component, HtmlComponent} from "@common/ui";
-import {Injectable} from "@common/core";
+import {component, HtmlComponent} from "@cmmn/ui";
+import {Injectable} from "@cmmn/core";
 
 @Injectable(true)
 @component({

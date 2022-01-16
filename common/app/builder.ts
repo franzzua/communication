@@ -1,6 +1,6 @@
-import {Container} from "@common/core";
+import {Container} from "@cmmn/core";
 import {IRouterOptions, Router} from "./router";
-import {setDefaultContainer} from "@common/ui";
+import {setDefaultContainer} from "@cmmn/ui";
 
 export class Builder{
     private container: Container = new Container();

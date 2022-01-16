@@ -1,5 +1,5 @@
-import {component, HtmlComponent, property} from "@common/ui";
-import {Injectable, bind} from "@common/core";
+import {component, HtmlComponent, property} from "@cmmn/ui";
+import {Injectable, bind} from "@cmmn/core";
 import {MessageProxy} from "@services";
 
 @Injectable(true)

@@ -1,7 +1,7 @@
 import {Message} from "@model";
-import {Container, Injectable} from "@common/core";
+import {Container, Injectable} from "@cmmn/core";
 import {ContextModel} from "./context-model";
-import type {IFactory} from "@common/domain/worker";
+import type {IFactory} from "@cmmn/domain/worker";
 import {MessageModel} from "@domain/model/message-model";
 import {YjsRepository} from "@infr/yjs/yjsRepository";
 import {DomainModel} from "@domain/model/domain-model";

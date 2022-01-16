@@ -1,5 +1,5 @@
-import {Router} from "@common/app";
-import {Injectable} from "@common/core";
+import {Router} from "@cmmn/app";
+import {Injectable} from "@cmmn/core";
 
 @Injectable()
 export class RouterService {

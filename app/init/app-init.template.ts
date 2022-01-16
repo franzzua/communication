@@ -1,5 +1,5 @@
 import {IAccountInfo} from "@services";
-import {ITemplate} from "@common/ui";
+import {ITemplate} from "@cmmn/ui";
 
 export const AppInitTemplate: ITemplate<IAccountInfo[], IEvents> = (html, state, events) => html`
     <h1>Welcome back, my bloody son!</h1>

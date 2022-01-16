@@ -1,4 +1,4 @@
-import {registerSerializer} from "@common/core";
+import {registerSerializer} from "@cmmn/core";
 
 export class Permutation {
 

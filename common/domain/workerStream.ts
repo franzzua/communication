@@ -1,4 +1,4 @@
-import {cell, deserialize, serialize} from "@common/core";
+import {cell, deserialize, serialize} from "@cmmn/core";
 import {Cell, cellx} from "cellx";
 import {Stream} from "./stream";
 import {ulid} from "ulid";

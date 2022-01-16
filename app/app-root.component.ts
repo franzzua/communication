@@ -1,7 +1,7 @@
-import {Router} from "@common/app";
+import {Router} from "@cmmn/app";
 import {Routes} from "./routes";
-import {Injectable} from "@common/core";
-import {component, HtmlComponent} from "@common/ui";
+import {Injectable} from "@cmmn/core";
+import {component, HtmlComponent} from "@cmmn/ui";
 
 @Injectable(true)
 @component<State>({

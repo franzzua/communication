@@ -1,8 +1,8 @@
-import {ModelProxy, proxy} from "@common/domain";
+import {ModelProxy, proxy} from "@cmmn/domain";
 import {Context, DomainState, Message} from "@model";
 import {IMessageActions} from "@domain";
 import {ulid} from "ulid";
-import {utc} from "@common/core";
+import {utc} from "@cmmn/core";
 import {ContextProxy} from "./context-proxy";
 import {DomainProxy} from "./domain-proxy";
 

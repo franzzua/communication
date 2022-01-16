@@ -1,4 +1,4 @@
-import {Container} from "@common/core";
+import {Container} from "@cmmn/core";
 import {Router} from "./router";
 
 export class Application {

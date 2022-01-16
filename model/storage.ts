@@ -1,6 +1,6 @@
 import {Context} from "./context";
 import {Message} from "./message";
-import {proxy} from "@common/domain";
+import {proxy} from "@cmmn/domain";
 import {dom} from "lib0";
 
 export class Storage {

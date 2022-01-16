@@ -1,4 +1,4 @@
-import {ITemplate} from "@common/ui";
+import {ITemplate} from "@cmmn/ui";
 
 const icon = html => html('svg:settings-icon')([require('./settings.icon.svg')]);
 

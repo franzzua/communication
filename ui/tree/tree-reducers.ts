@@ -2,7 +2,7 @@ import {IState} from "./tree.template";
 import {Message} from "@model";
 import {TreeItem, TreePresenter} from "../../presentors/tree.presentor";
 import type {Reducer} from "./tree.component";
-import {Fn, Injectable, utc} from "@common/core";
+import {Fn, Injectable, utc} from "@cmmn/core";
 import {ContextProxy} from "@services";
 import {ulid} from "ulid";
 

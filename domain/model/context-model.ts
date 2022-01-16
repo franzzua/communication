@@ -4,10 +4,10 @@ import {ContextJSON} from "@domain/contracts/json";
 import {Permutation} from "@domain/helpers/permutation";
 import {Context, Message} from "@model";
 import {Factory} from "./factory";
-import {Model} from "@common/domain/worker";
+import {Model} from "@cmmn/domain/worker";
 import {ContextStore} from "@infr/yjs/contextStore";
 import {DateTime} from "luxon";
-import {Fn} from "@common/core";
+import {Fn} from "@cmmn/core";
 
 export class ContextModel extends Model<Context, IContextActions> implements IContextActions {
 

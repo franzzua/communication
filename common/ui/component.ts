@@ -1,7 +1,7 @@
 import {HtmlComponent} from "./htmlComponent";
 import {CellRenderer} from "./cellRenderer";
 import {Html, IEvents, ITemplate} from "./types";
-import {Container} from "@common/core";
+import {Container} from "@cmmn/core";
 import {importStyle} from "./importStyle";
 
 export const GlobalStaticState = new class {

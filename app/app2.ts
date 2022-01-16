@@ -1,7 +1,7 @@
-import {Application, Builder} from "@common/app";
-import {useStreamDomain, useWorkerDomain} from "@common/domain";
+import {Application, Builder} from "@cmmn/app";
+import {useStreamDomain, useWorkerDomain} from "@cmmn/domain";
 import {Routes} from "./routes";
-import {Container, Injectable} from "@common/core";
+import {Container, Injectable} from "@cmmn/core";
 import {AppRootComponent} from "./app-root.component";
 import {TextContentComponent} from "../ui/content/text-content.component";
 import {RouterService} from "./services/router.service";

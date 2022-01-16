@@ -1,6 +1,6 @@
 import {component, GlobalStaticState} from "./component";
 import {HtmlComponent} from "./htmlComponent";
-import {Container} from "@common/core";
+import {Container} from "@cmmn/core";
 import "./styleHandler"
 
 export {HtmlComponent, component};

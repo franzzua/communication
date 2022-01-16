@@ -1,10 +1,10 @@
-import {component, HtmlComponent, property} from "@common/ui";
+import {component, HtmlComponent, property} from "@cmmn/ui";
 import {IEvents, IState, Template} from "./tree.template";
 import {ContextProxy, DomainProxy} from "@services";
 import {keyMap, TreeReducers} from "./tree-reducers";
 import {TreeItem} from "../../presentors/tree.presentor";
 import {RouterService} from "../../app/services/router.service";
-import {AsyncQueue, Fn, Injectable, bind} from "@common/core";
+import {AsyncQueue, Fn, Injectable, bind} from "@cmmn/core";
 import {Cell} from "cellx";
 import {KeyboardAspect} from "./keyboardAspect";
 import {Context} from "@model";

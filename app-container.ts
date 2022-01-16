@@ -1,7 +1,7 @@
 // import {Container} from "@hypertype/core";
 // import {AccountManager, LogService, ProxyProvider} from "@services";
 // import {RouterService} from "./app/services/router.service";
-// import {useWorkerDomain} from "@common/domain";
+// import {useWorkerDomain} from "@cmmn/domain";
 //
 // export const AppContainer = Container.withProviders(
 //     // StorageService,

@@ -1,4 +1,4 @@
-import {IRouterOptions, Route} from "@common/app";
+import {IRouterOptions, Route} from "@cmmn/app";
 
 export const Routes: (Route & {
     template?: (html, params) => any

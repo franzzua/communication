@@ -21,22 +21,22 @@
       "DOM"
     ],
     "paths": {
-      "@common/domain": [
+      "@cmmn/domain": [
         "./common/domain"
       ],
-      "@common/domain/worker": [
+      "@cmmn/domain/worker": [
         "./common/domain/worker"
       ],
-      "@common/core": [
+      "@cmmn/core": [
         "./common/core"
       ],
-      "@common/uhtml": [
+      "@cmmn/uhtml": [
         "./common/uhtml/index.js"
       ],
-      "@common/ui": [
+      "@cmmn/ui": [
         "./common/ui"
       ],
-      "@common/app": [
+      "@cmmn/app": [
         "./common/app"
       ],
       "@model": [

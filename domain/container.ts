@@ -1,4 +1,4 @@
-import {Container} from "@common/core";
+import {Container} from "@cmmn/core";
 import {DomainModel} from "@domain/model";
 import {Factory} from "./model/factory";
 

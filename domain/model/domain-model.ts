@@ -1,5 +1,5 @@
-import {Injectable} from "@common/core";
-import {Model} from "@common/domain/worker";
+import {Injectable} from "@cmmn/core";
+import {Model} from "@cmmn/domain/worker";
 import {IDomainActions} from "@domain";
 import {DomainState} from "@model";
 import {ContextModel} from "@domain/model/context-model";

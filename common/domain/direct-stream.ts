@@ -1,4 +1,4 @@
-import {Injectable} from "@common/core";
+import {Injectable} from "@cmmn/core";
 import {Stream} from "./stream";
 import {IFactory} from "./shared/factory";
 import {Action} from "./shared/types";

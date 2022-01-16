@@ -2,7 +2,7 @@ import {IFactory} from "./shared/factory";
 import {Model} from "./worker/model";
 import {ModelProxy} from "./modelProxy";
 import {Stream} from "./stream";
-import {Injectable} from "@common/core";
+import {Injectable} from "@cmmn/core";
 import {ModelPath} from "./shared/types";
 import {getRootProxy} from "./shared/domain.structure";
 

@@ -1,4 +1,4 @@
-import {Injectable} from "@common/core";
+import {Injectable} from "@cmmn/core";
 import {ContextProxy, MessageProxy} from "@services";
 
 @Injectable()

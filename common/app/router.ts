@@ -1,6 +1,6 @@
 import createRouter, {Options, Route, RouteNode, Router as Router5, State as RouterState} from 'router5';
 import browserPlugin from 'router5-plugin-browser';
-import {Injectable} from "@common/core";
+import {Injectable} from "@cmmn/core";
 import {Cell} from "cellx";
 
 export {RouterState, Route};

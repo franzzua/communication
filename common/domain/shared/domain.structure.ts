@@ -1,7 +1,7 @@
 import {ModelKey, ModelPath} from "./types";
 import {ModelProxy} from "../modelProxy";
 import {ModelMap} from "../model-map";
-import {Fn} from "@common/core";
+import {Fn} from "@cmmn/core";
 
 
 type DefMapping = {

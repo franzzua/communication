@@ -1,4 +1,4 @@
-import {ModelProxy, proxy} from "@common/domain";
+import {ModelProxy, proxy} from "@cmmn/domain";
 import {Context, Message} from "@model";
 import {IContextActions} from "@domain";
 import {MessageProxy} from "./message-proxy";

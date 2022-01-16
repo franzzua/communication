@@ -1,6 +1,6 @@
 import {IAccountInfo, IAccountProvider} from "@services";
 import {Icons} from "../../../icons/Icons";
-import {ITemplate} from "@common/ui";
+import {ITemplate} from "@cmmn/ui";
 
 export const Template: ITemplate<IState, IEvents> = (html, state, events) => html`
     ${state.providers.map(provider => html(`provider.${provider}`)`

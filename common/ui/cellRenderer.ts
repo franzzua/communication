@@ -1,10 +1,9 @@
-import {Cell, cellx} from "cellx";
-import {html, render} from "@common/uhtml";
+import {Cell, cellx, IEvent} from "cellx";
+import {html, render} from "@cmmn/uhtml";
 import {HtmlComponent} from "./htmlComponent";
 import {IEvents, ITemplate} from "./types";
-import {bind, Fn} from "@common/core";
+import {bind, Fn} from "@cmmn/core";
 import {EventHandlerProvider} from "./eventHandlerProvider";
-import {IEvent} from "cellx/src/EventEmitter";
 
 export class CellRenderer<TState, TEvents extends IEvents> {
     private stateCell: Cell<TState> = this.component.$state ?? cellx(() => this.component.State).cell;

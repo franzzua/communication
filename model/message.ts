@@ -2,7 +2,7 @@ import {DateTime} from "luxon";
 import {User} from "./user";
 import {Context} from "./context";
 import {MessageJSON} from "@domain";
-import {proxy} from "@common/domain";
+import {proxy} from "@cmmn/domain";
 
 export class Message {
     public Content: string;

@@ -1,5 +1,5 @@
 import {IEvents, IState, Template} from "./panel.template";
-import {component, HtmlComponent} from "@common/ui";
+import {component, HtmlComponent} from "@cmmn/ui";
 
 @component({
     name: 'ctx-panel',

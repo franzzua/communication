@@ -1,5 +1,5 @@
 import {IFactory} from "../shared/factory";
-import {AsyncQueue, cell, deserialize, Injectable, serialize} from "@common/core";
+import {AsyncQueue, cell, deserialize, Injectable, serialize} from "@cmmn/core";
 import {ModelPath, WorkerAction, WorkerMessage, WorkerMessageType} from "../shared/types";
 
 @Injectable()

@@ -1,5 +1,5 @@
 import {HtmlComponent} from "./htmlComponent";
-import {Hole, TemplateFunction as UHtmlTemplateFunction} from "@common/uhtml";
+import {Hole, TemplateFunction as UHtmlTemplateFunction} from "@cmmn/uhtml";
 import {ArgumentsOf} from "ts-jest/dist/utils/testing";
 
 export type IEventHandler<TEvents> = {
