@@ -8,7 +8,7 @@
 // import {ulid} from "ulid";
 // import {utc} from "@hypertype/core";
 // import {Model} from "@hypertype/domain";
-// import {YRepository} from "@infr/y/y.repository";
+// import {YRepository} from "@infr/yjs/yjs.repository";
 //
 // export class RepositoryProvider {
 //     public static get(storage: {Type; URI}): IRepository {

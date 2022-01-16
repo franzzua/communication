@@ -3,7 +3,7 @@ import browserPlugin from 'router5-plugin-browser';
 import {Injectable} from "@common/core";
 import {Cell} from "cellx";
 
-export {RouterState};
+export {RouterState, Route};
 
 export class IRouterOptions {
     routes: Route[] | RouteNode;

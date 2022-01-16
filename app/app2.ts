@@ -6,7 +6,7 @@ import {AppRootComponent} from "./app-root.component";
 import {TextContentComponent} from "../ui/content/text-content.component";
 import {RouterService} from "./services/router.service";
 import {TreeComponent} from "../ui/tree/tree.component";
-import {AccountManager, DomainProxy, ProxyProvider} from "@services";
+import {AccountManager, DomainProxy} from "@services";
 import {TreeReducers} from "../ui/tree/tree-reducers";
 import {TreePresenter} from "../presentors/tree.presentor";
 import {MobileToolbarComponent} from "../ui/mobile-toolbar/mobile-toolbar.component";
@@ -28,7 +28,7 @@ export class App2 extends Application {
             .with(DomainContainer)
             .with(useStreamDomain(Factory))
             .with(Container.withProviders(
-                RouterService, ProxyProvider, TreeReducers, TreePresenter, DomainProxy, AccountManager
+                RouterService,  TreeReducers, TreePresenter, DomainProxy, AccountManager
             ))
             .withUI(AppRootComponent, TextContentComponent, TreeComponent, MobileToolbarComponent, AppInitComponent)
             .withRoutes({

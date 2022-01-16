@@ -3,7 +3,7 @@ import {Container, Injectable} from "@common/core";
 import {ContextModel} from "./context-model";
 import type {IFactory} from "@common/domain/worker";
 import {MessageModel} from "@domain/model/message-model";
-import {YjsRepository} from "@infr/y/yjsRepository";
+import {YjsRepository} from "@infr/yjs/yjsRepository";
 import {DomainModel} from "@domain/model/domain-model";
 import {ModelPath} from "../../common/domain/shared/types";
 

@@ -1,9 +1,9 @@
-import {Fn} from "@hypertype/core";
 import {TreeItem} from "../../presentors/tree.presentor";
 import type {Reducer} from "./tree.component";
 import {isMobile} from "is-mobile";
 import {ITemplate} from "@common/ui";
 import {ContextProxy} from "@services";
+import {Fn} from "@common/core";
 
 const mobile = isMobile({tablet: true})
 

@@ -1,16 +1,4 @@
-export * from "./event.bus";
-export * from "./storage.service";
-export * from "./context.service";
-export * from "./message.service";
-export * from "./state.service";
-export * from "./log.service";
-export * from "./action.service";
 export * from "./account.manager";
 export {ContextProxy} from "./context-proxy";
 export {MessageProxy} from "./message-proxy";
-export {DomainProxy} from "./domain-proxy.service";
-export {ProxyProvider} from "./proxy-provider.service";
-// export {ItemStore} from "./stores/item-store";
-// export {StorageStore} from "./stores/storage-store";
-// export {MessageStore} from "./stores/message-store";
-// export {ContextStore} from "./stores/context-store";
+export {DomainProxy} from "./domain-proxy";

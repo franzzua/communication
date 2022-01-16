@@ -1,7 +1,6 @@
 import {Injectable} from "@common/core";
 import {Cell} from "cellx";
 import {FakeLoginService} from "../app/services/fake-login.service";
-import {award} from "rdf-namespaces/dist/schema";
 
 @Injectable()
 export class AccountManager {

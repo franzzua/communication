@@ -1,8 +1,7 @@
 import {IAccountInfo} from "@services";
-import {IEventHandler} from "@hypertype/ui";
 import {ITemplate} from "@common/ui";
 
-export const AppInitTemplate: ITemplate<IAccountInfo[], IEvents> = (html, state: IAccountInfo[], events: IEventHandler<IEvents>) => html`
+export const AppInitTemplate: ITemplate<IAccountInfo[], IEvents> = (html, state, events) => html`
     <h1>Welcome back, my bloody son!</h1>
     ${state.length ? state.map(acc => html(acc)`
         <div>${acc.title}</div>
@@ -24,5 +23,5 @@ export const AppInitTemplate: ITemplate<IAccountInfo[], IEvents> = (html, state:
 `;
 
 export type IEvents = {
-    login(provider: 'google');
+    login(provider: string);
 }

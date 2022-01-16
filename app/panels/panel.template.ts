@@ -1,8 +1,8 @@
-import {IEventHandler} from "@hypertype/ui";
+import {ITemplate} from "@common/ui";
 
 const icon = html => html('svg:settings-icon')([require('./settings.icon.svg')]);
 
-export const Template = (html, state: IState, events: IEventHandler<IEvents>) => html`
+export const Template: ITemplate<IState, IEvents> = (html, state, events) => html`
     <div class=${`panel ${state.isOpen ? '' : 'closed'}`}>
         <ctx-settings></ctx-settings>
     </div>
@@ -17,6 +17,6 @@ export interface IState {
     isOpen: boolean;
 }
 
-export interface IEvents {
+export type IEvents = {
     switchOpen();
 }

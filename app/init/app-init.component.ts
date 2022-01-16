@@ -1,9 +1,8 @@
-import {Injectable} from "@common/core";
+import {Injectable, bind} from "@common/core";
 import {AccountManager, IAccountInfo} from "@services";
 import {AppInitTemplate, IEvents} from "./app-init.template";
 import {RouterService} from "../services/router.service";
 import {component, HtmlComponent} from "@common/ui";
-import bind from "bind-decorator";
 
 @Injectable(true)
 @component({

@@ -4,7 +4,7 @@ import {IMessageActions} from "@domain";
 import {ulid} from "ulid";
 import {utc} from "@common/core";
 import {ContextProxy} from "./context-proxy";
-import {DomainProxy} from "./domain-proxy.service";
+import {DomainProxy} from "./domain-proxy";
 
 @proxy.of(Message, (id, self) => [...self.path, 'Messages', id])
 export class MessageProxy extends ModelProxy<Message, IMessageActions> {

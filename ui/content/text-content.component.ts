@@ -1,13 +1,6 @@
 import {component, HtmlComponent, property} from "@common/ui";
-import {Injectable} from "@common/core";
-import bind from "bind-decorator";
-import {Message} from "@model";
-import type {Model} from "@common/domain";
-import {IMessageActions} from "@domain";
-import {IFactory} from "@common/domain";
-import {ProxyProvider} from "@services";
-import {MessageModel} from "@domain/model";
-import {MessageProxy} from "../../services/message-proxy";
+import {Injectable, bind} from "@common/core";
+import {MessageProxy} from "@services";
 
 @Injectable(true)
 @component<string, IEvents>({
@@ -22,7 +15,7 @@ import {MessageProxy} from "../../services/message-proxy";
 })
 export class TextContentComponent extends HtmlComponent<string, IEvents> {
 
-    constructor(private proxy: ProxyProvider) {
+    constructor() {
         super();
     }
 

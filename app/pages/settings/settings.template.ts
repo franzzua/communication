@@ -1,8 +1,8 @@
-import {IEventHandler} from "@hypertype/ui";
 import {IAccountInfo, IAccountProvider} from "@services";
 import {Icons} from "../../../icons/Icons";
+import {ITemplate} from "@common/ui";
 
-export const Template = (html, state: IState, events: IEventHandler<IEvents>) => html`
+export const Template: ITemplate<IState, IEvents> = (html, state, events) => html`
     ${state.providers.map(provider => html(`provider.${provider}`)`
             <button class="add-user"
                     onmouseup=${events.addAccount(e => e.target.data)}
@@ -27,7 +27,7 @@ export interface IState {
         providers: string[];
 }
 
-export interface IEvents {
+export type IEvents = {
     addAccount(provider);
     clear(account: IAccountInfo);
 }

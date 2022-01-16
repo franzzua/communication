@@ -1,4 +1,3 @@
-import * as crc32 from "crc-32";
 import {ulid} from "ulid";
 import {Cell, cellx} from "cellx";
 
@@ -52,9 +51,6 @@ export const Fn = {
             };
             return descr;
         }
-    },
-    crc32(value) {
-        return crc32.str(JSON.stringify(value));
     },
 
     distinctUntilChanged<T>(comparator: (x: T, y: T) => boolean) {

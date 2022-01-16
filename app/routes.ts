@@ -1,5 +1,4 @@
-import {IRouterOptions} from "@hypertype/app";
-import {Route} from "router5";
+import {IRouterOptions, Route} from "@common/app";
 
 export const Routes: (Route & {
     template?: (html, params) => any

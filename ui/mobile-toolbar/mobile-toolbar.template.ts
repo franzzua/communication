@@ -1,8 +1,8 @@
-import {IEventHandler} from "@hypertype/ui";
 import type {TreeReducers} from "../tree/tree-reducers";
 import {Icons} from "../../icons/Icons";
+import {ITemplate} from "@common/ui";
 
-export const Template = (html, state: IState, events: IEventHandler<IEvents>) => html`
+export const Template: ITemplate<IState, IEvents> = (html, state, events) => html`
     <input onchange=${events.AddNext(e => (e.target.value = '') || e)}>
     ${Icons.move.left(html, {}, [], {click: events.MoveLeft(x => x)})}
     ${Icons.plus.message(html, {}, [], {click: events.AddNext(x => x)})}

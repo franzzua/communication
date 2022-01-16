@@ -1,9 +1,8 @@
 import {Cell, cellx} from "cellx";
 import {html, render} from "@common/uhtml";
-import bind from "bind-decorator";
 import {HtmlComponent} from "./htmlComponent";
 import {IEvents, ITemplate} from "./types";
-import {Fn} from "@common/core";
+import {bind, Fn} from "@common/core";
 import {EventHandlerProvider} from "./eventHandlerProvider";
 import {IEvent} from "cellx/src/EventEmitter";
 

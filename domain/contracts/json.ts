@@ -1,5 +1,3 @@
-import {AccessRule, Message, Sorting, User} from "@model";
-import {DateTime} from "luxon";
 
 export class MessageJSON{
     public ContextURI: string;

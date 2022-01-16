@@ -2,7 +2,7 @@ import {IMessageActions} from "@domain/contracts/actions";
 import {Context, Message} from "@model";
 import {Factory} from "./factory";
 import {Model} from "@common/domain/worker";
-import {ContextStore} from "@infr/y/contextStore";
+import {ContextStore} from "@infr/yjs/contextStore";
 import {utc} from "@common/core";
 import {ContextModel} from "./context-model";
 

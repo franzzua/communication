@@ -1,10 +1,5 @@
-import {Context, Message} from "@model";
 import {Injectable} from "@common/core";
-import {ProxyProvider} from "@services";
-import {Permutation} from "@domain/helpers/permutation";
-import {ContextModel, MessageModel} from "@domain/model";
-import {MessageProxy} from "../services/message-proxy";
-import {ContextProxy} from "../services/context-proxy";
+import {ContextProxy, MessageProxy} from "@services";
 
 @Injectable()
 export class TreePresenter {

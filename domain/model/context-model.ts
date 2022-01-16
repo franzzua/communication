@@ -3,13 +3,10 @@ import {IContextActions} from "../contracts/actions";
 import {ContextJSON} from "@domain/contracts/json";
 import {Permutation} from "@domain/helpers/permutation";
 import {Context, Message} from "@model";
-import {cellx} from "cellx";
 import {Factory} from "./factory";
 import {Model} from "@common/domain/worker";
-import {ContextStore} from "@infr/y/contextStore";
+import {ContextStore} from "@infr/yjs/contextStore";
 import {DateTime} from "luxon";
-import {Me} from "rdf-namespaces/dist/vcard";
-import {proxy} from "@common/domain";
 import {Fn} from "@common/core";
 
 export class ContextModel extends Model<Context, IContextActions> implements IContextActions {

@@ -3,7 +3,7 @@ import {Fn} from "./Fn";
 export {};
 
 declare global {
-    interface Array<T> {
+    interface ReadonlyArray<T> {
         filter(callbackfn: (value: T, index: number) => boolean): Array<T>;
 
         max(fn?: (item: T) => any): T;
@@ -34,6 +34,10 @@ declare global {
 
         groupBy<K>(selector: (t: T) => K, descending?): Map<K, Array<T>>;
     }
+    interface Array<T> extends ReadonlyArray<T> {
+
+    }
+
 }
 
 // Array.prototype.flat = Array.prototype.flat  || function(level = 1){
@@ -63,7 +67,7 @@ Array.prototype.toMap = function (keySelector, valSelector) {
 
 
 Array.prototype.orderBy = function <T>(selector: (t: T) => (string | number) = Fn.I as any, descending = false) {
-    return [...this].sort((a,b) => ((selector(a) > selector(b)) ? 1 : -1) * (descending ? -1 : 1));
+    return [...this].sort((a, b) => ((selector(a) > selector(b)) ? 1 : -1) * (descending ? -1 : 1));
 };
 
 Array.prototype.mapBy = function (selector) {
