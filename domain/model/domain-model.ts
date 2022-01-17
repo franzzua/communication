@@ -1,9 +1,9 @@
 import {Injectable} from "@cmmn/core";
-import {Model} from "@cmmn/domain/worker";
+import {Model} from "@cmmn/domain";
 import {IDomainActions} from "@domain";
 import {DomainState} from "@model";
 import {ContextModel} from "@domain/model/context-model";
-import {Cell} from "cellx";
+import {Cell} from "@cmmn/core";
 import {Factory} from "@domain/model/factory";
 import {ObservableMap} from "cellx-collections";
 

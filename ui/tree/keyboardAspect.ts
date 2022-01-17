@@ -1,4 +1,4 @@
-import {EventEmitter} from "cellx";
+import {EventEmitter} from "@cmmn/core";
 
 export class KeyboardAspect extends EventEmitter {
 

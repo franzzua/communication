@@ -16,7 +16,7 @@ export const Template: ITemplate<Pick<IState, "Items" | "Selected">, IEvents> = 
                 .item=${{item, index}}
                 onchange=${events.updateMessage(e => ({item: e.target.item.item, content: e.detail}))}
                 onfocus=${events.setFocus(e => e.target.item)} 
-                active=${Fn.arrayEqual(item.Path, state.Selected?.Path ?? [])} />
+                active=${Fn.compare(item.Path, state.Selected?.Path ?? [])} />
     </div>
     `)}
     </div>

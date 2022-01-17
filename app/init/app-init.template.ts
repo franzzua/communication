@@ -3,7 +3,7 @@ import {ITemplate} from "@cmmn/ui";
 
 export const AppInitTemplate: ITemplate<IAccountInfo[], IEvents> = (html, state, events) => html`
     <h1>Welcome back, my bloody son!</h1>
-    ${state.length ? state.map(acc => html(acc)`
+    ${state.length ? state.map(acc => html(acc.title)`
         <div>${acc.title}</div>
     `) : html('no-acc')`<div>
         <h3>But... who are you?</h3>

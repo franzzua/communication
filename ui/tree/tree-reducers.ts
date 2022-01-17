@@ -4,7 +4,6 @@ import {TreeItem, TreePresenter} from "../../presentors/tree.presentor";
 import type {Reducer} from "./tree.component";
 import {Fn, Injectable, utc} from "@cmmn/core";
 import {ContextProxy} from "@services";
-import {ulid} from "ulid";
 
 
 export type ReducerStore<TState> = {

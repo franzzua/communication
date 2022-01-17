@@ -2,7 +2,7 @@ import {ModelProxy, proxy} from "@cmmn/domain";
 import {Context, Message} from "@model";
 import {IContextActions} from "@domain";
 import {MessageProxy} from "./message-proxy";
-import {ModelMap} from "../common/domain/model-map";
+import {ModelMap} from "@cmmn/domain";
 
 @proxy.of(Context, (uri, self) => ['Root', 'Contexts', uri])
 export class ContextProxy extends ModelProxy<Context, IContextActions> {

@@ -1,22 +1,22 @@
-import {Context, Message, Storage} from "@model";
+import {Context, Message} from "@model";
 
 
-export interface IMessageActions {
+export type IMessageActions = {
     Attach(uri: string): Promise<void>;
     UpdateText(text: string): Promise<void>;
     Reorder(newOrder: number): Promise<void>;
     Move(fromURI: string, toURI: string, toIndex: number): Promise<void>;
 
-    Remove(): void;
+    Remove(): Promise<void>;
 }
 
-export interface IContextActions {
+export type IContextActions = {
     RemoveMessage(uri: string): Promise<void>;
 
     CreateMessage(message: Message, index?: number): Promise<void>;
 }
 
-export interface IDomainActions {
+export type IDomainActions = {
     // LoadContext(uri: string): Promise<void>;
     //
     // CreateContext(context: Context): Promise<void>;
@@ -24,6 +24,7 @@ export interface IDomainActions {
 
 export interface IStorageActions {
     CreateMessage(message: Message): Promise<string>;
+
     CreateContext(context: Context): Promise<string>;
 
     Clear(): Promise<void>;

@@ -1,8 +1,7 @@
 import {ModelProxy, proxy} from "@cmmn/domain";
 import {Context, DomainState, Message} from "@model";
 import {IMessageActions} from "@domain";
-import {ulid} from "ulid";
-import {utc} from "@cmmn/core";
+import {utc, Fn} from "@cmmn/core";
 import {ContextProxy} from "./context-proxy";
 import {DomainProxy} from "./domain-proxy";
 
@@ -20,7 +19,7 @@ export class MessageProxy extends ModelProxy<Message, IMessageActions> {
     public AddMessage(message: Message): MessageProxy {
         if (!this.SubContext) {
             const subContext = {
-                id: ulid(),
+                id: Fn.ulid(),
                 Messages: [],
                 Parents: [this.State.id],
                 Storage: null,

@@ -4,8 +4,7 @@ import {ContextProxy, DomainProxy} from "@services";
 import {keyMap, TreeReducers} from "./tree-reducers";
 import {TreeItem} from "../../presentors/tree.presentor";
 import {RouterService} from "../../app/services/router.service";
-import {AsyncQueue, Fn, Injectable, bind} from "@cmmn/core";
-import {Cell} from "cellx";
+import {Cell, AsyncQueue, Fn, Injectable, bind} from "@cmmn/core";
 import {KeyboardAspect} from "./keyboardAspect";
 import {Context} from "@model";
 

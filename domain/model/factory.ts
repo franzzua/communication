@@ -1,11 +1,8 @@
-import {Message} from "@model";
 import {Container, Injectable} from "@cmmn/core";
 import {ContextModel} from "./context-model";
-import type {IFactory} from "@cmmn/domain/worker";
-import {MessageModel} from "@domain/model/message-model";
+import {IFactory, ModelAction, Model, ModelPath} from "@cmmn/domain";
 import {YjsRepository} from "@infr/yjs/yjsRepository";
 import {DomainModel} from "@domain/model/domain-model";
-import {ModelPath} from "../../common/domain/shared/types";
 
 @Injectable()
 export class Factory implements IFactory<DomainModel> {
@@ -22,9 +19,10 @@ export class Factory implements IFactory<DomainModel> {
 
     public Root = new DomainModel(this);
 
-    public GetModel(path: ModelPath) {
-        return this.Root.QueryModel(path.slice(1));
+    public GetModel<TState, TActions extends ModelAction>(path: ModelPath): Model<TState, TActions> {
+        return this.Root.QueryModel<TState, TActions>(path.slice(1)) as Model<TState, TActions>;
     }
+
     //
     // public GetOrCreateMessage(state: Message): MessageModel {
     //     if (this.MessageMap.has(state.id))
@@ -60,6 +58,7 @@ export class Factory implements IFactory<DomainModel> {
     public GetContext(uri: string): ContextModel {
         return this.Root.ObsContexts.get(uri);
     }
+
     //
     // public GetMessage(id: string): MessageModel {
     //     return this.MessageMap.get(id);

@@ -4,10 +4,9 @@ import {ContextJSON} from "@domain/contracts/json";
 import {Permutation} from "@domain/helpers/permutation";
 import {Context, Message} from "@model";
 import {Factory} from "./factory";
-import {Model} from "@cmmn/domain/worker";
+import {Model} from "@cmmn/domain";
 import {ContextStore} from "@infr/yjs/contextStore";
-import {DateTime} from "luxon";
-import {Fn} from "@cmmn/core";
+import {DateTime, Fn} from "@cmmn/core";
 
 export class ContextModel extends Model<Context, IContextActions> implements IContextActions {
 
@@ -18,8 +17,9 @@ export class ContextModel extends Model<Context, IContextActions> implements ICo
     }
 
     private _cache = new Map<string, MessageModel>();
-    private GetOrCreateMessage(id: string){
-        return this._cache.getOrAdd(id,id => new MessageModel(this.factory, this.contextStore, id));
+
+    private GetOrCreateMessage(id: string) {
+        return this._cache.getOrAdd(id, id => new MessageModel(this.factory, this.contextStore, id));
     }
 
     public get State(): Readonly<Context> {
@@ -43,7 +43,7 @@ export class ContextModel extends Model<Context, IContextActions> implements ICo
         });
     }
 
-    public *getParents(): IterableIterator<MessageModel> {
+    public* getParents(): IterableIterator<MessageModel> {
         for (let context of this.factory.Root.Contexts.values()) {
             for (let message of context.Messages.values()) {
                 if (message.SubContext === this)
@@ -91,7 +91,7 @@ export class ContextModel extends Model<Context, IContextActions> implements ICo
     async CreateMessage(message: Message, index: number = this.Messages.size): Promise<void> {
         if (!message.id)
             message.id = Fn.ulid();
-        if (message.ContextURI && message.ContextURI !== this.URI){
+        if (message.ContextURI && message.ContextURI !== this.URI) {
             this.factory.GetContext(message.ContextURI).RemoveMessage(message.id);
         }
         message.ContextURI = this.URI;

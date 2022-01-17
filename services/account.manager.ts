@@ -1,5 +1,4 @@
-import {Injectable} from "@cmmn/core";
-import {Cell} from "cellx";
+import {Injectable,Cell} from "@cmmn/core";
 import {FakeLoginService} from "../app/services/fake-login.service";
 
 @Injectable()

@@ -9,11 +9,13 @@
     "outDir": "./dist/esm",
     "skipLibCheck": true,
     "skipDefaultLibCheck": true,
+    "allowJs": true,
+    "allowSyntheticDefaultImports": true,
     "emitDecoratorMetadata": true,
     "declarationDir": "./dist/typings",
     "declaration": true,
     "types": [
-      "node",
+      "node"
     ],
     "lib": [
       "ESNext",
@@ -21,24 +23,6 @@
       "DOM"
     ],
     "paths": {
-      "@cmmn/domain": [
-        "./common/domain"
-      ],
-      "@cmmn/domain/worker": [
-        "./common/domain/worker"
-      ],
-      "@cmmn/core": [
-        "./common/core"
-      ],
-      "@cmmn/uhtml": [
-        "./common/uhtml/index.js"
-      ],
-      "@cmmn/ui": [
-        "./common/ui"
-      ],
-      "@cmmn/app": [
-        "./common/app"
-      ],
       "@model": [
         "./model"
       ],
@@ -57,9 +41,14 @@
     },
     "plugins": [
       {
-        "transform": "@hypertype/tools/plugins/absolute",
+        "transform": "@cmmn/tools/absolute-plugin.cjs",
         "after": true
-      }
+      },
+//       Transform paths in output .js files
+      { "transform": "typescript-transform-paths" },
+
+//       Transform paths in output .d.ts files (Include this line if you output declarations files)
+      { "transform": "typescript-transform-paths", "afterDeclarations": true },
     ]
   },
   "exclude": [

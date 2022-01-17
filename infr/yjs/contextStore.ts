@@ -1,7 +1,7 @@
 import {Map as YMap} from "yjs";
 import {ContextJSON, MessageJSON} from "@domain";
 import {YjsStore} from "@infr/yjs/yjsStore";
-import {cellx} from "cellx";
+import {cellx, ICellx} from "@cmmn/core";
 
 
 export class ContextStore extends YjsStore {
@@ -96,7 +96,7 @@ export class ContextStore extends YjsStore {
     }
 
 
-    State = cellx(this.GetState());
+    State: ICellx<IState> = cellx(this.GetState());
 
     subscr = this.State.subscribe((err, data) => {
         const { value} = data.data as { prevValue: IState, value: IState };
