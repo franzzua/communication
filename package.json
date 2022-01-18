@@ -5,21 +5,8 @@
   "main": "index.js",
   "scripts": {
     "tsc": "ttsc --watch",
-    "yjs:weboscket": "PORT=1234 node ./node_modules/y-websocket/bin/server.js",
     "bundle": "cmmn bundle ./dist/esm/entry/index.js --watch --run",
-    "build:client": "hypertype client --watch",
-    "build:client:prod": "hypertype client --prod",
-    "build:run": "hypertype client --watch --run",
-    "build:worker": "hypertype worker --watch",
-    "build:server": "hypertype server --watch",
-    "build:server:prod": "hypertype server --prod",
-    "build": "ttsc && cmmn bundle ./dist/esm/entry/index.js  && cp ./.github/workflows/staticwebapp.config.json ./dist",
-    "ci": "ttsc && hypertype client --prod",
-    "server": "http-server ./dist -p 8080",
-    "server:watch": "nodemon ./dist/server.js",
-    "signal": "y-webrtc-signaling",
-    "start": "node dist/server.js",
-    "bundle&publish": "ttsc && npm run build:client:prod && npm run publish"
+    "build": "ttsc && cmmn bundle ./dist/esm/entry/index.js  && cp ./.github/workflows/staticwebapp.config.json ./dist"
   },
   "author": "",
   "license": "ISC",
@@ -28,7 +15,7 @@
     "@cmmn/core": "1",
     "@cmmn/ui": "1",
     "@cmmn/domain": "1",
-    "@cmmn/tools": "1.0.3",
+    "@cmmn/tools": "1",
     "cellx-collections": "^1.0.3",
     "cellx-decorators": "^1.6.3",
     "is-mobile": "^3.0.0",
@@ -40,24 +27,5 @@
     "y-indexeddb": "^9.0.6",
     "y-webrtc": "^10.2.2",
     "yjs": "^13.5.23"
-  },
-  "hypertype": {
-    "client": {
-      "type": "server",
-      "index": "./dist/esm/entry/index.js",
-      "html": "./entry/index.html",
-      "port": 3001,
-      "publicPath": "/"
-    },
-    "server": {
-      "type": "node",
-      "index": "./server/index.ts",
-      "target": "server.js"
-    },
-    "worker": {
-      "type": "worker",
-      "index": "./entry/worker.ts",
-      "target": "worker.js"
-    }
   }
 }
