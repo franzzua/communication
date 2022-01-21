@@ -4,10 +4,11 @@ import {isMobile} from "is-mobile";
 import {ITemplate} from "@cmmn/ui";
 import {ContextProxy} from "@services";
 import {Fn} from "@cmmn/core";
+import {} from "less";
 
 const mobile = isMobile({tablet: true})
 
-export const Template: ITemplate<Pick<IState, "Items" | "Selected">, IEvents> = (html, state, events) => html`
+export const template: ITemplate<Pick<IState, "Items" | "Selected">, IEvents> = (html, state, events) => html`
     <div class="items">
         ${state?.Items.map((item, index) => html(`item.${item.Path.join('.')}`)`
     <div item style=${{'--level': item.Path.length - 1}} class=${`level-${item.Path.length} ${item.Path.length > 3 ? 'li' : ''}`}>

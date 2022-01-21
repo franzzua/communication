@@ -1,6 +1,5 @@
 import {AbstractType, Doc, YEvent} from "yjs";
-// @ts-ignore
-import {IndexeddbPersistence} from "y-indexeddb/dist/y-indexeddb.cjs";
+import {IndexeddbPersistence} from "y-indexeddb";
 import { Cell } from "@cmmn/core";
 import {WebrtcProvider} from "y-webrtc";
 

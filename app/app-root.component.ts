@@ -2,6 +2,7 @@ import {Router} from "@cmmn/app";
 import {Routes} from "./routes";
 import {Injectable} from "@cmmn/core";
 import {component, HtmlComponent} from "@cmmn/ui";
+import style from "./styles/root.style.less";
 
 @Injectable(true)
 @component<State>({
@@ -19,7 +20,7 @@ import {component, HtmlComponent} from "@cmmn/ui";
             </aside>
         `;
     },
-    style: require('./styles/root.style.less')
+    style
 })
 export class AppRootComponent extends HtmlComponent<State> {
     constructor(private router: Router) {

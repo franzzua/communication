@@ -3,12 +3,13 @@ import {AccountManager, IAccountInfo} from "@services";
 import {AppInitTemplate, IEvents} from "./app-init.template";
 import {RouterService} from "../services/router.service";
 import {component, HtmlComponent} from "@cmmn/ui";
+import style from './app-init.style.less';
 
 @Injectable(true)
 @component({
     name: 'app-init',
     template: AppInitTemplate,
-    style: require('./app-init.style.less')
+    style
 })
 export class AppInitComponent extends HtmlComponent<IAccountInfo[], IEvents> {
 

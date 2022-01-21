@@ -1,6 +1,7 @@
 import {ITemplate} from "@cmmn/ui";
+import settings_icon from "./settings.icon.svg";
 
-const icon = html => html('svg:settings-icon')([require('./settings.icon.svg')]);
+const icon = html => html('svg:settings-icon')([settings_icon]);
 
 export const Template: ITemplate<IState, IEvents> = (html, state, events) => html`
     <div class=${`panel ${state.isOpen ? '' : 'closed'}`}>

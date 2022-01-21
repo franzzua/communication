@@ -2,12 +2,13 @@ import {IEvents, IState, Template} from "./mobile-toolbar.template";
 import {TreeReducers} from "../tree/tree-reducers";
 import {component, HtmlComponent} from "@cmmn/ui";
 import {Injectable} from "@cmmn/core";
+import style from "./mobile-toolbar.style.less";
 
 @Injectable(true)
 @component({
     name: 'ctx-mobile-toolbar',
     template: Template,
-    style: require('./mobile-toolbar.style.less')
+    style
 })
 export class MobileToolbarComponent extends HtmlComponent<IState, IEvents>{
 

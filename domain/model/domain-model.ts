@@ -1,4 +1,3 @@
-import {Injectable} from "@cmmn/core";
 import {Model} from "@cmmn/domain";
 import {IDomainActions} from "@domain";
 import {DomainState} from "@model";
@@ -7,7 +6,6 @@ import {Cell} from "@cmmn/core";
 import {Factory} from "@domain/model/factory";
 import {ObservableMap} from "cellx-collections";
 
-@Injectable()
 export class DomainModel extends Model<DomainState, IDomainActions> {
     public ObsContexts = new ObservableMap<string, ContextModel>();
 

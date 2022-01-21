@@ -1,7 +1,7 @@
 import {Storage} from "./storage";
-import { DateTime } from "@cmmn/core";
+import {DateTime, utc} from "@cmmn/core";
 import {ContextJSON} from "@domain";
-import { Permutation } from "@domain/helpers/permutation";
+import {Permutation} from "@domain/helpers/permutation";
 
 export class Context {
     public readonly id: string;
@@ -11,23 +11,24 @@ export class Context {
     // public Access?: Array<AccessRule> = [];
     // public Sorting?: Sorting;
     public Permutation?: Permutation;
-    public Storage: Omit<Storage, keyof {Root, Contexts, Messages}>;
+    public Storage: Omit<Storage, keyof { Root, Contexts, Messages }>;
     // public Parents: Array<string> = [];
     public IsRoot: boolean;
     public UpdatedAt: DateTime;
     public CreatedAt: DateTime;
+
     public equals?(m: Context): boolean;
 
 
-    static FromJSON(c: ContextJSON): Context{
-        return  Object.assign(new Context(), {
+    static FromJSON(c: ContextJSON): Context {
+        return Object.assign(new Context(), {
             URI: c.URI,
             id: c.id,
             Storage: null,
             Parents: [],
             IsRoot: c.IsRoot,
-            UpdatedAt: DateTime.fromISO(c.UpdatedAt, {zone: 'utc'}),
-            CreatedAt: DateTime.fromISO(c.CreatedAt, {zone: 'utc'}),
+            UpdatedAt: utc(c.UpdatedAt),
+            CreatedAt: utc(c.CreatedAt),
             Permutation: c.Permutation ? Permutation.Parse(c.Permutation) : null,
             Messages: [],
         });
@@ -38,8 +39,8 @@ export class Context {
             // StorageURI: c.Storage.URI,
             URI: c.URI,
             id: c.id,
-            UpdatedAt: c.UpdatedAt.toISO(),
-            CreatedAt: c.CreatedAt.toISO(),
+            UpdatedAt: c.UpdatedAt.toJSON(),
+            CreatedAt: c.CreatedAt?.toJSON(),
             IsRoot: c.IsRoot,
             // Sorting: Sorting[c.],
             Permutation: c.Permutation?.toString(),
@@ -48,7 +49,7 @@ export class Context {
         };
     }
 
-    static equals(x: Context, y: Context): boolean{
+    static equals(x: Context, y: Context): boolean {
         if (x == null && y == null)
             return true;
         if (!x && y || !y && x)

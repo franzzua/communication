@@ -1,4 +1,10 @@
-const  getIcon = ( name, file) => (html, style: object, classes: string[], on: {
+import arrows_circle_left from "./arrows_circle_left.svg";
+import arrows_circle_right from "./arrows_circle_right.svg";
+import message_plus from "./message_plus.svg";
+import todolist_plus from "./todolist_plus.svg";
+import cloud_plus from "./cloud_plus.svg";
+
+const getIcon = (name, file) => (html, style: object, classes: string[], on: {
     click?, hover?
 }) => {
     classes = [...classes, 'icon', name];
@@ -13,12 +19,12 @@ const  getIcon = ( name, file) => (html, style: object, classes: string[], on: {
 
 export const Icons = {
     move: {
-        left :getIcon('move-left', require('./arrows_circle_left.svg')),
-        right :getIcon('move-right', require('./arrows_circle_right.svg')),
+        left: getIcon('move-left', arrows_circle_left),
+        right: getIcon('move-right', arrows_circle_right),
     },
     plus: {
-        message: getIcon('add-message', require('./message_plus.svg')),
-        list: getIcon('add-list', require('./todolist_plus.svg')),
+        message: getIcon('add-message', message_plus),
+        list: getIcon('add-list', todolist_plus),
     },
-    addUser: getIcon('add-user', require('./cloud_plus.svg'))
+    addUser: getIcon('add-user', cloud_plus)
 }

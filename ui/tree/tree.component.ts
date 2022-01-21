@@ -1,19 +1,16 @@
 import {component, HtmlComponent, property} from "@cmmn/ui";
-import {IEvents, IState, Template} from "./tree.template";
+import {IEvents, IState, template} from "./tree.template";
 import {ContextProxy, DomainProxy} from "@services";
 import {keyMap, TreeReducers} from "./tree-reducers";
 import {TreeItem} from "../../presentors/tree.presentor";
 import {RouterService} from "../../app/services/router.service";
-import {Cell, AsyncQueue, Fn, Injectable, bind} from "@cmmn/core";
+import {AsyncQueue, bind, Cell, Fn, Injectable} from "@cmmn/core";
 import {KeyboardAspect} from "./keyboardAspect";
 import {Context} from "@model";
+import style from "./tree.style.less";
 
 @Injectable(true)
-@component({
-    name: 'ctx-tree',
-    template: Template,
-    style: require('./tree.style.less')
-})
+@component({name: 'ctx-tree', template, style})
 export class TreeComponent extends HtmlComponent<Pick<IState, "Items" | "Selected">, IEvents> implements IEvents {
 
 
@@ -74,14 +71,13 @@ export class TreeComponent extends HtmlComponent<Pick<IState, "Items" | "Selecte
         })
     }
 
-    get State(){
+    get State() {
         const s = this.$reducerState.get();
         return {
             Items: s.Items,
             Selected: s.Selected
         }
     }
-
 
 
     public Actions = [this.InitAction, this.KeyboardActions];

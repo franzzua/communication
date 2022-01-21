@@ -1,6 +1,7 @@
 import {component, HtmlComponent, property} from "@cmmn/ui";
-import {Injectable, bind} from "@cmmn/core";
+import {bind, Injectable} from "@cmmn/core";
 import {MessageProxy} from "@services";
+import style from "./text-content.style.less";
 
 @Injectable(true)
 @component<string, IEvents>({
@@ -11,7 +12,7 @@ import {MessageProxy} from "@services";
              onfocus=${events.focus(x => void 0)}>
         </div>
     `,
-    style: require('./text-content.style.less')
+    style: style
 })
 export class TextContentComponent extends HtmlComponent<string, IEvents> {
 

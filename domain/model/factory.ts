@@ -17,7 +17,7 @@ export class Factory implements IFactory<DomainModel> {
     }
 
 
-    public Root = new DomainModel(this);
+    public Root: DomainModel = new DomainModel(this);
 
     public GetModel<TState, TActions extends ModelAction>(path: ModelPath): Model<TState, TActions> {
         return this.Root.QueryModel<TState, TActions>(path.slice(1)) as Model<TState, TActions>;

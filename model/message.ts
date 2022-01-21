@@ -1,4 +1,4 @@
-import {DateTime} from "@cmmn/core";
+import {DateTime, utc} from "@cmmn/core";
 import {User} from "./user";
 import {MessageJSON} from "@domain";
 
@@ -29,8 +29,8 @@ export class Message {
         return Object.assign(new Message(), {
             Content: m.Content,
             Description: m.Description,
-            CreatedAt: DateTime.fromISO(m.CreatedAt, {zone: 'utc'}),
-            UpdatedAt: DateTime.fromISO(m.UpdatedAt, {zone: 'utc'}),
+            CreatedAt: utc(m.CreatedAt),
+            UpdatedAt: utc(m.UpdatedAt),
             id: m.id,
             ContextURI: m.ContextURI,
             SubContextURI: m.SubContextURI,
@@ -42,8 +42,8 @@ export class Message {
             Content: m.Content,
             id: m.id,
             Description: m.Description,
-            CreatedAt: m.CreatedAt.toISO(),
-            UpdatedAt: m.UpdatedAt.toISO(),
+            CreatedAt: m.CreatedAt.toJSON(),
+            UpdatedAt: m.UpdatedAt.toJSON(),
             ContextURI: m.ContextURI,
             SubContextURI: m.SubContextURI,
             AuthorURI: m.Author?.URI,

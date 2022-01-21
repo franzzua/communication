@@ -6,7 +6,7 @@ import {Context, Message} from "@model";
 import {Factory} from "./factory";
 import {Model} from "@cmmn/domain";
 import {ContextStore} from "@infr/yjs/contextStore";
-import {DateTime, Fn} from "@cmmn/core";
+import {DateTime, Fn, utc} from "@cmmn/core";
 
 export class ContextModel extends Model<Context, IContextActions> implements IContextActions {
 
@@ -118,7 +118,7 @@ export class ContextModel extends Model<Context, IContextActions> implements ICo
             throw new Error("invalid permutation")
         this.State = {
             ...this.State,
-            UpdatedAt: DateTime.utc(),
+            UpdatedAt: utc(),
             Permutation: permutation,
             Messages: orderedMessages.map(x => x.id)
         };
