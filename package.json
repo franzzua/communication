@@ -5,26 +5,36 @@
   "main": "index.js",
   "scripts": {
     "compile": "cmmn compile --watch",
-    "bundle": "cmmn bundle main --watch --run",
-    "bundle:prod": "cmmn bundle main --prod",
+    "web:run": "cmmn bundle main --watch --run",
+    "web:prod": "cmmn bundle main --prod",
+    "server:bundle": "cmmn bundle server --watch",
+    "server:run": "nodemon dist/server-es.js",
     "build": "cmmn compile && cmmn bundle --prod && cp ./.github/workflows/staticwebapp.config.json ./dist"
   },
+  "type": "module",
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "@cmmn/app": "1.2.2",
-    "@cmmn/core": "1.2.2",
-    "@cmmn/ui": "1.2.2",
-    "@cmmn/domain": "1.2.2",
-    "@cmmn/tools": "1.2.2",
+    "@cmmn/app": "1.2.3",
+    "@cmmn/core": "1.2.3",
+    "@cmmn/domain": "1.2.3",
+    "@cmmn/server": "1.2.3",
+    "@cmmn/tools": "1.2.3",
+    "@cmmn/ui": "1.2.3",
+    "@signal-fire/client": "^1.4.0",
+    "@signal-fire/server": "^0.5.0",
+    "@types/ws": "^8.2.2",
     "cellx-collections": "^1.0.3",
     "cellx-decorators": "^1.6.3",
+    "fastify": "3.11",
+    "fastify-websocket": "^4.0.0",
     "is-mobile": "^3.0.0",
     "jest": "^26.6.3",
     "less": "^4",
     "ts-jest": "^26.4.4",
     "typescript": "4.4.3",
     "typescript-transform-paths": "^3.3.1",
+    "webrtc-signaling-server": "^1.0.0",
     "y-indexeddb": "^9.0.6",
     "y-webrtc": "^10.2.2",
     "yjs": "^13.5.23"
@@ -37,14 +47,27 @@
       "dedupe": [
         "lib0"
       ],
+      "browser": true,
       "port": 3001
     },
     "worker": {
       "dedupe": [
         "lib0"
       ],
-      "input": "dist/esm/entry/worker.js",
-      "module": "cjs"
+      "browser": true,
+      "input": "dist/esm/entry/worker.js"
+    },
+    "server": {
+      "input": "dist/esm/server/server.js",
+      "module": "es",
+      "external": [
+        "node_modules",
+        "@cmmn"
+      ]
     }
+  },
+  "dependencies": {
+    "@inhauth/core": "^1.0.0",
+    "@types/simple-peer": "^9.11.4"
   }
 }
