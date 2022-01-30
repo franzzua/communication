@@ -1,5 +1,4 @@
 import {bind} from "@cmmn/core";
-import * as map from "lib0/map.js";
 import type {WebSocket} from "ws";
 
 export class YWebrtcHandler {
@@ -7,8 +6,8 @@ export class YWebrtcHandler {
      * Map froms topic-name to set of subscribed clients.
      * @type {Map<string, Set<any>>}
      */
-    private static topics = new Map()
-    private subscribedTopics = new Set()
+    private static topics = new Map<string, Set<WebSocket>>()
+    private subscribedTopics = new Set<string>()
     private closed = false;
     // Check if connection is still alive
     private onClosed: Function;
@@ -23,9 +22,11 @@ export class YWebrtcHandler {
     private publish(message) {
         const receivers = YWebrtcHandler.topics.get(message.topic)
         if (receivers) {
-            receivers.forEach(receiver =>
+            receivers.forEach(receiver => {
+                if (receiver === this.conn)
+                    return;
                 YWebrtcHandler.send(receiver, message)
-            )
+            })
         }
     }
 
@@ -40,7 +41,11 @@ export class YWebrtcHandler {
 
     private async subscribe(topics) {
         for (let {name, token} of topics) {
-            if (this.auth && !(await this.auth(name, token))){
+            if (this.auth && !(await this.auth(name, token))) {
+                this.conn.send(JSON.stringify({
+                    type: 'unauthenticated',
+                    room: name
+                }))
                 continue;
             }
             const topics = YWebrtcHandler.topics.getOrAdd(name, () => new Set());
@@ -65,7 +70,7 @@ export class YWebrtcHandler {
     }
 
 
-    private listenPingPong(){
+    private listenPingPong() {
         let pongReceived = true;
         const pingInterval = setInterval(() => {
             if (!pongReceived) {
@@ -86,7 +91,7 @@ export class YWebrtcHandler {
     }
 
     @bind
-    private onClose(){
+    private onClose() {
         this.subscribedTopics.forEach(topicName => {
             const subs = YWebrtcHandler.topics.get(topicName) || new Set()
             subs.delete(this.conn)

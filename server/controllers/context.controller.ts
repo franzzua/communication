@@ -17,7 +17,7 @@ export class ContextController {
     }
 
     @Get()
-    async checkAuth(request: FastifyRequest, reply: FastifyReply) {
+    async getTokens(request: FastifyRequest, reply: FastifyReply) {
         const uri = request.query['uri'];
         const token = await this.parser.Parse<ResourceToken>(request.headers['ResourceToken'] && request.headers['ResourceToken'][0]);
         const accessToken = await this.parser.Parse<{ user: string }>(request.headers.authorization);

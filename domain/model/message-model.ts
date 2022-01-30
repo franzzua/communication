@@ -13,7 +13,7 @@ export class MessageModel extends Model<Message, IMessageActions> implements IMe
     }
 
     public get SubContext() {
-        return this.$state().SubContextURI && this.factory.GetOrCreateContext(this.$state().SubContextURI, this.Context.URI);
+        return this.$state()?.SubContextURI && this.factory.GetOrCreateContext(this.$state().SubContextURI, this.Context.URI);
     }
 
     constructor(private readonly factory: Factory, private contextStore: ContextStore, public id: string) {

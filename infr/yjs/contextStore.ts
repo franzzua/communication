@@ -19,14 +19,16 @@ export class ContextStore extends YjsStore {
         this.IsSynced$.then(() => this.State(this.GetState()));
     }
 
-    public async GetRemoteProvider(){
+    public async GetRemoteProvider() {
+        await Promise.resolve();
+        const token = await this.token;
         return new WebrtcProvider(this.URI, this.doc, {
-            signaling: [`${location.origin.replace(/^http/,'ws')}/api`],
+            signaling: [`${location.origin.replace(/^http/, 'ws')}/api`],
             // If password is a string, it will be used to encrypt all communication over the signaling servers.
             // No sensitive information (WebRTC connection info, shared data) will be shared over the signaling servers.
             // The main objective is to prevent man-in-the-middle attacks and to allow you to securely use public / untrusted signaling instances.
-            password: 'very secure password',
-            token: await this.token,
+            // password: 'very secure password',
+            token,
             // Specify an existing Awareness instance - see https://github.com/yjs/y-protocols
             // awareness: new awarenessProtocol.Awareness(doc),
             maxConns: 70 + Math.floor(Math.random() * 70),
@@ -99,7 +101,7 @@ export class ContextStore extends YjsStore {
     State: ICellx<IState> = cellx(this.GetState());
 
     subscr = this.State.subscribe((err, data) => {
-        const { value} = data.data as { prevValue: IState, value: IState };
+        const {value} = data.data as { prevValue: IState, value: IState };
         this.doc.transact(() => {
             const prevContext = this.readContext();
             if (value.Context.UpdatedAt && prevContext.UpdatedAt !== value.Context.UpdatedAt) {

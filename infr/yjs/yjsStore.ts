@@ -21,7 +21,7 @@ export abstract class YjsStore {
     public IsSynced$ = (async () => {
         const webRtcProvider = await this.GetRemoteProvider();
         return new Promise(resolve => webRtcProvider.once('connect', resolve))
-    })();
+    })().catch(console.error);
 
     abstract GetRemoteProvider(): Promise<Observable<any>>;
 }
