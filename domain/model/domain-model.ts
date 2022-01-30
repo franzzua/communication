@@ -65,7 +65,7 @@ export class DomainModel extends Model<DomainState, IDomainActions> {
     // };
 
     protected Factory = uri => {
-        return (this.factory as Factory).CreateContext(uri);
+        return this.factory.CreateContext(uri, null);
     };
 }
 

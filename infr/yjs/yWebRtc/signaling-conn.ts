@@ -1,8 +1,9 @@
 import * as cryptoutils from "./crypto";
 import * as buffer from "lib0/buffer";
 import {log} from "./y-webrtc";
-import {Room} from "@infr/yjs/yWebRtc/room";
-import {WebrtcConn} from "@infr/yjs/yWebRtc/webrtc-conn";
+import {Room} from "./room";
+import {WebrtcConn} from "./webrtc-conn";
+import {WebrtcProvider} from "./webrtc-provider";
 
 export class SignalingConn extends WebSocket {
     constructor(url: string) {
@@ -12,7 +13,7 @@ export class SignalingConn extends WebSocket {
     /**
      * @type {Set<WebrtcProvider>}
      */
-    providers = new Set()
+    providers = new Set<WebrtcProvider>()
 
     public connected = false;
 

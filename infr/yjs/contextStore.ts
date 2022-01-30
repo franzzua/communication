@@ -2,6 +2,7 @@ import {Map as YMap} from "yjs";
 import {ContextJSON, MessageJSON} from "@domain";
 import {YjsStore} from "@infr/yjs/yjsStore";
 import {cellx, ICellx} from "@cmmn/core";
+import {WebrtcProvider} from "@infr/yjs/yWebRtc";
 
 
 export class ContextStore extends YjsStore {
@@ -10,7 +11,7 @@ export class ContextStore extends YjsStore {
 
     private messageArray = this.doc.getArray<YMap<any>>('messages');
 
-    constructor(uri: string) {
+    constructor(uri: string, private token: Promise<string>) {
         super(uri);
         this.contextMap.observeDeep(() => this.State(this.GetState()))
         this.messageArray.observeDeep(() => this.State(this.GetState()));
@@ -18,22 +19,21 @@ export class ContextStore extends YjsStore {
         this.IsSynced$.then(() => this.State(this.GetState()));
     }
 
-    // public State$ = merge(
-    //     fromYjs(this.contextMap),
-    //     fromYjs(this.messageArray),
-    //     from(this.IsLoaded$),
-    //     from(this.IsSynced$),
-    // ).pipe(
-    //     map((event) => {
-    //         console.log(event);
-    //         return this.GetState();
-    //     }),
-    //     tap(state => this.State(state)),
-    //     tap(console.log),
-    //     shareReplay(1)
-    // )
-
-    // subscr2 = this.State$.subscribe();
+    public async GetRemoteProvider(){
+        return new WebrtcProvider(this.URI, this.doc, {
+            signaling: [`${location.origin.replace(/^http/,'ws')}/api`],
+            // If password is a string, it will be used to encrypt all communication over the signaling servers.
+            // No sensitive information (WebRTC connection info, shared data) will be shared over the signaling servers.
+            // The main objective is to prevent man-in-the-middle attacks and to allow you to securely use public / untrusted signaling instances.
+            password: 'very secure password',
+            token: await this.token,
+            // Specify an existing Awareness instance - see https://github.com/yjs/y-protocols
+            // awareness: new awarenessProtocol.Awareness(doc),
+            maxConns: 70 + Math.floor(Math.random() * 70),
+            filterBcConns: true,
+            peerOpts: {}
+        } as any);
+    }
 
     UpdateContext(item: Partial<ContextJSON>) {
         this.doc.transact(() => {

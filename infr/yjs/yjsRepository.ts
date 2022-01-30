@@ -1,38 +1,14 @@
-import {ContextJSON, MessageJSON, StorageJSON} from "@domain";
+import {StorageJSON} from "@domain";
 import {ContextStore} from "./contextStore";
-import {StorageStore} from "@infr/yjs/storageStore";
+import {ResourceTokenStore} from "@infr/yjs/resource-token-store";
+import {Injectable} from "@cmmn/core";
 
-export class YjsRepository  {
-    private storageStore = new StorageStore();
+@Injectable()
+export class YjsRepository {
 
-    constructor() {
-    }
+    private map = new Map<string, ContextStore>();
 
-    Contexts = {
-        Create: (item: ContextJSON) => {
-            const store = this.storageStore.Add(item.URI);
-            store.UpdateContext(item);
-        },
-        Delete(item: ContextJSON) {
-        },
-        Update: (changes: Partial<ContextJSON>) => {
-            const store = this.storageStore.Get(changes.URI);
-            store.UpdateContext(changes);
-        }
-    }
-    Messages = {
-        Create: (item: MessageJSON) => {
-            const store = this.storageStore.Get(item.ContextURI);
-            store.AddMessage(item);
-        },
-        Delete: (item: MessageJSON) => {
-            const store = this.storageStore.Get(item.ContextURI);
-            store.DeleteMessage(item);
-        },
-        Update: (changes: Partial<MessageJSON>) => {
-            const store = this.storageStore.Get(changes.ContextURI);
-            store.UpdateMessage(changes);
-        }
+    constructor(private tokenStore: ResourceTokenStore) {
     }
 
     State$ = null;
@@ -41,42 +17,17 @@ export class YjsRepository  {
         ContextStore.clear()
     }
 
-    LoadContext(uri: string): ContextStore {
-        const store = this.storageStore.GetOrAdd(uri);
-        return store;
+    LoadContext(uri: string, parentURI: string): ContextStore {
+        return this.GetOrAdd(uri, parentURI);
     }
 
-    //
-    // LoadContext$(uri: string) {
-    //     const store = this.storageStore.GetOrAdd(uri);
-    //     return from(store.IsLoaded$.then(() => {
-    //         const state = store.GetState();
-    //         if (state.Context.CreatedAt)
-    //             return state;
-    //         return store.IsSynced$;
-    //     })).pipe(
-    //         switchMap(x => store.State$)
-    //     );
-    // }
+    GetOrAdd(uri: string, parentURI): ContextStore {
+        const token = this.tokenStore.GetToken(uri, parentURI);
+        return this.map.getOrAdd(uri, uri => new ContextStore(uri, token));
+    }
 
     async Load(uri: string = null): Promise<StorageJSON> {
         return new Promise<StorageJSON>(r => ({}));
-        // if (uri) {
-        //     const store = this.storageStore.Add(uri)
-        //     await store.IsSynced$;
-        // }
-        // await this.storageStore.IsLoaded$;
-        // const state = await this.State$.pipe(
-        //     first()
-        // ).toPromise();
-        // if (state.Contexts.length != 0) {
-        //     return state;
-        // } else {
-        //     await this.storageStore.IsSynced$;
-        //     return await this.State$.pipe(
-        //         first()
-        //     ).toPromise();
-        // }
     }
 
 }

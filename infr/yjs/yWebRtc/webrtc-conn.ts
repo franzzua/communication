@@ -3,7 +3,7 @@ import * as syncProtocol from 'y-protocols/sync'
 import * as logging from "lib0/logging";
 import * as encoding from "lib0/encoding";
 import {log} from "./y-webrtc";
-import * as SimplePeer from "simple-peer"
+import * as SimplePeer from "simple-peer/simplepeer.min.js"
 
 export class WebrtcConn {
     private closed = false;

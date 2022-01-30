@@ -11,7 +11,8 @@ import type {Options} from "simple-peer"
  */
 export class WebrtcProvider extends Observable<any> {
 
-    signalingConns = new Map<string, SignalingConn>();
+    static signalingConns = new Map<string, SignalingConn>();
+    signalingConns = new Set<SignalingConn>();
     shouldConnect = false
     room: Room = null
     init$: Promise<void>;
@@ -62,7 +63,8 @@ export class WebrtcProvider extends Observable<any> {
     connect() {
         this.shouldConnect = true
         this.signalingUrls.forEach(url => {
-            const signalingConn = this.signalingConns.getOrAdd(url, url => new SignalingConn(url))
+            const signalingConn = WebrtcProvider.signalingConns.getOrAdd(url, url => new SignalingConn(url))
+            this.signalingConns.add(signalingConn);
             signalingConn.providers.add(this)
         })
         if (this.room) {
@@ -76,7 +78,7 @@ export class WebrtcProvider extends Observable<any> {
             conn.providers.delete(this)
             if (conn.providers.size === 0) {
                 conn.destroy()
-                this.signalingConns.delete(conn.url)
+                WebrtcProvider.signalingConns.delete(conn.url)
             }
         })
         if (this.room) {

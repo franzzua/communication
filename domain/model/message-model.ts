@@ -9,15 +9,16 @@ import {ContextModel} from "./context-model";
 export class MessageModel extends Model<Message, IMessageActions> implements IMessageActions {
 
     public get Context(): ContextModel {
-        return this.factory.GetOrCreateContext(this.$state().ContextURI);
+        return this.factory.GetOrCreateContext(this.$state().ContextURI, null);
     }
 
     public get SubContext() {
-        return this.$state().SubContextURI && this.factory.GetOrCreateContext(this.$state().SubContextURI);
+        return this.$state().SubContextURI && this.factory.GetOrCreateContext(this.$state().SubContextURI, this.Context.URI);
     }
 
     constructor(private readonly factory: Factory, private contextStore: ContextStore, public id: string) {
         super();
+        const subContext = this.SubContext;
     }
 
     public get State() {
@@ -68,11 +69,11 @@ export class MessageModel extends Model<Message, IMessageActions> implements IMe
                 URI: toURI
             } as Context
         };
-        const oldContext = this.factory.GetOrCreateContext(fromURI);
+        const oldContext = this.factory.GetOrCreateContext(fromURI, null);
         if (oldContext) {
             await oldContext.Actions.RemoveMessage(this.id);
         }
-        const newContext = this.factory.GetOrCreateContext(toURI);
+        const newContext = this.factory.GetOrCreateContext(toURI, null);
         await newContext.Actions.CreateMessage(state, toIndex);
     }
 
