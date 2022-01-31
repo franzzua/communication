@@ -1,16 +1,15 @@
 import * as random from "lib0/random";
-import * as cryptoutils from "./crypto";
-import * as encoding from "lib0/encoding";
 import * as error from "lib0/error";
 import * as logging from "lib0/logging";
 import {log} from "./y-webrtc";
 import * as awarenessProtocol from 'y-protocols/awareness'
-import * as syncProtocol from 'y-protocols/sync'
 import * as decoding from "lib0/decoding";
 import {WebrtcProvider} from "./webrtc-provider";
 import * as buffer from "lib0/buffer";
 import {WebrtcConnection} from "@infr/yjs/yWebRtc/webrtc.connection";
 import {BroadcastChannelConnection} from "@infr/yjs/yWebRtc/broadcast-channel.connection";
+import {MessageSerializer} from "@infr/yjs/yWebRtc/message-serializer";
+import {Cryptor} from "@infr/yjs/yWebRtc/cryptor";
 
 export enum MessageType {
     Sync1 = 0,
@@ -42,12 +41,12 @@ export class Room {
 
     static Rooms = new Map<string, Room>();
 
-    static Open(doc, provider, name, key: CryptoKey, token): Room {
+    static Open(doc, provider, name, cryptor: Cryptor, token): Room {
         // there must only be one room
         if (Room.Rooms.has(name)) {
             throw error.create(`A Yjs Doc connected to room "${name}" already exists!`)
         }
-        const room = new Room(doc, provider, name, key, token)
+        const room = new Room(doc, provider, name, cryptor, token)
         Room.Rooms.set(name, /** @type {Room} */ (room))
         return room
     }
@@ -57,15 +56,16 @@ export class Room {
      *
      * @type {string}
      */
-    peerId = random.uuidv4()
-    awareness = this.provider.awareness
-    synced = false
-    webrtcConns = new Map<string, WebrtcConnection>();
-    broadcastChannel = new BroadcastChannelConnection(this);
+    public peerId = random.uuidv4()
+    private awareness = this.provider.awareness
+    private synced = false
+    public webrtcConns = new Map<string, WebrtcConnection>();
+    public broadcastChannel = new BroadcastChannelConnection(this);
+    public serializer = new MessageSerializer(this.doc, this.awareness);
     // bcConns = new Set();
     // bcconnected = false;
 
-    constructor(public doc, public provider: WebrtcProvider, public name, public key: CryptoKey, private token) {
+    constructor(public doc, public provider: WebrtcProvider, public name, public cryptor: Cryptor, private token) {
         window.addEventListener('beforeunload', () => {
             awarenessProtocol.removeAwarenessStates(this.awareness, [doc.clientID], 'window unload')
             Room.Rooms.forEach(room => {
@@ -82,21 +82,16 @@ export class Room {
      * Listens to Yjs updates and sends them to remote peers
      */
     _docUpdateHandler = (update, origin) => {
-        const encoder = encoding.createEncoder();
-        encoding.writeVarUint(encoder, MessageType.SyncUpdate);
-        syncProtocol.writeUpdate(encoder, update);
-        this.broadcast(encoding.toUint8Array(encoder));
+        const buf = this.serializer.getUpdate(update);
+        this.broadcast(buf);
     }
     /**
      * Listens to Awareness updates and sends them to remote peers
      */
     _awarenessUpdateHandler = ({added, updated, removed}, origin) => {
         const changedClients = added.concat(updated).concat(removed)
-        const encoderAwareness = encoding.createEncoder()
-        encoding.writeVarUint(encoderAwareness, MessageType.Awareness)
-        encoding.writeVarUint8Array(encoderAwareness, awarenessProtocol.encodeAwarenessUpdate(this.awareness, changedClients))
-        this.broadcast(encoding.toUint8Array(encoderAwareness))
-    }
+        const buf = this.serializer.getAwarenessMessage(changedClients);
+        this.broadcast(buf);    }
 
     connect() {
         this.doc.on('update', this._docUpdateHandler);
@@ -157,13 +152,9 @@ export class Room {
      * @param {Room} room
      * @param {any} data
      */
-    public async getSignalingMessage(data: any = {type: 'announce', from: this.peerId}) {
-        if (this.key) {
-            const encryptedData = await cryptoutils.encryptJson(data, this.key);
-            return {type: 'publish', topic: this.name, data: buffer.toBase64(encryptedData)}
-        } else {
-            return {type: 'publish', topic: this.name, data};
-        }
+    public async getSignalingMessage(data: object = {type: 'announce', from: this.peerId}) {
+        const encrypted = await this.cryptor.encryptJson(data);
+        return {type: 'publish', topic: this.name, data: buffer.toBase64(encrypted)}
     }
 
 
@@ -173,68 +164,42 @@ export class Room {
      * @param {function} syncedCallback
      * @return {encoding.Encoder?}
      */
-    getAnswer(buf, syncedCallback?): Uint8Array | null {
+    getAnswer(buf: Uint8Array, syncedCallback?): Uint8Array | void {
         const decoder = decoding.createDecoder(buf)
         const messageType = decoding.readVarUint(decoder) as MessageType;
-        const doc = this.doc
         switch (messageType) {
             case MessageType.Sync1: {
                 decoding.readVarUint(decoder)
-                const encoder = encoding.createEncoder();
-
-                encoding.writeVarUint(encoder, MessageType.Sync2);
-                syncProtocol.readSyncStep1(decoder, encoder, doc);
-                return encoding.toUint8Array(encoder);
+                return this.serializer.writeSync1(decoder);
             }
             case MessageType.Sync2:
                 decoding.readVarUint(decoder)
-                syncProtocol.readSyncStep2(decoder, doc, this);
+                this.serializer.writeSync2(decoder);
                 if (!this.synced && syncedCallback) {
                     syncedCallback()
                 }
                 return;
             case MessageType.SyncUpdate:
                 decoding.readVarUint(decoder)
-                syncProtocol.readUpdate(decoder, doc, this);
-                return;
+                return this.serializer.writeUpdate(decoder);
             case MessageType.QueryAwareness:
-                return this.getAwarenessMessage();
+                return this.serializer.getAwarenessMessage();
             case MessageType.Awareness:
-                awarenessProtocol.applyAwarenessUpdate(this.awareness, decoding.readVarUint8Array(decoder), this)
-                return;
-
+                return this.serializer.writeAwareness(decoder);
             default:
                 console.error('Unable to compute message')
                 return;
         }
     }
 
-    public getSync1Message() {
-        const encoderSync = encoding.createEncoder()
-        encoding.writeVarUint(encoderSync, MessageType.Sync1)
-        syncProtocol.writeSyncStep1(encoderSync, this.doc)
-        return encoding.toUint8Array(encoderSync);
+
+    public emitPeersChanged(added: string[], removed: string[]) {
+        this.provider.emit('peers', [{
+            added,
+            removed,
+            webrtcPeers: Array.from(this.webrtcConns.keys()),
+            bcPeers: Array.from(this.broadcastChannel.connections)
+        }])
     }
-
-    public getSync2Message() {
-        const encoderState = encoding.createEncoder()
-        encoding.writeVarUint(encoderState, MessageType.Sync2)
-        syncProtocol.writeSyncStep2(encoderState, this.doc)
-        return encoding.toUint8Array(encoderState);
-    }
-
-    public getAwarenessMessage() {
-        const encoderAwarenessState = encoding.createEncoder()
-        encoding.writeVarUint(encoderAwarenessState, MessageType.Awareness)
-        encoding.writeVarUint8Array(encoderAwarenessState, awarenessProtocol.encodeAwarenessUpdate(this.awareness, [this.doc.clientID]))
-        return encoding.toUint8Array(encoderAwarenessState);
-    }
-
-    public getQueryAwarenessMessage() {
-        const encoderAwarenessQuery = encoding.createEncoder()
-        encoding.writeVarUint(encoderAwarenessQuery, MessageType.QueryAwareness)
-        return encoding.toUint8Array(encoderAwarenessQuery);
-    }
-
-
 }
+

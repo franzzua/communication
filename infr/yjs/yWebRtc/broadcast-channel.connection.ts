@@ -1,7 +1,5 @@
-import * as awarenessProtocol from 'y-protocols/awareness'
 import * as encoding from "lib0/encoding";
 import * as bc from "lib0/broadcastchannel";
-import * as cryptoutils from "./crypto";
 import {MessageType, Room} from "./room";
 import {bind} from "@cmmn/core";
 import {createMutex} from "lib0/mutex";
@@ -9,7 +7,7 @@ import * as decoding from "lib0/decoding";
 
 export class BroadcastChannelConnection {
     public connected: boolean;
-    public bcConns = new Set<string>();
+    public connections = new Set<string>();
 
     constructor(private room: Room) {
         bc.subscribe(room.name, this.listener);
@@ -22,47 +20,37 @@ export class BroadcastChannelConnection {
         // broadcast peerId via broadcastchannel
         this.broadcastBcPeerId()
         // write sync step 1
-        this.send(this.room.getSync1Message());
+        this.send(this.room.serializer.getSync1Message());
         // broadcast local state
-        this.send(this.room.getSync2Message());
+        this.send(this.room.serializer.getSync2Message());
         // write queryAwareness
-        this.send(this.room.getQueryAwarenessMessage());
+        this.send(this.room.serializer.getQueryAwarenessMessage());
         // broadcast local awareness state
-        this.send(this.room.getAwarenessMessage());
+        this.send(this.room.serializer.getAwarenessMessage());
     }
 
     @bind
     async listener(data) {
-        const m = await cryptoutils.decrypt(new Uint8Array(data), this.room.key);
+        const m = await this.room.cryptor.decrypt(new Uint8Array(data));
         const decoder = decoding.createDecoder(m);
         const messageType = decoding.readVarUint(decoder) as MessageType;
         switch (messageType) {
             case MessageType.AddPeer:
                 const peerName = decoding.readVarString(decoder);
-                if (peerName === this.room.peerId || this.bcConns.has(peerName)) {
+                if (peerName === this.room.peerId || this.connections.has(peerName)) {
                     return;
                 }
-                this.bcConns.add(peerName);
-                this.room.provider.emit('peers', [{
-                    added: [peerName],
-                    removed: [],
-                    webrtcPeers: Array.from(this.room.webrtcConns.keys()),
-                    bcPeers: Array.from(this.bcConns)
-                }])
+                this.connections.add(peerName);
+                this.room.emitPeersChanged([peerName], []);
                 this.broadcastBcPeerId();
                 return;
             case MessageType.RemovePeer: {
                 const peerName = decoding.readVarString(decoder);
-                if (peerName === this.room.peerId || !this.bcConns.has(peerName)) {
+                if (peerName === this.room.peerId || !this.connections.has(peerName)) {
                     return;
                 }
-                this.bcConns.delete(peerName)
-                this.room.provider.emit('peers', [{
-                    added: [],
-                    removed: [peerName],
-                    webrtcPeers: Array.from(this.room.webrtcConns.keys()),
-                    bcPeers: Array.from(this.bcConns)
-                }])
+                this.connections.delete(peerName)
+                this.room.emitPeersChanged([], [peerName]);
                 this.broadcastBcPeerId()
                 return;
             }
@@ -80,7 +68,7 @@ export class BroadcastChannelConnection {
      * @param {Uint8Array} m
      */
     async send(m) {
-        const data = await cryptoutils.encrypt(m, this.room.key);
+        const data = await this.room.cryptor.encrypt(m);
         this.mux(() =>
             bc.publish(this.room.name, data)
         );

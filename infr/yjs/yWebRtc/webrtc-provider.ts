@@ -1,11 +1,14 @@
 import {Observable} from "lib0/observable.js";
 import * as random from "lib0/random.js";
-import * as cryptoutils from "./crypto";
 import {SignalingConnection} from "./signaling.connection";
 import {Room} from "./room";
 import * as awarenessProtocol from 'y-protocols/awareness'
 import type {Options} from "simple-peer"
 import {bind} from "@cmmn/core";
+import {Cryptor} from "@infr/yjs/yWebRtc/cryptor";
+import {SymmetricCryptor} from "@infr/yjs/yWebRtc/symmetric-cryptor";
+import {AsIsCryptor} from "@infr/yjs/yWebRtc/as-is-cryptor";
+import {TokenCryptor} from "@infr/yjs/yWebRtc/token-cryptor";
 
 /**
  * @extends Observable<string>
@@ -43,9 +46,17 @@ export class WebrtcProvider extends Observable<any> {
             this.signalingConns.add(signalingConn);
             signalingConn.providers.add(this)
         })
-        const key = this.options.password ? await cryptoutils.deriveKey(this.options.password, this.roomName) : null;
-        this.room = Room.Open(this.doc, this, this.roomName, key, this.options.token);
+        const cryptor = this.getCryptor();
+        this.room = Room.Open(this.doc, this, this.roomName, cryptor, this.options.token);
         this.room.connect()
+    }
+
+    private getCryptor(): Cryptor {
+        if (this.options.token && this.options.password)
+            return new TokenCryptor(this.options.password, this.roomName, this.options.token);
+        if (this.options.password)
+            return new SymmetricCryptor(this.options.password, this.roomName);
+        return new AsIsCryptor();
     }
 
     get signalingUrls() {

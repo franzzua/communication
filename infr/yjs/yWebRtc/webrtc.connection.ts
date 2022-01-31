@@ -69,14 +69,14 @@ export class WebrtcConnection {
         log('connected to ', logging.BOLD, this.remotePeerId)
         this.connected = true
         // send sync step 1
-        this.send(this.room.getSync1Message());
-        this.send(this.room.getAwarenessMessage());
+        this.send(this.room.serializer.getSync1Message());
+        this.send(this.room.serializer.getAwarenessMessage());
 
         this.room.provider.emit('peers', [{
             removed: [],
             added: [this.remotePeerId],
             webrtcPeers: Array.from(this.room.webrtcConns.keys()),
-            bcPeers: Array.from(this.room.broadcastChannel.bcConns)
+            bcPeers: Array.from(this.room.broadcastChannel.connections)
         }])
     }
 
@@ -85,7 +85,7 @@ export class WebrtcConnection {
      * @param {Uint8Array} buf
      * @return {encoding.Encoder?}
      */
-    getAnswer(buf): Uint8Array {
+    getAnswer(buf): Uint8Array | void {
         log('received message from ', logging.BOLD, this.remotePeerId, logging.GREY, ' (', this.room.name, ')', logging.UNBOLD, logging.UNCOLOR)
         return this.room.getAnswer(buf, () => {
             this.synced = true
@@ -125,6 +125,4 @@ const checkIsSynced = room => {
         log('synced ', logging.BOLD, room.name, logging.UNBOLD, ' with all peers')
     }
 }
-
-
 

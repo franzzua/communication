@@ -27,7 +27,7 @@ export class ContextStore extends YjsStore {
             // If password is a string, it will be used to encrypt all communication over the signaling servers.
             // No sensitive information (WebRTC connection info, shared data) will be shared over the signaling servers.
             // The main objective is to prevent man-in-the-middle attacks and to allow you to securely use public / untrusted signaling instances.
-            // password: 'very secure password',
+            password: 'very secure password',
             token,
             // Specify an existing Awareness instance - see https://github.com/yjs/y-protocols
             // awareness: new awarenessProtocol.Awareness(doc),
