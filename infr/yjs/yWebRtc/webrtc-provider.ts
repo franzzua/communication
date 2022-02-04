@@ -8,7 +8,7 @@ import {bind} from "@cmmn/core";
 import {Cryptor} from "@infr/yjs/yWebRtc/cryptor";
 import {SymmetricCryptor} from "@infr/yjs/yWebRtc/symmetric-cryptor";
 import {AsIsCryptor} from "@infr/yjs/yWebRtc/as-is-cryptor";
-import {TokenCryptor} from "@infr/yjs/yWebRtc/token-cryptor";
+import {Doc} from "yjs";
 
 /**
  * @extends Observable<string>
@@ -27,6 +27,7 @@ export class WebrtcProvider extends Observable<any> {
         public options: {
             signaling?: string[];
             password?: string;
+            cryptor?: Cryptor;
             token?: string;
             awareness?: awarenessProtocol.Awareness;
             maxConns?: number;
@@ -52,8 +53,8 @@ export class WebrtcProvider extends Observable<any> {
     }
 
     private getCryptor(): Cryptor {
-        if (this.options.token && this.options.password)
-            return new TokenCryptor(this.options.password, this.roomName, this.options.token);
+        if (this.options.cryptor)
+            return this.options.cryptor;
         if (this.options.password)
             return new SymmetricCryptor(this.options.password, this.roomName);
         return new AsIsCryptor();

@@ -39,15 +39,15 @@ export class SymmetricCryptor extends Cryptor {
         )
     }
 
-    public async decrypt(data: Uint8Array): Promise<Uint8Array> {
-        const dataDecoder = decoding.createDecoder(data)
+    public async decrypt(data: ArrayBuffer): Promise<ArrayBuffer> {
+        const dataDecoder = decoding.createDecoder(new Uint8Array(data));
         const algorithm = decoding.readVarString(dataDecoder)
         if (algorithm !== 'AES-GCM') {
             Promise.reject(new Error('Unknown encryption algorithm'))
         }
         const iv = decoding.readVarUint8Array(dataDecoder)
         const cipher = decoding.readVarUint8Array(dataDecoder);
-        const decrypted = await crypto.subtle.decrypt(
+        const decrypted: ArrayBuffer = await crypto.subtle.decrypt(
             {
                 name: 'AES-GCM',
                 iv
@@ -58,7 +58,7 @@ export class SymmetricCryptor extends Cryptor {
         return new Uint8Array(decrypted)
     }
 
-    public async encrypt(data: Uint8Array): Promise<Uint8Array> {
+    public async encrypt(data: ArrayBuffer): Promise<ArrayBuffer> {
         const iv = crypto.getRandomValues(new Uint8Array(12))
         const cipher = await crypto.subtle.encrypt(
             {

@@ -2,13 +2,16 @@ import {StorageJSON} from "@domain";
 import {ContextStore} from "./contextStore";
 import {ResourceTokenStore} from "@infr/yjs/resource-token-store";
 import {Injectable} from "@cmmn/core";
+import {Api} from "@infr/api";
+import {ResourceTokenApi} from "@infr/resource-token-api.service";
 
 @Injectable()
 export class YjsRepository {
 
     private map = new Map<string, ContextStore>();
 
-    constructor(private tokenStore: ResourceTokenStore) {
+    constructor(private tokenStore: ResourceTokenStore,
+                private api: ResourceTokenApi) {
     }
 
     State$ = null;
@@ -22,8 +25,8 @@ export class YjsRepository {
     }
 
     GetOrAdd(uri: string, parentURI): ContextStore {
-        const token = this.tokenStore.GetToken(uri, parentURI);
-        return this.map.getOrAdd(uri, uri => new ContextStore(uri, token));
+        const api = this.api.withParentURI(parentURI);
+        return this.map.getOrAdd(uri, uri => new ContextStore(uri, api));
     }
 
     async Load(uri: string = null): Promise<StorageJSON> {

@@ -3,7 +3,9 @@ import {ContextJSON, MessageJSON} from "@domain";
 import {YjsStore} from "@infr/yjs/yjsStore";
 import {cellx, ICellx} from "@cmmn/core";
 import {WebrtcProvider} from "@infr/yjs/yWebRtc";
-
+import {TokenCryptor} from "@infr/yjs/token-cryptor";
+import {ResourceTokenApi} from "@infr/resource-token-api.service";
+import {TokenVerifier} from "@infr/token-verifier.service";
 
 export class ContextStore extends YjsStore {
 
@@ -11,7 +13,7 @@ export class ContextStore extends YjsStore {
 
     private messageArray = this.doc.getArray<YMap<any>>('messages');
 
-    constructor(uri: string, private token: Promise<string>) {
+    constructor(uri: string, private api: ResourceTokenApi) {
         super(uri);
         this.contextMap.observeDeep(() => this.State(this.GetState()))
         this.messageArray.observeDeep(() => this.State(this.GetState()));
@@ -20,14 +22,14 @@ export class ContextStore extends YjsStore {
     }
 
     public async GetRemoteProvider() {
-        await Promise.resolve();
-        const token = await this.token;
+        const cryptor = this.api.getCryptor(this.URI)
+        const token = await this.api.GetToken(this.URI);
         return new WebrtcProvider(this.URI, this.doc, {
             signaling: [`${location.origin.replace(/^http/, 'ws')}/api`],
             // If password is a string, it will be used to encrypt all communication over the signaling servers.
             // No sensitive information (WebRTC connection info, shared data) will be shared over the signaling servers.
             // The main objective is to prevent man-in-the-middle attacks and to allow you to securely use public / untrusted signaling instances.
-            password: 'very secure password',
+            cryptor,
             token,
             // Specify an existing Awareness instance - see https://github.com/yjs/y-protocols
             // awareness: new awarenessProtocol.Awareness(doc),

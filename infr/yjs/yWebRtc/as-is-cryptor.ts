@@ -1,4 +1,4 @@
-import {Cryptor} from "@infr/yjs/yWebRtc/cryptor";
+import {Cryptor} from "./cryptor";
 
 export class AsIsCryptor extends Cryptor {
     constructor() {

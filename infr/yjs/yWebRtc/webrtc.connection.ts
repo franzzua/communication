@@ -32,12 +32,7 @@ export class WebrtcConnection {
             this.closed = true
             if (room.webrtcConns.has(this.remotePeerId)) {
                 room.webrtcConns.delete(this.remotePeerId)
-                room.provider.emit('peers', [{
-                    removed: [this.remotePeerId],
-                    added: [],
-                    webrtcPeers: Array.from(room.webrtcConns.keys()),
-                    // bcPeers: Array.from(room.bcConns)
-                }])
+                this.room.emitPeersChanged( [], [this.remotePeerId]);
             }
             checkIsSynced(room)
             this.peer.destroy()
@@ -72,12 +67,7 @@ export class WebrtcConnection {
         this.send(this.room.serializer.getSync1Message());
         this.send(this.room.serializer.getAwarenessMessage());
 
-        this.room.provider.emit('peers', [{
-            removed: [],
-            added: [this.remotePeerId],
-            webrtcPeers: Array.from(this.room.webrtcConns.keys()),
-            bcPeers: Array.from(this.room.broadcastChannel.connections)
-        }])
+        this.room.emitPeersChanged( [this.remotePeerId], []);
     }
 
     /**

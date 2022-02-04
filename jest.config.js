@@ -1,26 +1,46 @@
-// jest.config.js
-const {pathsToModuleNameMapper} = require('ts-jest/utils');
-// In the following statement, replace `./tsconfig` with the path to your `tsconfig` file
-// which contains the path mapping (ie the `compilerOptions.paths` option):
-const {compilerOptions} = require('./tsconfig');
+import ts from "typescript";
+import {pathsToModuleNameMapper} from "ts-jest";
 
+const options = getTSConfig();
 
-module.exports = {
+export default {
     transform: {
-        "^.+\\.jsx?$": "babel-jest",
-        "^.+\\.tsx?$": "ts-jest"
+        '^.+\\.tsx?$': ['@swc/jest', {
+            jsc: {
+                parser: {
+                    syntax: "typescript",
+                    // tsx: true, // If you use react
+                    dynamicImport: true,
+                    decorators: true,
+                },
+                target: "es2021",
+                transform: {
+                    decoratorMetadata: true,
+                },
+                paths: options.paths,
+                baseUrl: '.'
+            },
+        }],
     },
-    testEnvironment: 'jest-environment-node',
-    globals: {
-        'ts-jest': {
-            compiler: 'typescript',
-            tsconfig: './specs/tsconfig.json'
-        }
-    },
-    transformIgnorePatterns: [],
-    moduleNameMapper: {
-        ...pathsToModuleNameMapper(compilerOptions.paths, {prefix: '<rootDir>/'}),
-        '^solidocity': '<rootDir>/node_modules/solidocity/dist/node.js',
-        '^@hypertype\/infr':'<rootDir>/node_modules/@hypertype/infr/dist/index.js',
+    roots: ["./"],
+    moduleNameMapper: pathsToModuleNameMapper(options.paths, {
+        prefix: '<rootDir>'
+    }),
+    extensionsToTreatAsEsm: ['.ts', '.tsx', '.jsx?'],
+}
+
+
+function getTSConfig() {
+    const configPath = ts.findConfigFile('./', ts.sys.fileExists, 'tsconfig.json');
+    const readConfigFileResult = ts.readConfigFile(configPath, ts.sys.readFile);
+    if (readConfigFileResult.error) {
+        throw new Error(ts.formatDiagnostic(readConfigFileResult.error, formatHost));
     }
-};
+    const jsonConfig = readConfigFileResult.config;
+    const convertResult = ts.convertCompilerOptionsFromJson(jsonConfig.compilerOptions, './');
+    if (convertResult.errors && convertResult.errors.length > 0) {
+        throw new Error(ts.formatDiagnostics(convertResult.errors, formatHost));
+    }
+    const compilerOptions = convertResult.options;
+    return compilerOptions;
+}

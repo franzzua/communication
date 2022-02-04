@@ -4,17 +4,16 @@ import fastify from "fastify";
 
 import {ContextController} from "./controllers/context.controller";
 import {InhauthContainer} from "./inhauth";
-import {TokenParser} from "./services/token.parser";
-import {Authorizer} from "./services/authorizer.service";
-import {AclStore} from "./services/acl.store";
+import {ServerContainer} from "./container";
+import {PublicKeyController} from "./controllers/public-key.controller";
 
 async function run() {
     const server = await Server
         // @ts-ignore
         .withFastify(fastify)
         .with(InhauthContainer)
-        .withControllers(ContextController, WebrtcController)
-        .withControllers(TokenParser, Authorizer, AclStore)
+        .withControllers(ContextController, WebrtcController, PublicKeyController)
+        .with(ServerContainer)
         .start(3003);
     // const server = new http.Server();
 }

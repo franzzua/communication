@@ -91,7 +91,8 @@ export class Room {
     _awarenessUpdateHandler = ({added, updated, removed}, origin) => {
         const changedClients = added.concat(updated).concat(removed)
         const buf = this.serializer.getAwarenessMessage(changedClients);
-        this.broadcast(buf);    }
+        this.broadcast(buf);
+    }
 
     connect() {
         this.doc.on('update', this._docUpdateHandler);
@@ -154,7 +155,7 @@ export class Room {
      */
     public async getSignalingMessage(data: object = {type: 'announce', from: this.peerId}) {
         const encrypted = await this.cryptor.encryptJson(data);
-        return {type: 'publish', topic: this.name, data: buffer.toBase64(encrypted)}
+        return {type: 'publish', topic: this.name, data: buffer.toBase64(new Uint8Array(encrypted))}
     }
 
 
@@ -164,8 +165,8 @@ export class Room {
      * @param {function} syncedCallback
      * @return {encoding.Encoder?}
      */
-    getAnswer(buf: Uint8Array, syncedCallback?): Uint8Array | void {
-        const decoder = decoding.createDecoder(buf)
+    getAnswer(buf: ArrayBuffer, syncedCallback?): Uint8Array | void {
+        const decoder = decoding.createDecoder(new Uint8Array(buf));
         const messageType = decoding.readVarUint(decoder) as MessageType;
         switch (messageType) {
             case MessageType.Sync1: {

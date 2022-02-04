@@ -2,27 +2,34 @@
   "extends": "@cmmn/tools/compile/tsconfig.json",
   "compilerOptions": {
     "baseUrl": ".",
+    "module": "ESNext",
+    "types": ["vitest/globals"],
+    "emitDecoratorMetadata": true,
     "paths": {
       "@model": [
-        "./model"
+        "model"
       ],
       "@infr/*": [
-        "./infr/*"
+        "infr/*"
       ],
       "@services": [
-        "./services"
+        "services"
       ],
       "@domain/*": [
-        "./domain/*"
+        "domain/*"
       ],
       "@domain": [
-        "./domain"
+        "domain"
       ]
     }
   },
+
+  "include": [
+    "**/*.ts",
+    "**/*.js"
+  ],
   "exclude": [
     "node_modules",
-    "specs",
     "**/*.spec.ts",
     "dist"
   ]

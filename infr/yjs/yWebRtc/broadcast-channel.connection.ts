@@ -32,7 +32,7 @@ export class BroadcastChannelConnection {
     @bind
     async listener(data) {
         const m = await this.room.cryptor.decrypt(new Uint8Array(data));
-        const decoder = decoding.createDecoder(m);
+        const decoder = decoding.createDecoder(new Uint8Array(m));
         const messageType = decoding.readVarUint(decoder) as MessageType;
         switch (messageType) {
             case MessageType.AddPeer:

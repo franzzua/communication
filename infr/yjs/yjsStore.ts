@@ -19,6 +19,7 @@ export abstract class YjsStore {
     public IsLoaded$: Promise<void> = this.indexeddbProvider.whenSynced.then(() => {
     });
     public IsSynced$ = (async () => {
+        await Promise.resolve();
         const webRtcProvider = await this.GetRemoteProvider();
         return new Promise(resolve => webRtcProvider.once('connect', resolve))
     })().catch(console.error);
