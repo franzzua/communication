@@ -6,12 +6,17 @@ import {WebrtcProvider} from "@infr/yjs/yWebRtc";
 import {TokenCryptor} from "@infr/yjs/token-cryptor";
 import {ResourceTokenApi} from "@infr/resource-token-api.service";
 import {TokenVerifier} from "@infr/token-verifier.service";
+import {YjsWebRTCProvider} from "@yjs/webrtc";
 
 export class ContextStore extends YjsStore {
 
     private contextMap = this.doc.getMap('context');
 
     private messageArray = this.doc.getArray<YMap<any>>('messages');
+
+    private provider = new YjsWebRTCProvider(
+        [`${location.origin.replace(/^http/, 'ws')}/api`],
+    );
 
     constructor(uri: string, private api: ResourceTokenApi) {
         super(uri);
@@ -22,17 +27,9 @@ export class ContextStore extends YjsStore {
     }
 
     public async GetRemoteProvider() {
-        const cryptor = this.api.getCryptor(this.URI)
         const token = await this.api.GetToken(this.URI);
-        return new WebrtcProvider(this.URI, this.doc, {
-            signaling: [`${location.origin.replace(/^http/, 'ws')}/api`],
-            // If password is a string, it will be used to encrypt all communication over the signaling servers.
-            // No sensitive information (WebRTC connection info, shared data) will be shared over the signaling servers.
-            // The main objective is to prevent man-in-the-middle attacks and to allow you to securely use public / untrusted signaling instances.
-            cryptor,
+        const room = await this.provider.joinRoom(this.URI, this.doc, {
             token,
-            // Specify an existing Awareness instance - see https://github.com/yjs/y-protocols
-            // awareness: new awarenessProtocol.Awareness(doc),
             maxConns: 70 + Math.floor(Math.random() * 70),
             filterBcConns: true,
             peerOpts: {}

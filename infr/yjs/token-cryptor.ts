@@ -37,6 +37,8 @@ export class TokenCryptor extends Cryptor {
     public async decrypt(data: ArrayBuffer): Promise<ArrayBuffer> {
         const base = await this.baseCryptor;
         const {token, result} = await base.decrypt(data);
+        if (!await this.checkToken(token))
+            throw new Error()
         return result;
     }
 

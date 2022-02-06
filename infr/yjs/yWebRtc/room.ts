@@ -60,7 +60,7 @@ export class Room {
     private awareness = this.provider.awareness
     private synced = false
     public webrtcConns = new Map<string, WebrtcConnection>();
-    public broadcastChannel = new BroadcastChannelConnection(this);
+    public broadcastChannel: BroadcastChannelConnection;// = new BroadcastChannelConnection(this);
     public serializer = new MessageSerializer(this.doc, this.awareness);
     // bcConns = new Set();
     // bcconnected = false;
@@ -97,7 +97,7 @@ export class Room {
     connect() {
         this.doc.on('update', this._docUpdateHandler);
         this.awareness.on('update', this._awarenessUpdateHandler);
-        this.broadcastChannel.connect();
+        this.broadcastChannel?.connect();
         // signal through all available signaling connections
         this.announceSignalingInfo();
         // const roomName = this.name
@@ -121,7 +121,7 @@ export class Room {
 
     broadcast(m: Uint8Array) {
         log('broadcast message in ', logging.BOLD, this.name, logging.UNBOLD)
-        if (this.broadcastChannel.connected) {
+        if (this.broadcastChannel?.connected) {
             this.broadcastChannel.send(m);
         }
         this.webrtcConns.forEach(conn => {
@@ -199,7 +199,7 @@ export class Room {
             added,
             removed,
             webrtcPeers: Array.from(this.webrtcConns.keys()),
-            bcPeers: Array.from(this.broadcastChannel.connections)
+            bcPeers: Array.from(this.broadcastChannel?.connections ?? [])
         }])
     }
 }

@@ -38,7 +38,7 @@ export class SignalingConnection extends WebSocket {
         const data = await room.cryptor.decryptJson(buffer.fromBase64(m.data));
         const webrtcConns = room.webrtcConns;
         const peerId = room.peerId
-        if (data == null || data.from === peerId || (data.to !== undefined && data.to !== peerId) || room.broadcastChannel.connections.has(data.from)) {
+        if (data == null || data.from === peerId || (data.to !== undefined && data.to !== peerId) || room.broadcastChannel?.connections?.has(data.from)) {
             // ignore messages that are not addressed to this conn, or from clients that are connected via broadcastchannel
             return
         }
@@ -51,6 +51,7 @@ export class SignalingConnection extends WebSocket {
             case 'signal':
                 if (data.to === room.peerId) {
                     const connection = webrtcConns.getOrAdd(data.from, () => new WebrtcConnection(this, false, data.from, room));
+                    // TODO: unusable? to delete?
                     connection.peer.signal(data.signal)
                 }
                 break

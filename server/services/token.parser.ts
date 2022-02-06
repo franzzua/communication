@@ -23,7 +23,7 @@ export class TokenParser {
         return decrypted as any as TokenType;
     }
 
-    public async stringify(resultToken: ResourceToken): Promise<string> {
+    public async stringify<Token>(resultToken: Token): Promise<string> {
         return new SignJWT({
             ...resultToken,
             password: 'strokng password',

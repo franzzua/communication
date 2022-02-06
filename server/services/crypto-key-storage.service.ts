@@ -1,6 +1,6 @@
 import {Injectable} from "@cmmn/core";
 import {promises} from "fs";
-import {exportPKCS8,exportSPKI,  importSPKI, generateKeyPair, GenerateKeyPairResult, importPKCS8, KeyLike} from "jose";
+import {exportPKCS8,exportSPKI,  importSPKI, generateKeyPair,CompactEncrypt, GenerateKeyPairResult, importPKCS8, KeyLike} from "jose";
 
 const {writeFile, readFile, stat} = promises;
 

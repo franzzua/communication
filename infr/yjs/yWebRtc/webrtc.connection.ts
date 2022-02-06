@@ -20,7 +20,7 @@ export class WebrtcConnection {
      * @param {string} remotePeerId
      * @param {Room} room
      */
-    constructor(private signalingConn: SignalingConnection, private initiator, private remotePeerId, private room: Room) {
+    constructor(private signalingConn: SignalingConnection, private initiator: boolean, private remotePeerId, private room: Room) {
         log('establishing connection to ', logging.BOLD, remotePeerId)
         /**
          * @type {any}
@@ -43,7 +43,8 @@ export class WebrtcConnection {
             log('Error in connection to ', logging.BOLD, remotePeerId, ': ', err)
             room.announceSignalingInfo()
         })
-        this.peer.on('data', data => {
+        this.peer.on('data', async encrypted => {
+            const data = await this.room.cryptor.decrypt(encrypted);
             const answer = this.getAnswer(data)
             answer && this.send(answer)
         });
@@ -88,8 +89,9 @@ export class WebrtcConnection {
         this.peer.destroy()
     }
 
-    public send(m: Uint8Array) {
-        this.peer.send(m);
+    public async send(m: Uint8Array) {
+        const encrypted = await this.room.cryptor.encrypt(m);
+        this.peer.send(encrypted);
     }
 }
 

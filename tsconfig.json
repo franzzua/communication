@@ -20,6 +20,9 @@
       ],
       "@domain": [
         "domain"
+      ],
+      "@yjs/webrtc": [
+        "./yjsWebRTC"
       ]
     }
   },

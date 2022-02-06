@@ -20,11 +20,10 @@ export abstract class YjsStore {
     });
     public IsSynced$ = (async () => {
         await Promise.resolve();
-        const webRtcProvider = await this.GetRemoteProvider();
-        return new Promise(resolve => webRtcProvider.once('connect', resolve))
+        await this.GetRemoteProvider();
     })().catch(console.error);
 
-    abstract GetRemoteProvider(): Promise<Observable<any>>;
+    abstract GetRemoteProvider(): Promise<void>;
 }
 
 export function fromYjs(shared: AbstractType<YEvent>) {

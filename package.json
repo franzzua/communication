@@ -8,8 +8,6 @@
     "web:run": "cmmn bundle main --watch --run",
     "web:prod": "cmmn bundle main --prod",
     "server:bundle": "cmmn bundle server --watch",
-    "server:run": "node dist/server-es.js",
-    "server:watch": "nodemon dist/server-es.js",
     "build": "cmmn compile && cmmn bundle --prod && cp ./.github/workflows/staticwebapp.config.json ./dist"
   },
   "type": "module",

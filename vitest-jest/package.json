@@ -1,7 +1,0 @@
-{
-  "name": "vitest-jest",
-  "version": "1.0.0",
-  "bin": {
-    "vitest-jest": "./vitest-jest.js"
-  }
-}
