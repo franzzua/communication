@@ -137,7 +137,7 @@ export class TreeReducers {
     }
 
 
-    private CreateMessage(getParentPath: (state: IState) => string[], text = ''): Reducer<IState> {
+    private async CreateMessage(getParentPath: (state: IState) => string[], text = ''): Promise<Reducer<IState>> {
         return state => {
             const parentPath = getParentPath(state);
             const newMessage: Message = {

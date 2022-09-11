@@ -1,6 +1,8 @@
 import {EventEmitter} from "@cmmn/core";
 
-export class KeyboardAspect extends EventEmitter {
+export class KeyboardAspect extends EventEmitter<{
+    change: void
+}> {
 
     constructor(private element: HTMLElement) {
         super();

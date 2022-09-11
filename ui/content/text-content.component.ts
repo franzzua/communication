@@ -1,4 +1,4 @@
-import {component, HtmlComponent, property} from "@cmmn/ui";
+import {component, effect, HtmlComponent, property} from "@cmmn/ui";
 import {bind, Injectable} from "@cmmn/core";
 import {MessageProxy} from "@services";
 import style from "./text-content.style.less";
@@ -42,25 +42,29 @@ export class TextContentComponent extends HtmlComponent<string, IEvents> {
 
     async focus() {
         if (!this.active)
-            this.dispatchEvent(new FocusEvent('focus'));
+            this.element.dispatchEvent(new FocusEvent('focus'));
         // this.cursor.SetPath(this.path);
     }
 
     private get contentElement(): HTMLElement {
-        return this.querySelector('[contenteditable]');
+        return this.element.querySelector('[contenteditable]');
     }
 
     public get State() {
         return null;
     }
 
-    @bind
+    @effect(function (this: TextContentComponent){
+        return this.message?.State?.Content;
+    })
     private setContent() {
         const div = this.contentElement;
         div.textContent = this.message?.State?.Content;
     }
 
-    @bind
+    @effect(function (this: TextContentComponent){
+        return this.active;
+    })
     private async setSelection(rt) {
         const div = this.contentElement;
         if (!this.active) {
@@ -82,11 +86,6 @@ export class TextContentComponent extends HtmlComponent<string, IEvents> {
         selection.removeAllRanges();
         selection.addRange(range);
     }
-
-    public Effects = [
-        this.setContent,
-        this.setSelection
-    ]
 
 }
 

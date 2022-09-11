@@ -1,8 +1,8 @@
-import {Injectable, bind} from "@cmmn/core";
+import {Injectable} from "@cmmn/core";
 import {AccountManager, IAccountInfo} from "@services";
 import {AppInitTemplate, IEvents} from "./app-init.template";
 import {RouterService} from "../services/router.service";
-import {component, HtmlComponent} from "@cmmn/ui";
+import {component, effect, HtmlComponent} from "@cmmn/ui";
 import style from './app-init.style.less';
 
 @Injectable(true)
@@ -20,14 +20,12 @@ export class AppInitComponent extends HtmlComponent<IAccountInfo[], IEvents> {
         super();
     }
 
-    public $state = this.accManager.$accounts;
+    get State() {
+        return this.accManager.$accounts.get();
+    }
 
-    public Actions = [
-        this.init
-    ]
-
-    @bind
-    private async init() {
+    @effect()
+    protected async init() {
         const accounts = this.accManager.$accounts.get();
         if (!accounts.length) {
             return;
@@ -36,11 +34,9 @@ export class AppInitComponent extends HtmlComponent<IAccountInfo[], IEvents> {
         this.routerService.goToContext(contextURI);
     }
 
-    public Events = {
-        login: async (provider: 'google') => {
-            await this.accManager.Login(provider);
-            await this.init();
-        }
+    async login(provider: 'google') {
+        await this.accManager.Login(provider);
+        await this.init();
     }
 }
 

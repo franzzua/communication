@@ -1,10 +1,10 @@
-import {ModelProxy, proxy} from "@cmmn/domain";
+import {ModelProxy, proxy} from "@cmmn/domain/proxy";
 import {Context, Message} from "@model";
 import {IContextActions} from "@domain";
 import {MessageProxy} from "./message-proxy";
-import {ModelMap} from "@cmmn/domain";
+import {ModelMap} from "@cmmn/domain/proxy";
 
-@proxy.of(Context, (uri, self) => ['Root', 'Contexts', uri])
+@proxy.of(Context, (uri, self) => ['Contexts', uri])
 export class ContextProxy extends ModelProxy<Context, IContextActions> {
     get Messages(): ReadonlyArray<MessageProxy> {
         const permutation = this.State.Permutation;

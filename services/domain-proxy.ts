@@ -1,15 +1,14 @@
 import {Injectable} from "@cmmn/core";
 import {Context, DomainState} from "@model";
-import {ModelProxy, proxy, Stream} from "@cmmn/domain";
+import {EntityLocator, ModelMap, ModelProxy, proxy, Stream} from "@cmmn/domain/proxy";
 import type {IDomainActions} from "@domain";
-import {ModelMap} from "@cmmn/domain";
 import {ContextProxy} from "./context-proxy";
 
 @Injectable()
 @proxy.of(DomainState)
 export class DomainProxy extends ModelProxy<DomainState, IDomainActions> {
-    constructor(stream: Stream) {
-        super(stream, ['Root']);
+    constructor(stream: Stream, locator: EntityLocator) {
+        super(stream, locator);
         window['root'] = this;
     }
 

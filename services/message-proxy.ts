@@ -1,11 +1,11 @@
-import {ModelProxy, proxy} from "@cmmn/domain";
+import {ModelProxy, proxy} from "@cmmn/domain/proxy";
 import {Context, DomainState, Message} from "@model";
 import {IMessageActions} from "@domain";
 import {utc, Fn} from "@cmmn/core";
 import {ContextProxy} from "./context-proxy";
 import {DomainProxy} from "./domain-proxy";
 
-@proxy.of(Message, (id, self) => [...self.path, 'Messages', id])
+@proxy.of(Message, (id, self) => ['Messages', id])
 export class MessageProxy extends ModelProxy<Message, IMessageActions> {
     @proxy.link(DomainState)
     Root: DomainProxy;

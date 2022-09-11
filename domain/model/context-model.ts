@@ -3,27 +3,29 @@ import {IContextActions} from "../contracts/actions";
 import {ContextJSON} from "@domain/contracts/json";
 import {Permutation} from "@domain/helpers/permutation";
 import {Context, Message} from "@model";
-import {Factory} from "./factory";
-import {Model} from "@cmmn/domain";
+import {ModelLike} from "@cmmn/domain/worker";
 import {ContextStore} from "@infr/yjs/contextStore";
-import {DateTime, Fn, utc} from "@cmmn/core";
+import {Fn, utc} from "@cmmn/core";
+import {DomainLocator} from "@domain/model/domain-locator.service";
 
-export class ContextModel extends Model<Context, IContextActions> implements IContextActions {
+export class ContextModel implements ModelLike<Context, IContextActions>, IContextActions {
+
+    Actions = this;
+    $state = this.contextStore.ContextCell;
 
     constructor(public URI: string,
                 public contextStore: ContextStore,
-                private factory: Factory) {
-        super();
+                private locator: DomainLocator) {
     }
 
     private _cache = new Map<string, MessageModel>();
 
     private GetOrCreateMessage(id: string) {
-        return this._cache.getOrAdd(id, id => new MessageModel(this.factory, this.contextStore, id));
+        return this._cache.getOrAdd(id, id => new MessageModel(this.locator, this.contextStore, id));
     }
 
     public get State(): Readonly<Context> {
-        const state = this.contextStore.State();
+        const state = this.$state.get();
         const context = Context.FromJSON(state.Context);
 
         if (context.Permutation?.isInvalid()) {
@@ -37,14 +39,15 @@ export class ContextModel extends Model<Context, IContextActions> implements ICo
     public set State(value: Readonly<Context>) {
         if (value.Permutation && (value.Permutation.isInvalid() || value.Permutation.values.length > value.Messages.length))
             throw new Error("invalid permutation")
-        this.contextStore.State({
+        this.$state.set({
             Context: Context.ToJSON(value),
-            Messages: new Map(value.Messages.map(x => [x, this.GetOrCreateMessage(x).ToServer()]))
+            Messages: new Set(value.Messages)
         });
     }
 
     public* getParents(): IterableIterator<MessageModel> {
-        for (let context of this.factory.Root.Contexts.values()) {
+        // @ts-ignore
+        for (let context of this.locator.root.Contexts.values()) {
             for (let message of context.Messages.values()) {
                 if (message.SubContext === this)
                     yield message;
@@ -53,8 +56,8 @@ export class ContextModel extends Model<Context, IContextActions> implements ICo
     }
 
     public get Messages(): ReadonlyMap<string, MessageModel> {
-        const state = this.contextStore.State();
-        return state.Messages.map(x => this.GetOrCreateMessage(x.id));
+        const state = this.$state.get();
+        return new Map(Array.from(state.Messages).map(x => [x, this.GetOrCreateMessage(x)]));
     }
 
     private get DefaultOrderedMessages(): ReadonlyArray<MessageModel> {
@@ -89,10 +92,11 @@ export class ContextModel extends Model<Context, IContextActions> implements ICo
     }
 
     async CreateMessage(message: Message, index: number = this.Messages.size): Promise<void> {
+        await this.contextStore.Sync;
         if (!message.id)
             message.id = Fn.ulid();
         if (message.ContextURI && message.ContextURI !== this.URI) {
-            this.factory.GetContext(message.ContextURI).RemoveMessage(message.id);
+            this.locator.Root.Contexts.get(message.ContextURI).RemoveMessage(message.id);
         }
         message.ContextURI = this.URI;
         const messageModel = this.GetOrCreateMessage(message.id);
@@ -123,7 +127,5 @@ export class ContextModel extends Model<Context, IContextActions> implements ICo
             Messages: orderedMessages.map(x => x.id)
         };
     };
-
-    Actions = this;
 
 }

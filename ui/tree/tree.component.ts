@@ -1,13 +1,14 @@
-import {component, HtmlComponent, property} from "@cmmn/ui";
+import {action, component, HtmlComponent, property} from "@cmmn/ui";
 import {IEvents, IState, template} from "./tree.template";
 import {ContextProxy, DomainProxy} from "@services";
 import {keyMap, TreeReducers} from "./tree-reducers";
 import {TreeItem} from "../../presentors/tree.presentor";
 import {RouterService} from "../../app/services/router.service";
-import {AsyncQueue, bind, Cell, Fn, Injectable} from "@cmmn/core";
+import {AsyncQueue, Injectable} from "@cmmn/core";
 import {KeyboardAspect} from "./keyboardAspect";
 import {Context} from "@model";
 import style from "./tree.style.less";
+import {Cell, cell} from "@cmmn/cell";
 
 @Injectable(true)
 @component({name: 'ctx-tree', template, style})
@@ -20,11 +21,14 @@ export class TreeComponent extends HtmlComponent<Pick<IState, "Items" | "Selecte
         super();
     }
 
-    private keyboard = new Cell(new KeyboardAspect(this));
+    private keyboard = new Cell(new KeyboardAspect(this.element as HTMLElement));
     @property()
     private uri!: string;
 
-    @Fn.distinctUntilChanged<ContextProxy>((a, b) => a && b && Context.equals(a.State, b.State))
+    @cell({
+        compareKey: a => a.State,
+        compare: Context.equals
+    })
     get ContextProxy(): ContextProxy {
         return this.uri && this.root.ContextsMap.get(this.uri);
     }
@@ -52,14 +56,16 @@ export class TreeComponent extends HtmlComponent<Pick<IState, "Items" | "Selecte
         this.$reducerState.Invoke(reducer);
     }
 
-    @bind
+    @action(function (this: TreeComponent) {
+        return this.ContextProxy.State;
+    })
     private InitAction() {
         const context = this.ContextProxy;
         if (context)
             this.$reducerState.Invoke(this.treeStore.Init(context));
     }
 
-    @bind
+    @action()
     private KeyboardActions() {
         const eventQueue = this.keyboard.get().EventQueue;
         eventQueue.forEach(({event, modKey}: { event: KeyboardEvent, modKey: string }) => {
@@ -79,8 +85,6 @@ export class TreeComponent extends HtmlComponent<Pick<IState, "Items" | "Selecte
         }
     }
 
-
-    public Actions = [this.InitAction, this.KeyboardActions];
 }
 
 // export type TransformResult<T> = T | Promise<T>;
