@@ -1,12 +1,12 @@
-import {MessageModel} from "./message-model";
-import {IContextActions} from "../contracts/actions";
-import {ContextJSON} from "@domain/contracts/json";
-import {Permutation} from "@domain/helpers/permutation";
-import {Context, Message} from "@model";
-import {ModelLike} from "@cmmn/domain/worker";
-import {ContextStore} from "@infr/yjs/contextStore";
-import {Fn, utc} from "@cmmn/core";
-import {DomainLocator} from "@domain/model/domain-locator.service";
+import { MessageModel } from "./message-model";
+import { IContextActions } from "../contracts/actions";
+import { ContextJSON } from "@domain/contracts/json";
+import { Permutation } from "@domain/helpers/permutation";
+import { Context, Message } from "@model";
+import { ModelLike } from "@cmmn/domain/worker";
+import { ContextStore } from "@infr/yjs/contextStore";
+import { Fn, utc } from "@cmmn/core";
+import { DomainLocator } from "@domain/model/domain-locator.service";
 
 export class ContextModel implements ModelLike<Context, IContextActions>, IContextActions {
 
@@ -32,7 +32,10 @@ export class ContextModel implements ModelLike<Context, IContextActions>, IConte
             console.error("invalid permutation");
             context.Permutation = null;
         }
-        context.Messages = Array.from(state.Messages.keys());
+        context.Messages = (
+            context.Permutation?.Invoke(this.DefaultOrderedMessages) ??
+            this.DefaultOrderedMessages
+        ).map(x => x.id);
         return context;
     }
 
@@ -57,11 +60,11 @@ export class ContextModel implements ModelLike<Context, IContextActions>, IConte
 
     public get Messages(): ReadonlyMap<string, MessageModel> {
         const state = this.$state.get();
-        return new Map(Array.from(state.Messages).map(x => [x, this.GetOrCreateMessage(x)]));
+        return new Map(Array.from(state.Messages).map(x => [ x, this.GetOrCreateMessage(x) ]));
     }
 
     private get DefaultOrderedMessages(): ReadonlyArray<MessageModel> {
-        return [...this.Messages.values()].orderBy(x => x.id);
+        return [ ...this.Messages.values() ].orderBy(x => x.id);
     }
 
     public get OrderedMessages(): ReadonlyArray<MessageModel> {
@@ -101,12 +104,12 @@ export class ContextModel implements ModelLike<Context, IContextActions>, IConte
         message.ContextURI = this.URI;
         const messageModel = this.GetOrCreateMessage(message.id);
         messageModel.State = message;
-        const messages = [...this.OrderedMessages, messageModel];
+        const messages = [ ...this.OrderedMessages, messageModel ];
         this.UpdateMessagesPermutation(messages.distinct());
     };
 
     ReorderMessage(message: MessageModel, toIndex) {
-        const messages = [...this.OrderedMessages.filter(x => x !== message)];
+        const messages = [ ...this.OrderedMessages.filter(x => x !== message) ];
         messages.splice(toIndex, 0, message);
         this.UpdateMessagesPermutation(messages);
     };

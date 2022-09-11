@@ -9,8 +9,9 @@ import {ContextProxy} from "./context-proxy";
 export class DomainProxy extends ModelProxy<DomainState, IDomainActions> {
     constructor(stream: Stream, locator: EntityLocator) {
         super(stream, locator);
-        window['root'] = this;
+        globalThis['root'] = this;
     }
+
 
     get Contexts(): ReadonlyArray<ContextProxy> {
         return [...this.ContextsMap.values()];
