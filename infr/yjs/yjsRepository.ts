@@ -17,11 +17,11 @@ export class YjsRepository {
         ContextStore.clear()
     }
 
-    LoadContext(uri: string, parentURI: string): ContextStore {
-        return this.GetOrAdd(uri, parentURI);
-    }
+    // LoadContext(uri: string, parentURI: string): ContextStore {
+    //     return this.GetOrAdd(uri, parentURI);
+    // }
 
-    GetOrAdd(uri: string, parentURI): ContextStore {
+    public GetOrAdd(uri: string, parentURI: string): ContextStore {
         const token = this.tokenStore.GetToken(uri, parentURI);
         return this.map.getOrAdd(uri, uri => new ContextStore(uri, token));
     }

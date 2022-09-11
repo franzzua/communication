@@ -19,7 +19,7 @@ export type IContextActions = {
 export type IDomainActions = {
     // LoadContext(uri: string): Promise<void>;
     //
-    // CreateContext(context: Context): Promise<void>;
+    CreateContext(context: Context): Promise<void>;
 }
 
 export interface IStorageActions {
