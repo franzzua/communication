@@ -1,4 +1,4 @@
-import {ModelProxy, proxy} from "@cmmn/domain/proxy";
+import {Locator, ModelProxy, proxy, Stream} from "@cmmn/domain/proxy";
 import {Context, Message} from "@model";
 import {IContextActions} from "@domain";
 import {MessageProxy} from "./message-proxy";
@@ -6,6 +6,9 @@ import {ModelMap} from "@cmmn/domain/proxy";
 
 @proxy.of(Context, (uri, self) => ['Contexts', uri])
 export class ContextProxy extends ModelProxy<Context, IContextActions> {
+    constructor(stream: Stream, locator: Locator ) {
+        super(stream, locator);
+    }
     get Messages(): ReadonlyArray<MessageProxy> {
         const permutation = this.State.Permutation;
         const messages = [...this.MessageMap.values()].orderBy(x => x.State?.id);

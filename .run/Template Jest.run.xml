@@ -5,6 +5,7 @@
     <node-options value="--experimental-vm-modules" />
     <jest-package value="$USER_HOME$/.npm-packages/lib/node_modules/jest" />
     <working-dir value="" />
+    <jest-options value="--watch" />
     <envs />
     <scope-kind value="ALL" />
     <method v="2" />

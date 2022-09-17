@@ -104,7 +104,9 @@ export class ContextModel implements ModelLike<Context, IContextActions>, IConte
         message.ContextURI = this.URI;
         const messageModel = this.GetOrCreateMessage(message.id);
         messageModel.State = message;
-        const messages = [ ...this.OrderedMessages, messageModel ];
+        const messages = [...this.OrderedMessages];
+        messages.remove(messageModel);
+        messages.splice(index, 0, messageModel);
         this.UpdateMessagesPermutation(messages.distinct());
     };
 

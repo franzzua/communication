@@ -35,7 +35,10 @@ export class MessageModel implements ModelLike<Message, IMessageActions>, IMessa
     public set State(value: Readonly<Message>) {
         if (Message.equals(this.State, value))
             return;
-        this.$state.set(Message.ToJSON(value));
+        this.$state.set(Message.ToJSON({
+            ...value,
+            UpdatedAt: utc()
+        }));
     }
 
 

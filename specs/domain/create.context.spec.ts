@@ -1,7 +1,7 @@
 import '../polyfills';
 import { expect, suite, test, } from '@cmmn/tools/test';
 import { clearMocks, getTestContainer } from "../container";
-import { utc } from '@cmmn/core';
+import { Fn, utc } from '@cmmn/core';
 import { DomainLocator } from "@domain/model/domain-locator.service";
 import { ContextModel, MessageModel } from "@domain/model";
 import { Context, Message } from "@model";
@@ -19,23 +19,14 @@ export class CreateContextSpec {
 
     async before() {
         this.locator = await this.GetLocator();
-        await this.locator.Root.Actions.CreateContext({
-            IsRoot: true,
-            URI: 'root',
-            UpdatedAt: utc(),
-            CreatedAt: utc(),
-            Messages: [],
-            Storage: null,
-            id: undefined
-        })
     }
 
     private async GetLocator() {
         const container = getTestContainer();
         const locator = container.get<DomainLocator>(DomainLocator);
-        const context = locator.GetOrCreateContext('root', null)
+        const context = locator.GetOrCreateContext('https://example.com/root', null)
         context.State = {
-            URI: 'root',
+            URI: 'https://example.com/root',
             id: 'root',
             Messages: [],
             CreatedAt: utc(),
@@ -46,7 +37,6 @@ export class CreateContextSpec {
         };
         return locator;
     }
-
 
     @test()
     public async MessageOrdering() {
@@ -79,12 +69,10 @@ export class CreateContextSpec {
         // expect(this.storage.Root.State.Messages).lengthOf(0);
     }
 
-    @test()
-    public async ModelProxy(){
+    private async GetRootContext(){
         const container = getTestContainer();
         const domainProxy = container.get<DomainProxy>(DomainProxy);
         const context = domainProxy.ContextsMap.get('root');
-        expect(context.State.URI).toEqual('root');
         await context.Actions.CreateMessage({
             Content: 'Hi1',
             ContextURI: context.State.URI,
@@ -92,6 +80,13 @@ export class CreateContextSpec {
             id: '1',
             UpdatedAt: utc()
         });
+        return context;
+    }
+
+    @test()
+    public async Permutation(){
+        const context = await this.GetRootContext();
+        expect(context.State.id).toEqual('root');
         await context.Actions.CreateMessage({
             Content: 'Hi2',
             ContextURI: context.State.URI,
@@ -99,84 +94,48 @@ export class CreateContextSpec {
             id: '2',
             UpdatedAt: utc()
         }, 0);
+        expect(context.Messages).toHaveLength(2);
+        expect(context.Messages[0].State.Content).toEqual('Hi2');
+        expect(context.Messages[1].State.Content).toEqual('Hi1');
+        await context.Diff(state => ({
+            ...state,
+            Permutation: Permutation.Parse('[0,1]')
+        }));
+        expect(context.Messages[0].State.Content).toEqual('Hi1');
+        expect(context.Messages[1].State.Content).toEqual('Hi2');
     }
-
     @test()
-    public async CreateMessage() {
-        // const msg1uri = await this.storage.Root.AddMessage({
-        //     Content: 'first',
-        //     StorageURI: this.storageURI,
-        //     CreatedAt: utc().toISO(),
-        // });
-        // expect(msg1uri).not.null;
-        // const msg2URI = await this.storage.Root.AddMessage({
-        //     Content: 'second',
-        //     StorageURI: this.storageURI,
-        //     CreatedAt: utc().toISO(),
-        // });
-        // expect(msg2URI).not.null;
-        // expect(msg2URI).not.equal(msg1uri);
-
-        // await this.storage.CreateContext({
-        //     URI:
-        // });
+    public async AddMessage(){
+        const context = await this.GetRootContext();
+        const message = context.Messages[0];
+        const childMessage = await message.AddMessage({
+            Content: 'X',
+            CreatedAt: utc(),
+            id: Fn.ulid(),
+            UpdatedAt: utc()
+        });
+        expect(childMessage.State.Content).toEqual('X');
+        expect(childMessage.State.ContextURI).toEqual(message.State.SubContextURI);
     }
 
     @test()
     public async UpdateText() {
-        // const msg1URI = await this.storage.Root.AddMessage({
-        //     Content: 'first',
-        //     StorageURI: this.storageURI,
-        //     CreatedAt: utc().toISO(),
-        // });
-        // const msg1 = this.storage.Messages.get(msg1URI);
-        // await msg1.UpdateText('second');
+        const context = await this.GetRootContext();
+        const message = context.Messages[0];
+        message.State = {
+            ...message.State,
+            Content: 'Hello!'
+        };
+        expect(context.Messages[0].State.Content).toEqual('Hello!');
     }
 
-    @test()
-    public async CreateContext() {
-        // const contextURI = await this.storage.CreateContext({
-        //     Sorting: Sorting[Sorting.Alphabetically],
-        //     StorageURI: this.storageURI,
-        //     MessageURIs: [],
-        //     ParentsURIs: []
-        // });
-        // const context = this.storage.Contexts.get(contextURI);
-        // expect(context.State.URI).not.null;
-        // expect(context.State.URI).not.equal(this.storage.Root.State.URI);
-    }
 
     @test()
     public async CreateCycleSubTree() {
-        // const msg1URI = await this.storage.Root.AddMessage({
-        //     StorageURI: this.storageURI,
-        //     CreatedAt: utc().toISO(),
-        //     Content: 'first'
-        // });
-        // const msg1 = this.storage.Messages.get(msg1URI);
-        // const contextURI = await this.storage.CreateContext({
-        //     Sorting: Sorting[Sorting.Alphabetically],
-        //     StorageURI: this.storageURI,
-        //     MessageURIs: [],
-        //     ParentsURIs: [msg1.URI],
-        //     URI: undefined,
-        //     Permutation: null,
-        // });
-        // const context = this.storage.Contexts.get(contextURI);
-        // const msg2URI = await context.AddMessage({
-        //     CreatedAt: utc().toISO(),
-        //     StorageURI: this.storageURI,
-        //     ContextURI: contextURI,
-        //     Content: 'second',
-        // });
-        // const msg2 = this.storage.Messages.get(msg2URI);
-        // await msg2.Attach(this.storage.Root.URI);
-        // expect(context.State.URI).not.null;
-        // expect(context.State.URI).not.equal(this.storage.Root.State.URI);
-        // expect(this.storage.Root.Messages.find(x => x.URI == msg1URI).SubContext.Messages.find(x => x.URI == msg2URI).SubContext).equal(this.storage.Root);
-        // expect(this.storage.Root.Parents.find(x => x.URI == msg2URI).Context.Parents.find(x => x.URI == msg1URI).Context).equal(this.storage.Root);
-        // const json = this.storage.ToJSON()
-        // const res = JSON.stringify(json);
+        const context = await this.GetRootContext();
+        const message = context.Messages[0];
+        await message.Actions.Attach(context.State.URI);
+        expect(message.SubContext === context).toBeTruthy();
     }
 
     after() {
