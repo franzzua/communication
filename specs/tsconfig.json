@@ -2,7 +2,9 @@
 {
   "extends": "../tsconfig.json",
   "compilerOptions": {
-    "module": "CommonJS"
+    "module": "CommonJS",
+    "baseUrl": "../",
+    "rootDir": "../"
   },
   "exclude": [
     "dist"

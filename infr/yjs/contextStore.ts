@@ -3,18 +3,18 @@ import {SyncStore} from "@cmmn/sync";
 import {Cell} from "@cmmn/cell";
 import {ResolvablePromise, utc} from "@cmmn/core";
 
-
 export class ContextStore {
 
-    private static contextMap = new SyncStore<ContextJSON>("contexts");
-    private contextMap = ContextStore.contextMap;
     private messageStore = new SyncStore<MessageJSON>(this.URI);
 
     // private static provider = new WebRtcProvider([`${location.origin.replace(/^http/, 'ws')}/api`])
     public Sync = new ResolvablePromise();
 
-    constructor(protected URI: string, private token: Promise<string>) {
+    constructor(protected URI: string,
+                private token: Promise<string>,
+                private contextMap: SyncStore<ContextJSON>) {
         this.Join();
+
     }
 
     async Join() {

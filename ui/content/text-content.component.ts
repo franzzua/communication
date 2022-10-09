@@ -57,15 +57,16 @@ export class TextContentComponent extends HtmlComponent<string, IEvents> {
     @effect(function (this: TextContentComponent){
         return this.message?.State?.Content;
     })
-    private setContent() {
+    private setContent(content) {
         const div = this.contentElement;
-        div.textContent = this.message?.State?.Content;
+        div.textContent = content;
     }
 
     @effect(function (this: TextContentComponent){
         return this.active;
     })
-    private async setSelection(rt) {
+    private async setSelection(active) {
+        console.log('selection', active, this.message.State.Content);
         const div = this.contentElement;
         if (!this.active) {
             div.classList.remove('focus');

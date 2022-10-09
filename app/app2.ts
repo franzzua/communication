@@ -15,6 +15,7 @@ import {DomainContainer} from "@domain";
 import {InfrContainer} from "@infr/infr.container";
 import {AppInitComponent} from "./init/app-init.component";
 import {DomainLocator} from "@domain/model/domain-locator.service";
+import { UIContainer } from "../ui/container";
 
 @Injectable()
 export class App2 extends Application {
@@ -26,14 +27,15 @@ export class App2 extends Application {
     public static async Build() {
         return new Builder()
             .with(InfrContainer)
-            .with(DomainContainer)
+            .with(DomainContainer())
             .with(useStreamDomain())
             .with(Container.withProviders(
                 {provide: Locator, useFactory: cont => cont.get(DomainLocator)},
                 DomainLocator,
                 RouterService, TreeReducers, TreePresenter, DomainProxy, AccountManager
             ))
-            .withUI([AppRootComponent, TextContentComponent, TreeComponent, MobileToolbarComponent, AppInitComponent])
+            .withUI([AppRootComponent, AppInitComponent])
+            .withUI(UIContainer)
             .withRoutes({
                 options: null,
                 routes: Routes

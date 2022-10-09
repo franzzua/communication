@@ -1,12 +1,12 @@
-import { MessageModel } from "./message-model";
-import { IContextActions } from "../contracts/actions";
-import { ContextJSON } from "@domain/contracts/json";
-import { Permutation } from "@domain/helpers/permutation";
-import { Context, Message } from "@model";
-import { ModelLike } from "@cmmn/domain/worker";
-import { ContextStore } from "@infr/yjs/contextStore";
-import { Fn, utc } from "@cmmn/core";
-import { DomainLocator } from "@domain/model/domain-locator.service";
+import {MessageModel} from "./message-model";
+import {IContextActions} from "../contracts/actions";
+import {ContextJSON} from "@domain/contracts/json";
+import {Permutation} from "@domain/helpers/permutation";
+import {Context, Message} from "@model";
+import {ModelLike} from "@cmmn/domain/worker";
+import {ContextStore} from "@infr/yjs/contextStore";
+import {Fn, utc} from "@cmmn/core";
+import {DomainLocator} from "@domain/model/domain-locator.service";
 
 export class ContextModel implements ModelLike<Context, IContextActions>, IContextActions {
 
@@ -26,8 +26,10 @@ export class ContextModel implements ModelLike<Context, IContextActions>, IConte
 
     public get State(): Readonly<Context> {
         const state = this.$state.get();
-        const context = Context.FromJSON(state.Context);
+        if (!state.Context)
+            return undefined;
 
+        const context = Context.FromJSON(state.Context);
         if (context.Permutation?.isInvalid()) {
             console.error("invalid permutation");
             context.Permutation = null;
@@ -60,11 +62,11 @@ export class ContextModel implements ModelLike<Context, IContextActions>, IConte
 
     public get Messages(): ReadonlyMap<string, MessageModel> {
         const state = this.$state.get();
-        return new Map(Array.from(state.Messages).map(x => [ x, this.GetOrCreateMessage(x) ]));
+        return new Map(Array.from(state.Messages).map(x => [x, this.GetOrCreateMessage(x)]));
     }
 
     private get DefaultOrderedMessages(): ReadonlyArray<MessageModel> {
-        return [ ...this.Messages.values() ].orderBy(x => x.id);
+        return [...this.Messages.values()].orderBy(x => x.id);
     }
 
     public get OrderedMessages(): ReadonlyArray<MessageModel> {
@@ -74,24 +76,6 @@ export class ContextModel implements ModelLike<Context, IContextActions>, IConte
             return this.DefaultOrderedMessages;
         return this.State.Permutation.Invoke(this.DefaultOrderedMessages)
             .filter(x => x != null);
-    }
-
-    public ToJSON(): Context {
-        const state = this.State;
-        return {
-            ...state,
-            Storage: null,
-            Messages: []
-        };
-    }
-
-    public FromJSON(state: Context): any {
-        throw new Error('not implemented');
-        // Object.assign(this.State, state);
-    }
-
-    public ToServer(): ContextJSON {
-        return Context.ToJSON(this.State);
     }
 
     async CreateMessage(message: Message, index: number = this.Messages.size): Promise<void> {
@@ -111,7 +95,7 @@ export class ContextModel implements ModelLike<Context, IContextActions>, IConte
     };
 
     ReorderMessage(message: MessageModel, toIndex) {
-        const messages = [ ...this.OrderedMessages.filter(x => x !== message) ];
+        const messages = [...this.OrderedMessages.filter(x => x !== message)];
         messages.splice(toIndex, 0, message);
         this.UpdateMessagesPermutation(messages);
     };

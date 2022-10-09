@@ -1,20 +1,13 @@
-import {Locator, ModelProxy, proxy, Stream} from "@cmmn/domain/proxy";
+import {ModelMap, ModelProxy, proxy} from "@cmmn/domain/proxy";
 import {Context, Message} from "@model";
 import {IContextActions} from "@domain";
 import {MessageProxy} from "./message-proxy";
-import {ModelMap} from "@cmmn/domain/proxy";
 
 @proxy.of(Context, (uri, self) => ['Contexts', uri])
 export class ContextProxy extends ModelProxy<Context, IContextActions> {
-    constructor(stream: Stream, locator: Locator ) {
-        super(stream, locator);
-    }
+
     get Messages(): ReadonlyArray<MessageProxy> {
-        const permutation = this.State.Permutation;
-        const messages = [...this.MessageMap.values()].orderBy(x => x.State?.id);
-        if (!permutation)
-            return messages;
-        return permutation.Invoke(messages).filter(x => x != null);
+        return this.State.Messages.map(x => this.MessageMap.get(x));
     }
 
     // get Parents(): ReadonlyArray<MessageProxy> {
@@ -26,4 +19,12 @@ export class ContextProxy extends ModelProxy<Context, IContextActions> {
 
     // @proxy.map<Context>(Message, c => c.Parents)
     // ParentsMap: ModelMap<MessageProxy>;
+
+    public CreateMessage(message: Message): MessageProxy {
+        this.Actions.CreateMessage(message);
+        this.State.Messages.push(message.id);
+        const result = this.MessageMap.get(message.id);
+        result.State = message;
+        return result;
+    }
 }

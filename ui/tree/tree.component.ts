@@ -1,22 +1,24 @@
-import {action, component, HtmlComponent, property} from "@cmmn/ui";
-import {IEvents, IState, template} from "./tree.template";
-import {ContextProxy, DomainProxy} from "@services";
+import { action, component, HtmlComponent, property } from "@cmmn/ui";
+import { IEvents, IState, TreeTemplate } from "./tree.template";
+import { ContextProxy, DomainProxy } from "@services";
 import {keyMap, TreeReducers} from "./tree-reducers";
-import {TreeItem} from "../../presentors/tree.presentor";
-import {RouterService} from "../../app/services/router.service";
-import {AsyncQueue, Injectable} from "@cmmn/core";
-import {KeyboardAspect} from "./keyboardAspect";
-import {Context} from "@model";
+import {TreeItem, TreePresenter} from "../../presentors/tree.presentor";
+import { RouterService } from "../../app/services/router.service";
+import { AsyncQueue, Injectable } from "@cmmn/core";
+import { KeyboardAspect } from "./keyboardAspect";
+import { Context } from "@model";
 import style from "./tree.style.less";
-import {Cell, cell} from "@cmmn/cell";
+import { Cell, cell } from "@cmmn/cell";
+import { ObservableList } from "@cmmn/cell";
 
 @Injectable(true)
-@component({name: 'ctx-tree', template, style})
-export class TreeComponent extends HtmlComponent<Pick<IState, "Items" | "Selected">, IEvents> implements IEvents {
+@component({ name: 'ctx-tree', template: TreeTemplate, style })
+export class TreeComponent extends HtmlComponent<Pick<IState, "Items">, IEvents> implements IEvents {
 
 
     constructor(private root: DomainProxy,
                 private routerService: RouterService,
+                private presenter: TreePresenter,
                 private treeStore: TreeReducers) {
         super();
     }
@@ -25,34 +27,19 @@ export class TreeComponent extends HtmlComponent<Pick<IState, "Items" | "Selecte
     @property()
     private uri!: string;
 
-    @cell({
-        compareKey: a => a.State,
-        compare: Context.equals
-    })
+    @cell({ compareKey: a => a.State, compare: Context.equals })
     get ContextProxy(): ContextProxy {
         return this.uri && this.root.ContextsMap.get(this.uri);
     }
 
-    public $reducerState = new ReducerQueueState({
-        Items: [],
+    public $reducerState = new ReducerQueueState<IState>({
+        Items: new ObservableList(),
         Root: null,
-        Selected: null,
+        Selection: null,
         ItemsMap: new Map<string, TreeItem>()
     });
 
-    async setFocus({item, index}: { item: TreeItem; index: number; }) {
-        this.$reducerState.Invoke(this.treeStore.Focus(item));
-    }
-
-    updateMessage(x: { item: any; content: any; }) {
-        this.$reducerState.Invoke(this.treeStore.UpdateContent(x));
-    }
-
-    addMessage(text: string) {
-        throw new Error("Method not implemented.");
-    }
-
-    reduce(reducer: Reducer<IState>) {
+    InvokeAction(reducer: Reducer<IState>) {
         this.$reducerState.Invoke(reducer);
     }
 
@@ -65,10 +52,12 @@ export class TreeComponent extends HtmlComponent<Pick<IState, "Items" | "Selecte
             this.$reducerState.Invoke(this.treeStore.Init(context));
     }
 
-    @action()
+    @action(function (this: TreeComponent) {
+        return this.keyboard.get();
+    })
     private KeyboardActions() {
         const eventQueue = this.keyboard.get().EventQueue;
-        eventQueue.forEach(({event, modKey}: { event: KeyboardEvent, modKey: string }) => {
+        eventQueue.forEach(({ event, modKey }: { event: KeyboardEvent, modKey: string }) => {
             if (modKey in keyMap) {
                 event.preventDefault();
                 const reducer = this.treeStore[keyMap[modKey]](event as any);
@@ -79,9 +68,9 @@ export class TreeComponent extends HtmlComponent<Pick<IState, "Items" | "Selecte
 
     get State() {
         const s = this.$reducerState.get();
+        this.presenter.UpdateTree(s);
         return {
             Items: s.Items,
-            Selected: s.Selected
         }
     }
 

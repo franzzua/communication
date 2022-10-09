@@ -20,10 +20,12 @@ export class KeyboardAspect extends EventEmitter<{
         })
         element.addEventListener('paste', event => {
             this._eventsQueue.push({event, modKey: 'Paste'});
+            event.preventDefault();
             this.emit('change');
         })
         navigator.clipboard.addEventListener('paste', event => {
             this._eventsQueue.push({event, modKey: 'Paste'});
+            event.preventDefault();
             this.emit('change');
         })
 

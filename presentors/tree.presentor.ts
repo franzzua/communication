@@ -1,51 +1,56 @@
 import {Injectable} from "@cmmn/core";
-import {ContextProxy, MessageProxy} from "@services";
+import {MessageProxy} from "@services";
+import {IState} from "../ui/tree/tree.template";
 
 @Injectable()
 export class TreePresenter {
 
     public static Separator = '/';
 
-    private toTree(msg: MessageProxy, itemsMap: Map<string, TreeItem>, path = []) {
+    private updateTree(msg: MessageProxy, state: IState, path = [], index = 0): number {
         if (!msg.State)
-            return [];
+            return 0;
         const level = path.length;
         const newPath = [...path, msg.State.id];
         const pathString = newPath.join(TreePresenter.Separator);
-        let existed = itemsMap.get(pathString);
+        let existed = state.ItemsMap.get(pathString);
         if (existed == null) {
             // console.log('new item', msg.id, pathString);
             existed = {
                 Message: msg,
                 Path: newPath,
                 IsOpened: level < 5,
-                Length: 0
+                Length: 1
             };
-            itemsMap.set(pathString, existed)
+            state.ItemsMap.set(pathString, existed);
+            state.Items.insert(index, existed);
         } else {
+            const currentIndex = state.Items.toArray().indexOf(existed);
+            if (currentIndex !== index){
+                state.Items.removeAt(currentIndex);
+                state.Items.insert(index, existed);
+            }
             existed.Message = msg;
+            existed.Length = 1;
+            existed.Path = newPath;
         }
+        index++;
         if (existed.IsOpened && existed.Message.SubContext) {
-            const subContextTree = this.ToTree(msg.SubContext, itemsMap, existed.Path);
-            existed.Length = subContextTree.length;
-            return ([
-                existed,
-                ...subContextTree
-            ]);
+            for (const msg of existed.Message.SubContext.Messages) {
+                const length = this.updateTree(msg, state, newPath, index);
+                existed.Length += length;
+                index += length;
+            }
         }
-        return ([
-            existed,
-        ]);
+        return existed.Length;
     }
 
-    public ToTree(context: ContextProxy, itemsMap: Map<string, TreeItem>, path = []): TreeItem[] {
-        if (!context.State)
-            return [];
-        if (!context.Messages) {
-            return [];
+    public UpdateTree(state: IState, path = []): void {
+        let index = 0;
+        for (const msg of state.Root.Messages) {
+            index += this.updateTree(msg, state, path, index);
         }
-        const result = context.Messages.flatMap(msg => this.toTree(msg, itemsMap, path));
-        return result;
+        state.Items.emit('change');
     }
 }
 
@@ -54,5 +59,4 @@ export type TreeItem = {
     Message: MessageProxy;
     IsOpened: boolean;
     Length: number;
-    // HasSubItems: boolean;
 }

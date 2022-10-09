@@ -1,3 +1,4 @@
+import { proxy } from "@cmmn/domain/proxy";
 import {Context} from "./context";
 import {Message} from "./message";
 

@@ -5,7 +5,7 @@ import type {IDomainActions} from "@domain";
 import {ContextProxy} from "./context-proxy";
 
 @Injectable()
-@proxy.of(DomainState)
+@proxy.of(DomainState, () => [])
 export class DomainProxy extends ModelProxy<DomainState, IDomainActions> {
     constructor(stream: Stream, locator: EntityLocator) {
         super(stream, locator);

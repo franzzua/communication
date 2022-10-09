@@ -10,10 +10,10 @@ import style from "./styles/root.style.less";
     template(html, state) {
         const route = Routes.find(route => route.name == state.Router?.name);
         return html`
+            ${route?.template(html('route'), state.Router?.params) ?? html('route')`unknown route ${state.Router?.name}`}
             <aside class="top" empty=${!state.Panels.Top}>
                 ${state.Panels.Top ?? ''}
             </aside>
-            ${route?.template(html('route'), state.Router?.params) ?? html('route')`unknown route ${state.Router?.name}`}
             <ctx-panel></ctx-panel>
             <aside class="bottom" empty=${!state.Panels.Bottom}>
                 ${state.Panels.Bottom ?? ''}
