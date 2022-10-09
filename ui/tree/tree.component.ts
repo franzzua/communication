@@ -1,15 +1,15 @@
-import { action, component, HtmlComponent, property } from "@cmmn/ui";
-import { IEvents, IState, TreeTemplate } from "./tree.template";
-import { ContextProxy, DomainProxy } from "@services";
+import {action, component, HtmlComponent, property} from "@cmmn/ui";
+import {IEvents, IState, TreeTemplate} from "./tree.template";
+import {ContextProxy, DomainProxy} from "@services";
 import {keyMap, TreeReducers} from "./tree-reducers";
 import {TreeItem, TreePresenter} from "../../presentors/tree.presentor";
-import { RouterService } from "../../app/services/router.service";
-import { AsyncQueue, Injectable } from "@cmmn/core";
-import { KeyboardAspect } from "./keyboardAspect";
-import { Context } from "@model";
+import {RouterService} from "../../app/services/router.service";
+import {AsyncQueue, Injectable} from "@cmmn/core";
+import {KeyboardAspect} from "./keyboardAspect";
+import {Context} from "@model";
 import style from "./tree.style.less";
-import { Cell, cell } from "@cmmn/cell";
-import { ObservableList } from "@cmmn/cell";
+import {Cell, cell} from "@cmmn/cell";
+import {ObservableList} from "@cmmn/cell";
 
 @Injectable(true)
 @component({ name: 'ctx-tree', template: TreeTemplate, style })
@@ -44,7 +44,7 @@ export class TreeComponent extends HtmlComponent<Pick<IState, "Items">, IEvents>
     }
 
     @action(function (this: TreeComponent) {
-        return this.ContextProxy.State;
+        return this.ContextProxy.State.URI;
     })
     private InitAction() {
         const context = this.ContextProxy;
@@ -83,10 +83,10 @@ export class ReducerQueueState<TState> extends Cell<TState> {
     private asyncQueue = new AsyncQueue()
 
     public Invoke(reducer: Promise<Reducer<TState>> | Reducer<TState>) {
-        if (reducer instanceof Promise) {
-            this.asyncQueue.Invoke(() => reducer.then(reducer => this.set(reducer(this.get()))));
-        } else {
-            this.set(reducer(this.get()));
-        }
+        this.asyncQueue.Invoke(async () => {
+            const result = (await reducer)(this.get());
+            console.log(reducer['name'], result);
+            this.set(result);
+        });
     }
 }

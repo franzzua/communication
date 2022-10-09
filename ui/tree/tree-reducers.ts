@@ -125,8 +125,9 @@ export class TreeReducers {
 
 
     @logReducer
-    async AddChild(event: KeyboardEvent | InputEvent): Promise<Reducer<IState>> {
-        const text = (event.target instanceof HTMLInputElement) ? event.target.value : '';
+    async AddChild(event: KeyboardEvent | InputEvent | string): Promise<Reducer<IState>> {
+        const text = typeof event === "string" ? event :
+            (event.target instanceof HTMLInputElement) ? event.target.value : '';
         return state => {
             const selectedItem = state.Selection?.Focus.node.item;
             const selectedIndex = state.Selection?.Focus.node.index;
@@ -138,8 +139,9 @@ export class TreeReducers {
                 UpdatedAt: utc(),
                 ContextURI: undefined,
             } as Message;
-            const newMessage = selectedItem.Message.AddMessage(newMessageState);
-            const newPath = selectedItem.Path.concat([id]);
+            const newMessage = selectedItem?.Message.AddMessage(newMessageState)
+                ?? state.Root.CreateMessage(newMessageState);
+            const newPath = selectedItem?.Path.concat([id]) ?? [id];
             const newItem = {
                 Path: newPath,
                 Message: newMessage,
@@ -147,7 +149,7 @@ export class TreeReducers {
                 Length: 0
             };
             state.ItemsMap.set(newPath.join(TreePresenter.Separator), newItem);
-            state.Items.insert(selectedIndex + 1, newItem);
+            state.Items.insert((selectedIndex ?? -1) + 1, newItem);
             return state;
         }
     }
@@ -246,7 +248,7 @@ export class TreeReducers {
                 return state;
             const prevMessage = message.Context.Messages[messageIndex - 1];
             const subContext = prevMessage.GetOrCreateSubContext();
-            selectedItem.Message = message.MoveTo(subContext, subContext.Messages.length);
+            message.MoveTo(subContext, subContext.Messages.length);
             return {
                 ...state,
             }
@@ -267,7 +269,7 @@ export class TreeReducers {
 
             selectedItem.Message = message.MoveTo(parent.Message.Context, parentIndex + 1);
             state.ItemsMap.delete(selectedItem.Path.join(TreePresenter.Separator));
-            selectedItem.Path  = [...parent.Path.slice(0, -1), message.State.id];
+            selectedItem.Path = [...parent.Path.slice(0, -1), message.State.id];
             state.ItemsMap.set(selectedItem.Path.join(TreePresenter.Separator), selectedItem);
             // const parentItemIndex = state.Items.toArray().indexOf(parent);
             // state.Items.removeAt(state.Items.toArray().indexOf(selectedItem));

@@ -9,7 +9,7 @@ export class TreePresenter {
 
     private updateTree(msg: MessageProxy, state: IState, path = [], index = 0): number {
         if (!msg.State)
-            return 0;
+            throw new Error('msg with empty state');
         const level = path.length;
         const newPath = [...path, msg.State.id];
         const pathString = newPath.join(TreePresenter.Separator);
@@ -49,6 +49,9 @@ export class TreePresenter {
         let index = 0;
         for (const msg of state.Root.Messages) {
             index += this.updateTree(msg, state, path, index);
+        }
+        while (index < state.Items.length){
+            state.Items.removeAt(index);
         }
         state.Items.emit('change');
     }

@@ -7,6 +7,11 @@ import {DomainProxy} from "./domain-proxy";
 
 @proxy.of(Message, (id, self) => ['Messages', id])
 export class MessageProxy extends ModelProxy<Message, IMessageActions> {
+
+    constructor(stream, locator) {
+        super(stream, locator);
+    }
+
     @proxy.link(DomainState)
     Root: DomainProxy;
 
@@ -56,20 +61,23 @@ export class MessageProxy extends ModelProxy<Message, IMessageActions> {
     public MoveTo(context: ContextProxy, index: number = context.State.Messages.length): MessageProxy {
         this.Context.State.Messages.remove(this.State.id);
         this.Context.Actions.RemoveMessage(this.State.id);
-        context.Actions.CreateMessage(this.State, index);
+        const newState = {
+            ...this.State,
+            id: Fn.ulid(),
+            ContextURI: context.State.URI
+        };
+        context.Actions.CreateMessage(newState, index);
+
         context.State = {
             ...context.State,
             Messages: [
                 ...context.State.Messages.slice(0, index),
-                this.State.id,
+                newState.id,
                 ...context.State.Messages.slice(index)
             ]
         };
-        const result = context.MessageMap.get(this.State.id);
-        result.State = {
-            ...this.State,
-            ContextURI: context.State.URI
-        };
+        const result = context.MessageMap.get(newState.id);
+        result.State = newState;
         return result;
     }
 }

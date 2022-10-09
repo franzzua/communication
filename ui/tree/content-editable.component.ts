@@ -44,8 +44,9 @@ export class ContentEditableComponent extends HtmlComponent<IState> {
         console.log(
             this.Items.toArray().indexOf(this.Selection?.Focus.node.item),
             this.Selection?.Focus.node.innerText,
-            this.Selection?.Focus.node.item.Message.State.Content,
-            this.Selection?.Focus.node.item.Length,
+            this.Selection?.Focus.node.item?.Message.State.Content,
+            this.Selection?.Focus.node.item?.Length,
+
         );
     }
 
@@ -69,17 +70,13 @@ export class ContentEditableComponent extends HtmlComponent<IState> {
                 const content = node.textContent;
                 if (node.childNodes.length > 1 || !(node.firstChild instanceof Text))
                     node.innerHTML = content;
-                // this.InvokeAction(this.treeStore.AddMessage({
-                //     item: this.Items.get(0),
-                //     index,
-                //     content
-                // }));
+                this.InvokeAction(this.treeStore.AddChild(content));
                 node.remove();
                 console.log('add', content, index);
             } else {
                 added.delete(node.item);
                 const index = this.Items.toArray().indexOf(node.item);
-                if (node.index == -1) {
+                if (index == -1) {
                     node.remove();
                     continue;
                 }
@@ -118,6 +115,7 @@ export class ContentEditableComponent extends HtmlComponent<IState> {
                 }
             }
         }
+        const children2 = this.childNodes;
         for (let item of added) {
             if (fromUI) {
                 this.InvokeAction(this.treeStore.Remove(item));
@@ -130,8 +128,8 @@ export class ContentEditableComponent extends HtmlComponent<IState> {
                 newNode.innerHTML = item.Message.State.Content;
                 newNode.className = `item level-${item.Path.length}`
                 newNode.style.order = index.toString();
-                this.element.insertBefore(newNode, children[index + 1]);
-                children.splice(index, 0, newNode);
+                this.element.insertBefore(newNode, children2[index + 1]);
+                children2.splice(index, 0, newNode);
                 console.log('append', newNode.textContent, index + 1);
             }
         }

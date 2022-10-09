@@ -26,7 +26,7 @@ export class App2 extends Application {
 
     public static async Build() {
         return new Builder()
-            .with(InfrContainer)
+            .with(InfrContainer())
             .with(DomainContainer())
             .with(useStreamDomain())
             .with(Container.withProviders(

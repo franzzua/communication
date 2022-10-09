@@ -18,8 +18,8 @@ export class ContextStore {
     }
 
     async Join() {
-        // await this.contextMap.useIndexedDB();
-        // await this.messageStore.useIndexedDB();
+        await this.contextMap.useIndexedDB();
+        await this.messageStore.useIndexedDB();
         const state = this.GetState();
         if (!state.Context) {
             this.UpdateContext({
