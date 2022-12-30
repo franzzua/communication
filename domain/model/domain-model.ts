@@ -1,8 +1,8 @@
-import {Model} from "@cmmn/domain";
+import {Model} from "@cmmn/domain/worker";
 import {IDomainActions} from "@domain";
 import {DomainState} from "@model";
 import {ContextModel} from "@domain/model/context-model";
-import {Cell} from "@cmmn/core";
+import {Cell} from "@cmmn/cell";
 import {Factory} from "@domain/model/factory";
 import {ObservableMap} from "cellx-collections";
 

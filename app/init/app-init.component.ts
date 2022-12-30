@@ -4,6 +4,7 @@ import {AppInitTemplate, IEvents} from "./app-init.template";
 import {RouterService} from "../services/router.service";
 import {component, HtmlComponent} from "@cmmn/ui";
 import style from './app-init.style.less';
+import {IState} from "../panels/panel.template";
 
 @Injectable(true)
 @component({
@@ -27,7 +28,7 @@ export class AppInitComponent extends HtmlComponent<IAccountInfo[], IEvents> {
     ]
 
     @bind
-    private async init() {
+    protected async init() {
         const accounts = this.accManager.$accounts.get();
         if (!accounts.length) {
             return;
@@ -41,6 +42,9 @@ export class AppInitComponent extends HtmlComponent<IAccountInfo[], IEvents> {
             await this.accManager.Login(provider);
             await this.init();
         }
+    }
+    get State(): IAccountInfo[] {
+        return [];
     }
 }
 

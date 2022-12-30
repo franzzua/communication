@@ -1,5 +1,5 @@
 import {Application, Builder} from "@cmmn/app";
-import {useStreamDomain, useWorkerDomain} from "@cmmn/domain";
+import {Locator, useStreamDomain} from "@cmmn/domain/proxy";
 import {Routes} from "./routes";
 import {Container, Injectable} from "@cmmn/core";
 import {AppRootComponent} from "./app-root.component";
@@ -26,11 +26,14 @@ export class App2 extends Application {
         return new Builder()
             .with(InfrContainer)
             .with(DomainContainer)
-            .with(useStreamDomain(Factory))
+            .with(useStreamDomain())
             .with(Container.withProviders(
-                RouterService,  TreeReducers, TreePresenter, DomainProxy, AccountManager
+                RouterService,  TreeReducers, TreePresenter, DomainProxy, AccountManager,
+                {provide: Locator, useClass: Factory}
             ))
-            .withUI(AppRootComponent, TextContentComponent, TreeComponent, MobileToolbarComponent, AppInitComponent)
+            .withUI([
+                AppRootComponent, TextContentComponent, TreeComponent, MobileToolbarComponent, AppInitComponent
+            ])
             .withRoutes({
                 options: null,
                 routes: Routes

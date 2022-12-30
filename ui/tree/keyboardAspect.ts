@@ -1,10 +1,12 @@
 import {EventEmitter} from "@cmmn/core";
 
-export class KeyboardAspect extends EventEmitter {
+export class KeyboardAspect extends EventEmitter<{
+    change: void;
+}> {
 
-    constructor(private element: HTMLElement) {
+    constructor(private element: HTMLElement | SVGElement) {
         super();
-        element.addEventListener('keydown', event => {
+        element.addEventListener('keydown', (event: KeyboardEvent) => {
             if (event.target instanceof HTMLInputElement)
                 return;
             const modifiers = ['Alt', 'Ctrl', 'Shift'].filter(x => event[x.toLowerCase() + 'Key']);

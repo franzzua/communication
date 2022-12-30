@@ -34,8 +34,8 @@ export interface IState {
 }
 
 export type IEvents = {
-    setFocus({item: Item, index: number});
-    updateMessage({item: Item, content: string});
+    setFocus(data: {item: TreeItem, index: number});
+    updateMessage(data: {item: TreeItem, content: string});
     addMessage(text: string);
     reduce(reducer: Reducer<IState>);
 }

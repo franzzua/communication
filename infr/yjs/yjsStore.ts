@@ -1,6 +1,6 @@
 import {AbstractType, Doc, YEvent} from "yjs";
 import {IndexeddbPersistence} from "y-indexeddb";
-import {Cell} from "@cmmn/core";
+import {Cell} from "@cmmn/cell";
 import {WebrtcProvider} from "./yWebRtc";
 
 export class YjsStore {

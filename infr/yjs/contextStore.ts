@@ -1,8 +1,7 @@
 import {Map as YMap} from "yjs";
 import {ContextJSON, MessageJSON} from "@domain";
 import {YjsStore} from "@infr/yjs/yjsStore";
-import {cellx, ICellx} from "@cmmn/core";
-
+import {Cell} from "@cmmn/cell";
 
 export class ContextStore extends YjsStore {
 
@@ -12,10 +11,10 @@ export class ContextStore extends YjsStore {
 
     constructor(uri: string) {
         super(uri);
-        this.contextMap.observeDeep(() => this.State(this.GetState()))
-        this.messageArray.observeDeep(() => this.State(this.GetState()));
-        this.IsLoaded$.then(() => this.State(this.GetState()));
-        this.IsSynced$.then(() => this.State(this.GetState()));
+        this.contextMap.observeDeep(() => this.State.set(this.GetState()))
+        this.messageArray.observeDeep(() => this.State.set(this.GetState()));
+        this.IsLoaded$.then(() => this.State.set(this.GetState()));
+        this.IsSynced$.then(() => this.State.set(this.GetState()));
     }
 
     // public State$ = merge(
@@ -96,10 +95,10 @@ export class ContextStore extends YjsStore {
     }
 
 
-    State: ICellx<IState> = cellx(this.GetState());
+    State: Cell<IState> = new Cell(this.GetState());
 
-    subscr = this.State.subscribe((err, data) => {
-        const { value} = data.data as { prevValue: IState, value: IState };
+    subscr = this.State.on('change', (data) => {
+        const { value} = data;
         this.doc.transact(() => {
             const prevContext = this.readContext();
             if (value.Context.UpdatedAt && prevContext.UpdatedAt !== value.Context.UpdatedAt) {

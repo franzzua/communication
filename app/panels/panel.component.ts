@@ -8,6 +8,9 @@ import style from "./panel.style.less";
     style
 })
 export class PanelComponent extends HtmlComponent<IState, IEvents>{
+    get State(): IState {
+        return null;
+    }
 
 
 }

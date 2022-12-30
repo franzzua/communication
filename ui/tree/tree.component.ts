@@ -4,7 +4,8 @@ import {ContextProxy, DomainProxy} from "@services";
 import {keyMap, TreeReducers} from "./tree-reducers";
 import {TreeItem} from "../../presentors/tree.presentor";
 import {RouterService} from "../../app/services/router.service";
-import {AsyncQueue, bind, Cell, Fn, Injectable} from "@cmmn/core";
+import {AsyncQueue, bind, Fn, Injectable} from "@cmmn/core";
+import {Cell} from "@cmmn/cell";
 import {KeyboardAspect} from "./keyboardAspect";
 import {Context} from "@model";
 import style from "./tree.style.less";
@@ -20,11 +21,10 @@ export class TreeComponent extends HtmlComponent<Pick<IState, "Items" | "Selecte
         super();
     }
 
-    private keyboard = new Cell(new KeyboardAspect(this));
+    private keyboard = new Cell(new KeyboardAspect(this.element));
     @property()
     private uri!: string;
 
-    @Fn.distinctUntilChanged<ContextProxy>((a, b) => a && b && Context.equals(a.State, b.State))
     get ContextProxy(): ContextProxy {
         return this.uri && this.root.ContextsMap.get(this.uri);
     }

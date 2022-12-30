@@ -1,26 +1,26 @@
 import {Container, Injectable} from "@cmmn/core";
 import {ContextModel} from "./context-model";
-import {IFactory, ModelAction, Model, ModelPath} from "@cmmn/domain";
+import {ModelPath, Locator, ModelLike} from "@cmmn/domain/worker";
 import {YjsRepository} from "@infr/yjs/yjsRepository";
 import {DomainModel} from "@domain/model/domain-model";
 
 @Injectable()
-export class Factory implements IFactory<DomainModel> {
-
-    // public MessageMap = new Map<string, MessageModel>();
-    // public ContextMap = new Map<string, ContextModel>();
-
-    // private StorageMap = new Map<string, StorageModel>();
+export class Factory extends Locator {
 
     constructor(private container: Container,
                 private repository: YjsRepository) {
+        super()
     }
 
 
     public Root: DomainModel = new DomainModel(this);
 
-    public GetModel<TState, TActions extends ModelAction>(path: ModelPath): Model<TState, TActions> {
-        return this.Root.QueryModel<TState, TActions>(path.slice(1)) as Model<TState, TActions>;
+    get(path: ModelPath): ModelLike<any, any> {
+        if (path.length == 0)
+            return this.Root;
+        if (path.length % 2 == 1)
+            return this.Root.Contexts.get(path.pop() as string)
+        return this.Root.Contexts.get(path[path.length - 2] as string).Messages.get(path[path.length - 1] as string);
     }
 
     //

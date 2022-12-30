@@ -20,11 +20,14 @@ export class MobileToolbarComponent extends HtmlComponent<IState, IEvents>{
         get: (target: any, p: keyof TreeReducers, receiver: any): any  => {
             const reducer = this.treeReducers[p].bind(this.treeReducers);
             return target[p] ?? (target[p] = event => {
-                this.dispatchEvent(new CustomEvent("reduce", {
+                this.element.dispatchEvent(new CustomEvent("reduce", {
                     detail: reducer(event)
                 }));
             });
         }
     });
 
+    get State(){
+        return null;
+    }
 }

@@ -1,7 +1,7 @@
 import {IMessageActions} from "@domain/contracts/actions";
 import {Context, Message} from "@model";
 import {Factory} from "./factory";
-import {Model} from "@cmmn/domain";
+import {Model} from "@cmmn/domain/worker";
 import {ContextStore} from "@infr/yjs/contextStore";
 import {utc} from "@cmmn/core";
 import {ContextModel} from "./context-model";
@@ -9,11 +9,11 @@ import {ContextModel} from "./context-model";
 export class MessageModel extends Model<Message, IMessageActions> implements IMessageActions {
 
     public get Context(): ContextModel {
-        return this.factory.GetOrCreateContext(this.$state().ContextURI);
+        return this.factory.GetOrCreateContext(this.$state.get().ContextURI);
     }
 
     public get SubContext() {
-        return this.$state().SubContextURI && this.factory.GetOrCreateContext(this.$state().SubContextURI);
+        return this.$state.get().SubContextURI && this.factory.GetOrCreateContext(this.$state.get().SubContextURI);
     }
 
     constructor(private readonly factory: Factory, private contextStore: ContextStore, public id: string) {
@@ -21,20 +21,20 @@ export class MessageModel extends Model<Message, IMessageActions> implements IMe
     }
 
     public get State() {
-        const json = this.contextStore.State().Messages.get(this.id);
+        const json = this.contextStore.State.get().Messages.get(this.id);
         return json && Message.FromJSON(json);
     }
 
     public set State(value: Readonly<Message>) {
         if (Message.equals(this.State, value))
             return;
-        const cur = this.contextStore.State();
+        const cur = this.contextStore.State.get();
         const messages = new Map(cur.Messages);
         messages.set(value.id, Message.ToJSON({
             ...value,
             UpdatedAt: utc(),
         }));
-        this.contextStore.State({
+        this.contextStore.State.set({
             Context: cur.Context,
             Messages: messages
         });

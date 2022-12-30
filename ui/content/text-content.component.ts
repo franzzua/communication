@@ -42,12 +42,12 @@ export class TextContentComponent extends HtmlComponent<string, IEvents> {
 
     async focus() {
         if (!this.active)
-            this.dispatchEvent(new FocusEvent('focus'));
+            this.element.dispatchEvent(new FocusEvent('focus'));
         // this.cursor.SetPath(this.path);
     }
 
     private get contentElement(): HTMLElement {
-        return this.querySelector('[contenteditable]');
+        return this.element.querySelector('[contenteditable]');
     }
 
     public get State() {

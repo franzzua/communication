@@ -4,7 +4,7 @@ import {ContextJSON} from "@domain/contracts/json";
 import {Permutation} from "@domain/helpers/permutation";
 import {Context, Message} from "@model";
 import {Factory} from "./factory";
-import {Model} from "@cmmn/domain";
+import {Model} from "@cmmn/domain/worker";
 import {ContextStore} from "@infr/yjs/contextStore";
 import {DateTime, Fn, utc} from "@cmmn/core";
 
@@ -23,7 +23,7 @@ export class ContextModel extends Model<Context, IContextActions> implements ICo
     }
 
     public get State(): Readonly<Context> {
-        const state = this.contextStore.State();
+        const state = this.contextStore.State.get();
         const context = Context.FromJSON(state.Context);
 
         if (context.Permutation?.isInvalid()) {
@@ -37,7 +37,7 @@ export class ContextModel extends Model<Context, IContextActions> implements ICo
     public set State(value: Readonly<Context>) {
         if (value.Permutation && (value.Permutation.isInvalid() || value.Permutation.values.length > value.Messages.length))
             throw new Error("invalid permutation")
-        this.contextStore.State({
+        this.contextStore.State.set({
             Context: Context.ToJSON(value),
             Messages: new Map(value.Messages.map(x => [x, this.GetOrCreateMessage(x).ToServer()]))
         });
@@ -53,7 +53,7 @@ export class ContextModel extends Model<Context, IContextActions> implements ICo
     }
 
     public get Messages(): ReadonlyMap<string, MessageModel> {
-        const state = this.contextStore.State();
+        const state = this.contextStore.State.get();
         return state.Messages.map(x => this.GetOrCreateMessage(x.id));
     }
 
