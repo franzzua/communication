@@ -4,7 +4,7 @@ import {TreeItem, TreePresenter} from "../../presentors/tree.presentor";
 import type {Reducer} from "./tree.component";
 import {Fn, Injectable, utc} from "@cmmn/core";
 import {ContextProxy} from "@services";
-import {ItemSelection} from "./itemSelection";
+import {CaretSelection, ItemSelection} from "./itemSelection";
 
 
 export type ReducerStore<TState> = {
@@ -248,9 +248,11 @@ export class TreeReducers {
                 return state;
             const prevMessage = message.Context.Messages[messageIndex - 1];
             const subContext = prevMessage.GetOrCreateSubContext();
-            message.MoveTo(subContext, subContext.Messages.length);
+            const newMessage = message.MoveTo(subContext, subContext.Messages.length);
+            const newPath = [...selectedItem.Path.slice(0, -1), prevMessage.State.id, newMessage.State.id];
             return {
                 ...state,
+                // Selection: new CaretSelection(newPath, state.Selection?.Focus.offset)
             }
         }
     }
