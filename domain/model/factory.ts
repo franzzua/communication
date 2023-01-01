@@ -19,8 +19,9 @@ export class Factory extends Locator {
         if (path.length == 0)
             return this.Root;
         if (path.length % 2 == 1)
-            return this.Root.Contexts.get(path.pop() as string)
-        return this.Root.Contexts.get(path[path.length - 2] as string).Messages.get(path[path.length - 1] as string);
+            return this.GetOrCreateContext(path.pop() as string);
+        return this.Root.Contexts.get(path[path.length - 2] as string)
+            .Messages.get(path[path.length - 1] as string);
     }
 
     //

@@ -10,6 +10,7 @@ export class DomainProxy extends ModelProxy<DomainState, IDomainActions> {
 
     constructor(stream: Stream, locator: EntityLocator) {
         super(stream, locator);
+        window['root'] = this;
     }
 
     get Contexts(): ReadonlyArray<ContextProxy> {

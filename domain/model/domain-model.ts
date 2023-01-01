@@ -1,9 +1,8 @@
-import {Model} from "@cmmn/domain/worker";
+import {Locator, Model} from "@cmmn/domain/worker";
 import {IDomainActions} from "@domain";
 import {DomainState} from "@model";
 import {ContextModel} from "@domain/model/context-model";
 import {Cell} from "@cmmn/cell";
-import {Factory} from "@domain/model/factory";
 import {ObservableMap} from "cellx-collections";
 
 export class DomainModel extends Model<DomainState, IDomainActions> {
@@ -15,7 +14,7 @@ export class DomainModel extends Model<DomainState, IDomainActions> {
 
     private _contextsCell = new Cell(this.ObsContexts);
 
-    constructor(private factory: Factory) {
+    constructor(private locator: Locator) {
         super();
         window['domain'] = this;
         // this.useLastUpdate = true;
@@ -65,7 +64,7 @@ export class DomainModel extends Model<DomainState, IDomainActions> {
     // };
 
     protected Factory = uri => {
-        return (this.factory as Factory).CreateContext(uri);
+        return this.locator.get(uri);
     };
 }
 

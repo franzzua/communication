@@ -49,7 +49,6 @@
       "dedupe": [
         "lib0"
       ],
-      "external": ["@cmmn/", "luxon"],
       "alias": {
         "luxon": "luxon/build/es6/luxon.js"
       },
