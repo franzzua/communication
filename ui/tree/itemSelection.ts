@@ -5,7 +5,10 @@ export abstract class ItemSelection<T> {
         const selection = window.getSelection();
         switch (selection.type) {
             case  'Caret':
-                return new CaretSelection<T>(selection);
+                return new CaretSelection<T>(
+                    this.getSpan(selection.anchorNode),
+                    selection.anchorOffset,
+                );
             case  'Range':
                 return new RangeSelection<T>(selection);
             default:
@@ -17,7 +20,7 @@ export abstract class ItemSelection<T> {
     public Focus: SelectionItem<T>;
     public Direction: 'ltr' | 'rtl';
 
-    protected getSpan(node: Node) {
+    protected static getSpan<T>(node: Node) {
         if (node instanceof Text) {
             node = node.parentElement;
         }
@@ -30,12 +33,9 @@ export abstract class ItemSelection<T> {
 export class CaretSelection<T> extends ItemSelection<T> {
     public Type: 'Caret' = 'Caret';
 
-    constructor(selection: globalThis.Selection) {
+    constructor(node: HTMLSpanElement & { item: T, index: number }, offset: number) {
         super();
-        this.Anchor = this.Focus = {
-            node: this.getSpan(selection.anchorNode),
-            offset: selection.anchorOffset,
-        };
+        this.Anchor = this.Focus = { node, offset };
         this.Direction = 'ltr';
     }
 
@@ -52,11 +52,11 @@ export class RangeSelection<T> extends ItemSelection<T> {
     constructor(selection: globalThis.Selection) {
         super();
         this.Anchor = {
-            node: this.getSpan(selection.anchorNode),
+            node: ItemSelection.getSpan(selection.anchorNode),
             offset: selection.anchorOffset,
         };
         this.Focus = {
-            node: this.getSpan(selection.focusNode),
+            node: ItemSelection.getSpan(selection.focusNode),
             offset: selection.focusOffset,
         };
         this.Direction = (this.Anchor.node.index < this.Focus.node.index) ? 'ltr' : 'rtl';

@@ -1,4 +1,3 @@
-import { proxy } from "@cmmn/domain/proxy";
 import {Context} from "./context";
 import {Message} from "./message";
 
@@ -14,4 +13,10 @@ export class Storage {
 
 export class DomainState {
     public Contexts: string[];
+    public Selection: SelectionState;
+}
+
+export class SelectionState {
+    public Focus?: {Message; Offset};
+    public Anchor?: {Message; Offset};
 }

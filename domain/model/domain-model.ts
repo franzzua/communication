@@ -7,11 +7,15 @@ import {DomainLocator} from "@domain/model/domain-locator.service";
 import {YjsRepository} from "@infr/yjs/yjsRepository";
 import {Injectable} from "@cmmn/core";
 import {ContextMap} from "@domain/model/context-map";
+import {SelectionState} from "../../model/storage";
 
 @Injectable()
 export class DomainModel implements ModelLike<DomainState, IDomainActions>, IDomainActions {
     @cell
-    public Contexts = new ContextMap(this.locator, this.repository)
+    public Contexts = new ContextMap(this.locator, this.repository);
+
+    @cell
+    public Selection: SelectionState = {};
 
     constructor(private locator: DomainLocator,
                 private repository: YjsRepository) {
@@ -24,15 +28,13 @@ export class DomainModel implements ModelLike<DomainState, IDomainActions>, IDom
     // }
 
     public set State(state: DomainState) {
-        // return {
-        //     Contexts: new Map([...this.Contexts.values()].map(x => ([x.URI, {URI: x.URI} as Context]))),
-        //     Messages: new Map([...this.Contexts.values()].flatMap(x => x.OrderedMessages.map(x => [x.id, {id: x.id} as Message]))),
-        // };
+        this.Selection = state.Selection;
     }
 
     public get State(): DomainState {
         return {
             Contexts: Array.from(this.Contexts.keys()),
+            Selection: this.Selection
             // Messages: (this.factory as Factory).MessageMap.map(x => x.State),
         };
     }
