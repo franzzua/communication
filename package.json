@@ -9,8 +9,8 @@
     "serve": "cmmn serve -b",
     "web:prod": "cmmn bundle main --prod",
     "server:bundle": "cmmn bundle server --watch",
-    "server:run": "node dist/server-es.js",
-    "server:watch": "nodemon dist/server-es.js",
+    "server:run": "node dist/esm/server/server.js",
+    "server:watch": "nodemon dist/bundle/server.js",
     "build": "cmmn compile && cmmn bundle --prod && cp ./.github/workflows/staticwebapp.config.json ./dist"
   },
   "type": "module",
@@ -32,8 +32,8 @@
     "@swc/jest": "^0.2.22",
     "@testdeck/jest": "^0.2.1",
     "@types/ws": "^8.2.2",
-    "fastify": "3.11",
-    "fastify-websocket": "^4.0.0",
+    "fastify": "4.10",
+    "@fastify/websocket": "5",
     "is-mobile": "^3.0.0",
     "less": "^4",
     "luxon": "2.4.*",
@@ -58,7 +58,7 @@
       },
       "mount": {},
       "browser": true,
-      "port": 3003
+      "port": 4001
     },
     "worker": {
       "dedupe": [
@@ -73,7 +73,8 @@
       "external": [
         "node_modules",
         "@cmmn"
-      ]
+      ],
+      "port": 4002
     }
   },
   "dependencies": {

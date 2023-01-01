@@ -15,8 +15,7 @@ async function run() {
         .with(InhauthContainer)
         .withControllers(ContextController, WebrtcController)
         .withControllers(TokenParser, Authorizer, AclStore)
-        .start(3003);
-    // const server = new http.Server();
+        .start(+(process.env.PORT ?? 4004));
 }
 
 

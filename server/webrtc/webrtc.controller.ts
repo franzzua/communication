@@ -1,6 +1,6 @@
 import {controller, Get} from "@cmmn/server";
 import {YWebrtcHandler} from "./y-webrtc.handler";
-import {SocketStream} from "fastify-websocket";
+import {SocketStream} from "@fastify/websocket";
 import {FastifyRequest} from "fastify";
 import {bind, Injectable} from "@cmmn/core";
 import {TokenParser} from "../services/token.parser";
