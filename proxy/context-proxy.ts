@@ -7,7 +7,7 @@ import {MessageProxy} from "./message-proxy";
 export class ContextProxy extends ModelProxy<Context, IContextActions> {
 
     get Messages(): ReadonlyArray<MessageProxy> {
-        return this.State.Messages.map(x => this.MessageMap.get(x)).filter(x => x.State);
+        return this.State?.Messages.map(x => this.MessageMap.get(x)).filter(x => x.State) ?? [];
     }
 
     get Parents(): ReadonlyArray<MessageProxy> {

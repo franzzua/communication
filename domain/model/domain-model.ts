@@ -39,6 +39,15 @@ export class DomainModel implements ModelLike<DomainState, IDomainActions>, IDom
         };
     }
 
+    async CreateContext(uri: string, parentURI: string): Promise<void> {
+        this.Contexts.create(uri, parentURI);
+        // for (const parent of context.Parents) {
+        //     console.warn('TODO:')
+        //     const messageModel = this.factory.GetContext(parent);
+        //     messageModel.Actions.Attach(model.URI);
+        // }
+    };
+
     //
     // private toJSON(context: ContextModel, output: DomainState) {
     //     if (output.Contexts.has(context.URI))
@@ -55,15 +64,6 @@ export class DomainModel implements ModelLike<DomainState, IDomainActions>, IDom
     // };
     //
 
-    async CreateContext(context: Context): Promise<void> {
-        const model: ContextModel = this.Contexts.get(context.URI);
-        model.State = context;
-        // for (const parent of context.Parents) {
-        //     console.warn('TODO:')
-        //     const messageModel = this.factory.GetContext(parent);
-        //     messageModel.Actions.Attach(model.URI);
-        // }
-    };
 
 }
 

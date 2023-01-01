@@ -4,6 +4,7 @@ import {IMessageActions} from "@domain";
 import {Fn, utc} from "@cmmn/core";
 import {ContextProxy} from "./context-proxy";
 import {DomainProxy} from "./domain-proxy";
+import {Injectable} from "@cmmn/core";
 
 @proxy.of(Message, (id, self) => ['Messages', id])
 export class MessageProxy extends ModelProxy<Message, IMessageActions> {
@@ -21,12 +22,22 @@ export class MessageProxy extends ModelProxy<Message, IMessageActions> {
     @proxy.link<Message>(Context, m => m.SubContextURI)
     SubContext?: ContextProxy;
 
+    public get Messages(){
+        return this.SubContext?.Messages ?? [];
+    }
+
     public GetOrCreateSubContext(): ContextProxy {
         if (this.SubContext)
             return this.SubContext;
         const id = Fn.ulid();
         const uri = this.Context.State.URI.replace(this.Context.State.id, id);
-        const subContext = {
+        this.Actions.CreateSubContext(uri, this.Context.State.URI);
+        this.State = {
+            ...this.State,
+            SubContextURI: uri,
+            UpdatedAt: utc()
+        };
+        this.SubContext.State = {
             id,
             Messages: [],
             Parents: [this.State.id],
@@ -36,12 +47,6 @@ export class MessageProxy extends ModelProxy<Message, IMessageActions> {
             IsRoot: false,
             URI: uri,
         } as Context;
-        this.State = {
-            ...this.State,
-            SubContextURI: subContext.URI,
-            UpdatedAt: utc()
-        };
-        this.SubContext.State = subContext;
         return this.SubContext;
     }
 
@@ -58,7 +63,8 @@ export class MessageProxy extends ModelProxy<Message, IMessageActions> {
         return result;
     }
 
-    public MoveTo(context: ContextProxy, index: number = context.State.Messages.length): MessageProxy {
+
+    public MoveTo(context: ContextProxy, index: number): MessageProxy {
         this.Context.State.Messages.remove(this.State.id);
         this.Context.Actions.RemoveMessage(this.State.id);
         const newState = {

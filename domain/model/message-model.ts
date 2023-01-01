@@ -81,5 +81,12 @@ export class MessageModel implements ModelLike<Message, IMessageActions>, IMessa
         await this.Context.RemoveMessage(this.id);
     }
 
+    async CreateSubContext(uri: string, parentURI: string): Promise<void>{
+        this.State = {
+            ...this.State,
+            SubContextURI: uri
+        };
+        await this.locator.Root.CreateContext(uri, parentURI);
+    }
 }
 

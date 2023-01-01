@@ -247,6 +247,7 @@ export class TreeReducers {
             if (messageIndex == 0)
                 return state;
             const prevMessage = message.Context.Messages[messageIndex - 1];
+
             const subContext = prevMessage.GetOrCreateSubContext();
             const newMessage = message.MoveTo(subContext, subContext.Messages.length);
             const newPath = [...selectedItem.Path.slice(0, -1), prevMessage.State.id, newMessage.State.id];

@@ -82,12 +82,10 @@ export class ContextStore {
         };
     }
 
-    @cell({compare: Context.equals})
     get State(){
-        if (!this.IsSynced){
-            return null;
-        }
         const state = this.GetState();
+        if (!state.Context)
+            return Context.FromJSON({URI: this.URI} as any);
         const context = Context.FromJSON(state.Context);
         console.log(state);
         const ordered = Array.from(state.Messages).orderBy(x => x);
