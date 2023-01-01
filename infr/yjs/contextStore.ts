@@ -1,7 +1,9 @@
 import {ContextJSON, MessageJSON} from "@domain";
 import {SyncStore} from "@cmmn/sync";
-import {Cell} from "@cmmn/cell";
+import {cell, Cell} from "@cmmn/cell";
 import {ResolvablePromise, utc} from "@cmmn/core";
+import {Context, Message} from "@model";
+import {ContextMap} from "@domain/model";
 
 export class ContextStore {
 
@@ -9,12 +11,13 @@ export class ContextStore {
 
     // private static provider = new WebRtcProvider([`${location.origin.replace(/^http/, 'ws')}/api`])
     public Sync = new ResolvablePromise();
+    @cell
+    public IsSynced = false;
 
     constructor(protected URI: string,
                 private token: Promise<string>,
                 private contextMap: SyncStore<ContextJSON>) {
         this.Join();
-
     }
 
     async Join() {
@@ -31,6 +34,7 @@ export class ContextStore {
             })
         }
         this.Sync.resolve();
+        this.IsSynced = true;
     }
 
     // public async GetRemoteProvider() {
@@ -78,35 +82,53 @@ export class ContextStore {
         };
     }
 
-    ContextCell = new Cell(() => this.GetState(), {
-        onExternal: value => {
-            this.contextMap.Items.set(value.Context.URI, value.Context);
-            const existed = new Set(this.messageStore.Items.keys());
-            for (let id of value.Messages) {
-                if (existed.has(id))
-                    continue;
-                this.AddMessage({
-                    id: id,
-                    UpdatedAt: utc().toISO(),
-                    CreatedAt: utc().toISO(),
-                    Content: '',
-                    ContextURI: this.URI
-                });
-            }
-            for (let id of existed){
-                if (value.Messages.has(id))
-                    continue;
-                this.DeleteMessage({
-                    id: id
-                })
-            }
+    @cell({compare: Context.equals})
+    get State(){
+        if (!this.IsSynced){
+            return null;
         }
-    });
+        const state = this.GetState();
+        const context = Context.FromJSON(state.Context);
+        console.log(state);
+        const ordered = Array.from(state.Messages).orderBy(x => x);
+        context.Messages = context.Permutation?.Invoke(ordered) ?? ordered;
+        return context;
+    }
+
+    set State(value: Context){
+        this.contextMap.Items.set(value.URI, Context.ToJSON(value));
+        const existed = new Set(this.messageStore.Items.keys());
+        for (let id of value.Messages) {
+            if (existed.has(id)) {
+                existed.delete(id);
+                continue;
+            }
+            this.AddMessage({
+                id: id,
+                UpdatedAt: utc().toISO(),
+                CreatedAt: utc().toISO(),
+                Content: '',
+                ContextURI: this.URI
+            });
+        }
+        for (let id of existed){
+            this.DeleteMessage({
+                id: id
+            })
+        }
+    }
 
     GetMessageCell(id: string) {
-        return new Cell(() => this.messageStore.Items.get(id), {
+        console.log(id);
+        return new Cell(() => {
+            if (!this.IsSynced){
+                return null;
+            }
+            const result = this.messageStore.Items.get(id);
+            return result && Message.FromJSON(result);
+        }, {
             onExternal: value => {
-                this.messageStore.Items.set(value.id, value);
+                this.messageStore.Items.set(value.id, Message.ToJSON(value));
             }
         });
     }

@@ -1,6 +1,5 @@
 import {MessageModel} from "./message-model";
 import {IContextActions} from "../contracts/actions";
-import {ContextJSON} from "@domain/contracts/json";
 import {Permutation} from "@domain/helpers/permutation";
 import {Context, Message} from "@model";
 import {ModelLike} from "@cmmn/domain/worker";
@@ -11,7 +10,6 @@ import {DomainLocator} from "@domain/model/domain-locator.service";
 export class ContextModel implements ModelLike<Context, IContextActions>, IContextActions {
 
     Actions = this;
-    $state = this.contextStore.ContextCell;
 
     constructor(public URI: string,
                 public contextStore: ContextStore,
@@ -20,34 +18,20 @@ export class ContextModel implements ModelLike<Context, IContextActions>, IConte
 
     private _cache = new Map<string, MessageModel>();
 
-    private GetOrCreateMessage(id: string) {
+    private GetOrCreateMessage(id: string): MessageModel {
         return this._cache.getOrAdd(id, id => new MessageModel(this.locator, this.contextStore, id));
     }
 
-    public get State(): Readonly<Context> {
-        const state = this.$state.get();
-        if (!state.Context)
-            return undefined;
+    public get Messages(): Map<string, MessageModel> {
+        return new Map(this.State.Messages.map(x => [x, this.GetOrCreateMessage(x)]));
+    }
 
-        const context = Context.FromJSON(state.Context);
-        if (context.Permutation?.isInvalid()) {
-            console.error("invalid permutation");
-            context.Permutation = null;
-        }
-        context.Messages = (
-            context.Permutation?.Invoke(this.DefaultOrderedMessages) ??
-            this.DefaultOrderedMessages
-        ).map(x => x.id);
-        return context;
+    public get State(): Readonly<Context> {
+        return this.contextStore.State;
     }
 
     public set State(value: Readonly<Context>) {
-        if (value.Permutation && (value.Permutation.isInvalid() || value.Permutation.values.length > value.Messages.length))
-            throw new Error("invalid permutation")
-        this.$state.set({
-            Context: Context.ToJSON(value),
-            Messages: new Set(value.Messages)
-        });
+        this.contextStore.State = value;
     }
 
     public* getParents(): IterableIterator<MessageModel> {
@@ -60,25 +44,8 @@ export class ContextModel implements ModelLike<Context, IContextActions>, IConte
         }
     }
 
-    public get Messages(): ReadonlyMap<string, MessageModel> {
-        const state = this.$state.get();
-        return new Map(Array.from(state.Messages).map(x => [x, this.GetOrCreateMessage(x)]));
-    }
 
-    private get DefaultOrderedMessages(): ReadonlyArray<MessageModel> {
-        return [...this.Messages.values()].orderBy(x => x.id);
-    }
-
-    public get OrderedMessages(): ReadonlyArray<MessageModel> {
-        if (!this.Messages.size)
-            return [];
-        if (!this.State.Permutation)
-            return this.DefaultOrderedMessages;
-        return this.State.Permutation.Invoke(this.DefaultOrderedMessages)
-            .filter(x => x != null);
-    }
-
-    async CreateMessage(message: Message, index: number = this.Messages.size): Promise<void> {
+    async CreateMessage(message: Message, index: number = this.State.Messages.length): Promise<void> {
         await this.contextStore.Sync;
         if (!message.id)
             message.id = Fn.ulid();
@@ -86,35 +53,32 @@ export class ContextModel implements ModelLike<Context, IContextActions>, IConte
             this.locator.Root.Contexts.get(message.ContextURI).RemoveMessage(message.id);
         }
         message.ContextURI = this.URI;
+        const messages = this.State.Messages;
+        messages.remove(message.id);
+        messages.splice(index, 0, message.id);
+        this.State = {
+            ...this.State,
+            Messages: messages
+        }
+
         const messageModel = this.GetOrCreateMessage(message.id);
         messageModel.State = message;
-        const messages = [...this.OrderedMessages];
-        messages.remove(messageModel);
-        messages.splice(index, 0, messageModel);
-        this.UpdateMessagesPermutation(messages.distinct());
     };
 
     ReorderMessage(message: MessageModel, toIndex) {
-        const messages = [...this.OrderedMessages.filter(x => x !== message)];
-        messages.splice(toIndex, 0, message);
-        this.UpdateMessagesPermutation(messages);
+        const messages = this.State.Messages.filter(x => x !== message.id);
+        messages.splice(toIndex, 0, message.id);
+        this.State = {
+            ...this.State,
+            Messages: messages
+        }
     };
 
     async RemoveMessage(id: string): Promise<void> {
-        const messages = this.OrderedMessages.filter(x => x.id !== id);
-        this.UpdateMessagesPermutation(messages);
-    };
-
-    UpdateMessagesPermutation(orderedMessages: ReadonlyArray<MessageModel>) {
-        const permutation = Permutation.Diff(orderedMessages.orderBy(x => x.id), orderedMessages);
-        if (permutation.isInvalid())
-            throw new Error("invalid permutation")
         this.State = {
             ...this.State,
-            UpdatedAt: utc(),
-            Permutation: permutation,
-            Messages: orderedMessages.map(x => x.id)
-        };
+            Messages: this.State.Messages.filter(x => x !== id)
+        }
     };
 
 }

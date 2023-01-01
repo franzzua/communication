@@ -12,7 +12,7 @@ export class MessageModel implements ModelLike<Message, IMessageActions>, IMessa
     private $state = this.contextStore.GetMessageCell(this.id)
 
     public get Context(): ContextModel {
-        return this.locator.GetOrCreateContext(this.$state.get().ContextURI, null);
+        return this.locator.GetContext(this.$state.get().ContextURI);
     }
 
     public get SubContext() {
@@ -24,23 +24,14 @@ export class MessageModel implements ModelLike<Message, IMessageActions>, IMessa
                 private contextStore: ContextStore,
                 public id: string) {
 
-        const subContext = this.SubContext;
     }
 
     public get State() {
-        const json = this.$state.get();
-        return json && Message.FromJSON(json);
+        return this.$state.get();
     }
 
     public set State(value: Readonly<Message>) {
-        if (Message.equals(this.State, value))
-            return;
-        if (!value.CreatedAt)
-            console.log(value);
-        this.$state.set(Message.ToJSON({
-            ...value,
-            UpdatedAt: utc()
-        }));
+        this.$state.set(value);
     }
 
 
@@ -90,8 +81,5 @@ export class MessageModel implements ModelLike<Message, IMessageActions>, IMessa
         await this.Context.RemoveMessage(this.id);
     }
 
-    public ToServer() {
-        return Message.ToJSON(this.State);
-    }
 }
 
