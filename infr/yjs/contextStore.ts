@@ -87,7 +87,6 @@ export class ContextStore {
         if (!state.Context)
             return Context.FromJSON({URI: this.URI} as any);
         const context = Context.FromJSON(state.Context);
-        console.log(state);
         const ordered = Array.from(state.Messages).orderBy(x => x);
         context.Messages = context.Permutation?.Invoke(ordered) ?? ordered;
         return context;
@@ -117,7 +116,6 @@ export class ContextStore {
     }
 
     GetMessageCell(id: string) {
-        console.log(id);
         return new Cell(() => {
             if (!this.IsSynced){
                 return null;

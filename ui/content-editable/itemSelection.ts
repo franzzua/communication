@@ -1,3 +1,5 @@
+import {ItemElement} from "./content-editable.component";
+
 export abstract class ItemSelection<T> {
     public Type: 'Caret' | 'Range';
 
@@ -5,8 +7,12 @@ export abstract class ItemSelection<T> {
         const selection = window.getSelection();
         switch (selection.type) {
             case  'Caret':
+                const element = this.getSpan<T>(selection.anchorNode);
+                if (!element.item)
+                    return null;
                 return new CaretSelection<T>(
-                    this.getSpan(selection.anchorNode),
+                    element.item,
+                    element.index,
                     selection.anchorOffset,
                 );
             case  'Range':
@@ -20,11 +26,16 @@ export abstract class ItemSelection<T> {
     public Focus: SelectionItem<T>;
     public Direction: 'ltr' | 'rtl';
 
-    protected static getSpan<T>(node: Node) {
+
+    protected static getSpan<T>(node: Node): {item: T, index: number} {
         if (node instanceof Text) {
             node = node.parentElement;
         }
-        return node as HTMLSpanElement & { item: T, index: number };
+        const element = (node as ItemElement<T>);
+        return  {
+            item: element.item,
+            index: element.index
+        }
     }
 
     public abstract GetItemSelection(item: T, index: number): { from?; to?; at?; } | null;
@@ -33,15 +44,15 @@ export abstract class ItemSelection<T> {
 export class CaretSelection<T> extends ItemSelection<T> {
     public Type: 'Caret' = 'Caret';
 
-    constructor(node: HTMLSpanElement & { item: T, index: number }, offset: number) {
+    constructor(item: T, index: number, offset: number) {
         super();
-        this.Anchor = this.Focus = { node, offset };
+        this.Anchor = this.Focus = {item, index, offset};
         this.Direction = 'ltr';
     }
 
     GetItemSelection(item: T, index: number) {
-        if (item === this.Focus?.node.item)
-            return { at: this.Focus.offset };
+        if (item === this.Focus?.item)
+            return {at: this.Focus.offset};
         return null;
     }
 }
@@ -52,36 +63,36 @@ export class RangeSelection<T> extends ItemSelection<T> {
     constructor(selection: globalThis.Selection) {
         super();
         this.Anchor = {
-            node: ItemSelection.getSpan(selection.anchorNode),
+            ...ItemSelection.getSpan(selection.anchorNode),
             offset: selection.anchorOffset,
         };
         this.Focus = {
-            node: ItemSelection.getSpan(selection.focusNode),
+            ...ItemSelection.getSpan(selection.focusNode),
             offset: selection.focusOffset,
         };
-        this.Direction = (this.Anchor.node.index < this.Focus.node.index) ? 'ltr' : 'rtl';
+        this.Direction = (this.Anchor.index < this.Focus.index) ? 'ltr' : 'rtl';
     }
 
     GetItemSelection(item: T, index: number) {
         if (this.Direction == 'ltr') {
-            if (this.Anchor.node.index == index) {
-                return { from: this.Anchor.offset };
+            if (this.Anchor.index == index) {
+                return {from: this.Anchor.offset};
             }
-            if (this.Anchor.node.index < index && index < this.Focus.node.index) {
-                return { from: 0 };
+            if (this.Anchor.index < index && index < this.Focus.index) {
+                return {from: 0};
             }
-            if (index == this.Focus.node.index) {
-                return { from: 0, to: this.Focus.offset };
+            if (index == this.Focus.index) {
+                return {from: 0, to: this.Focus.offset};
             }
         } else if (this.Direction == 'rtl') {
-            if (this.Focus.node.index == index) {
-                return { from: this.Focus.offset };
+            if (this.Focus.index == index) {
+                return {from: this.Focus.offset};
             }
-            if (this.Focus.node.index < index && index < this.Anchor.node.index) {
-                return { from: 0 };
+            if (this.Focus.index < index && index < this.Anchor.index) {
+                return {from: 0};
             }
-            if (index == this.Anchor.node.index) {
-                return { from: 0, to: this.Anchor.offset };
+            if (index == this.Anchor.index) {
+                return {from: 0, to: this.Anchor.offset};
             }
         }
     }
@@ -89,5 +100,7 @@ export class RangeSelection<T> extends ItemSelection<T> {
 
 export type SelectionItem<T> = {
     offset: number;
-    node: HTMLSpanElement & { item: T, index: number };
+    item: T;
+    index: number;
+    // node: ExtendedElement<ContentItemComponent<T>>;
 }

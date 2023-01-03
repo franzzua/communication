@@ -26,7 +26,11 @@ export const Routes: (Route & {
         name: 'context',
         path: '/context/*uri',
         template: (html, params) => html`
-            <ctx-tree uri=${params.uri ? atob(decodeURIComponent(params.uri)) : null}></ctx-tree>`
+            <div flex>
+                <content-editable uri=${params.uri ? atob(decodeURIComponent(params.uri)) : null}/>
+                <ctx-tree uri=${params.uri ? atob(decodeURIComponent(params.uri)) : null}/>
+            </div>
+        `
     },
     {
         name: 'concord',

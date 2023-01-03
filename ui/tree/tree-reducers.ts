@@ -1,10 +1,9 @@
-import {IState} from "./tree.template";
 import {Message} from "@model";
 import {TreeItem, TreePresenter} from "../../presentors/tree.presentor";
-import type {Reducer} from "./tree.component";
+import type {Reducer} from "../reducers";
 import {Fn, Injectable, utc} from "@cmmn/core";
 import {ContextProxy} from "@services";
-import {CaretSelection, ItemSelection} from "./itemSelection";
+import {TreeState} from "./types";
 
 
 export type ReducerStore<TState> = {
@@ -18,49 +17,36 @@ export class TreeReducers {
     }
 
     @logReducer
-    async UpdateContent(data: { item: TreeItem, content: string }): Promise<Reducer<IState>> {
+    async UpdateContent(data: { item: TreeItem, content: string }): Promise<Reducer<TreeState>> {
         return state => {
             data.item.Message.Actions.UpdateText(data.content);
             // this.stateService.UpdateContent(data.item.Message, data.content);
             // data.item.Message.Content = data.content;
-            return ({ ...state, Selected: data.item });
+            return ({...state, Selected: data.item});
         }
     }
 
-    Init(root: ContextProxy): Reducer<IState> {
+    Init(root: ContextProxy): Reducer<TreeState> {
         return state => {
-            state.Root = root;
-            this.treePresenter.UpdateTree(state);
-            // const items = TreePresenter.ToTree(root, new Map());
-            // const selected = (() => {
-            //     if (state?.Selected) {
-            //         const existed = state.ItemsMap.get(state.Selected.Path.join(TreePresenter.Separator));
-            //         if (!existed) {
-            //             return state.Items[0];
-            //         }
-            //         return existed;
-            //     }
-            //     return state.Items[0];
-            // })();
             const newState = ({
                 ...state,
-                Selection: ItemSelection.GetCurrent<TreeItem>(),
+                Root: root,
             });
             return newState;
         }
     }
 
-    async Focus(x: TreeItem): Promise<Reducer<IState>> {
-        return (state: IState) => ({
+    async Focus(x: TreeItem): Promise<Reducer<TreeState>> {
+        return (state: TreeState) => ({
             ...state,
             Selected: x
         });
     }
 
     @logReducer
-    async Copy(event: ClipboardEvent): Promise<Reducer<IState>> {
-        return (state: IState) => {
-            const message = state.Selection?.Focus?.node.item.Message;
+    async Copy(event: ClipboardEvent): Promise<Reducer<TreeState>> {
+        return (state: TreeState) => {
+            const message = state.Selected?.Message;
             if (message) {
                 const json = {
                     Content: message.State.Content,
@@ -79,10 +65,10 @@ export class TreeReducers {
     }
 
     @logReducer
-    async Paste(event: ClipboardEvent): Promise<Reducer<IState>> {
+    async Paste(event: ClipboardEvent): Promise<Reducer<TreeState>> {
         const clipboard = event.clipboardData?.getData("text/plain")
             ?? await navigator.clipboard.readText();
-        return (state: IState) => {
+        return (state: TreeState) => {
             try {
                 const parsed = JSON.parse(clipboard) as Message;
                 if (parsed.Content) {
@@ -95,12 +81,12 @@ export class TreeReducers {
                     parsed.id = Fn.ulid();
                     parsed.CreatedAt = utc();
                     parsed.UpdatedAt = utc();
-                    state.Selection?.Focus?.node.item.Message.Context.Actions.CreateMessage(parsed);
+                    state.Selected.Message.Context.Actions.CreateMessage(parsed);
                 }
             } catch (e) {
                 const paragraphs = clipboard.split('\n');
                 for (let paragraph of paragraphs) {
-                    state.Selection?.Focus?.node.item.Message.AddMessage({
+                    state.Selected.Message.AddMessage({
                         id: Fn.ulid(),
                         Content: paragraph,
                         CreatedAt: utc(),
@@ -113,114 +99,98 @@ export class TreeReducers {
     }
 
     @logReducer
-    async Switch(event: KeyboardEvent): Promise<Reducer<IState>> {
-        return (state: IState) => {
-            if (state.Selection) {
-                state.Selection.Focus.node.item.IsOpened = !state.Selection?.Focus?.node.item.IsOpened;
-            }
+    async Switch(event: KeyboardEvent): Promise<Reducer<TreeState>> {
+        return (state: TreeState) => {
+            state.Selected.IsOpened = !state.Selected.IsOpened;
+            this.treePresenter.UpdateTree(state)
+            return {
+                ...state,
+            };
+        }
+    }
+
+
+    private async CreateMessage(getParentPath: (state: TreeState) => string[], text = ''): Promise<Reducer<TreeState>> {
+        return state => {
+            const parentPath = getParentPath(state);
+            const newMessage: Message = {
+                id: Fn.ulid(),
+                CreatedAt: utc(),
+                UpdatedAt: utc(),
+                Content: text,
+            };
+            const messageProxy = (() => {
+                if (parentPath.length > 0) {
+                    return state.ItemsMap.get(parentPath.join('/')).Message.AddMessage(newMessage);
+                } else {
+                    state.Root.Actions.CreateMessage(newMessage);
+                    return state.Root.MessageMap.get(newMessage.id);
+                }
+            })();
+            const newPath = [
+                ...parentPath,
+                newMessage.id,
+            ];
+            const newItem = {
+                Message: messageProxy,
+                Path: newPath,
+                IsOpened: true
+            } as TreeItem;
+            state.ItemsMap.set(newPath.join('/'), newItem);
             this.treePresenter.UpdateTree(state);
-            return state;
-        }
-    }
-
-
-    @logReducer
-    async AddChild(event: KeyboardEvent | InputEvent | string): Promise<Reducer<IState>> {
-        const text = typeof event === "string" ? event :
-            (event.target instanceof HTMLInputElement) ? event.target.value : '';
-        return state => {
-            const selectedItem = state.Selection?.Focus.node.item;
-            const selectedIndex = state.Selection?.Focus.node.index;
-            const id = Fn.ulid();
-            const newMessageState = {
-                id,
-                Content: text,
-                CreatedAt: utc(),
-                UpdatedAt: utc(),
-                ContextURI: undefined,
-            } as Message;
-            const newMessage = selectedItem?.Message.AddMessage(newMessageState)
-                ?? state.Root.CreateMessage(newMessageState);
-            const newPath = selectedItem?.Path.concat([id]) ?? [id];
-            const newItem = {
-                Path: newPath,
-                Message: newMessage,
-                IsOpened: true,
-                Length: 0
+            return {
+                ...state,
+                Selected: newItem
             };
-            state.ItemsMap.set(newPath.join(TreePresenter.Separator), newItem);
-            state.Items.insert((selectedIndex ?? -1) + 1, newItem);
             return state;
         }
     }
 
     @logReducer
-    async AddNext(event: KeyboardEvent): Promise<Reducer<IState>> {
+    async AddChild(event: KeyboardEvent | InputEvent): Promise<Reducer<TreeState>> {
         const text = (event.target instanceof HTMLInputElement) ? event.target.value : '';
-        return state => {
-            const selectedItem = state.Selection?.Focus.node.item;
-            const selectedIndex = state.Selection?.Focus.node.index;
-            const context = selectedItem.Message.Context ?? state.Root;
-            const id = Fn.ulid();
-            // setTimeout(() =>
-            //     context.Actions.CreateMessage(, index), 3000);
-            const newPath = selectedItem.Path.slice(0, -1).concat([id]) ?? [id];
-            const newMessage = context.MessageMap.get(id);
-            newMessage.State = {
-                id,
-                Content: text,
-                CreatedAt: utc(),
-                UpdatedAt: utc(),
-                ContextURI: context.State.URI,
-            };
-            context.Actions.CreateMessage(newMessage.State, selectedIndex + selectedItem.Length);
-            const newItem = {
-                Path: newPath,
-                Message: newMessage,
-                IsOpened: true,
-                Length: 0
-            };
-            state.ItemsMap.set(newPath.join(TreePresenter.Separator), newItem);
-            state.Items.insert(selectedIndex + selectedItem.Length, newItem);
-            return { ...state };
-        }
+        return this.CreateMessage(state => state.Selected?.Path ?? [], text);
     }
 
+    @logReducer
+    async AddNext(event: KeyboardEvent): Promise<Reducer<TreeState>> {
+        const text = (event.target instanceof HTMLInputElement) ? event.target.value : '';
+        return this.CreateMessage(state => state.Selected?.Path?.slice(0, -1) ?? [], text);
+    }
 
     @logReducer
-    async Down(event: KeyboardEvent): Promise<Reducer<IState>> {
-        return (state: IState) => {
-            const selectedIndex = state.Selection?.Focus.node.index;
+    async Down(event: KeyboardEvent): Promise<Reducer<TreeState>> {
+        return (state: TreeState) => {
+            const selectedIndex = state.Items.toArray().indexOf(state.Selected);
             if (selectedIndex >= state.Items.length - 1)
                 return state;
             return {
                 ...state,
-                Selected: state.Items[selectedIndex + 1],
+                Selected: state.Items.toArray()[selectedIndex + 1],
             };
         }
     }
 
     @logReducer
-    async Up(event: KeyboardEvent): Promise<Reducer<IState>> {
-        return (state: IState) => {
-            const selectedIndex = state.Selection?.Focus.node.index;
-            if (selectedIndex <= 0)
+    async Up(event: KeyboardEvent): Promise<Reducer<TreeState>> {
+        return (state: TreeState) => {
+            const selectedIndex = state.Items.toArray().indexOf(state.Selected);
+            if (selectedIndex < 0)
                 return state;
             return {
                 ...state,
-                Selected: state.Items[selectedIndex - 1],
+                Selected: state.Items.toArray()[selectedIndex - 1],
             };
         }
     }
 
     @logReducer
-    async Remove(item?: TreeItem): Promise<Reducer<IState>> {
-        return (state: IState) => {
-            item ??= state.Selection?.Focus.node.item;
-            const message = item.Message;
-            const selectedIndex = state.Items.toArray().indexOf(item);
+    async Remove(event: KeyboardEvent): Promise<Reducer<TreeState>> {
+        return (state: TreeState) => {
+            const message = state.Selected.Message;
+            const selectedIndex = state.Items.toArray().indexOf(state.Selected);
             const next = state.Items[selectedIndex + 1];
-            state.Items.removeAt(state.Items.toArray().indexOf(item));
+            state.Items.removeAt(state.Items.toArray().indexOf(state.Selected));
             if (next && next.Message.Context == message.Context) {
                 message.Actions.Remove();
                 return {
@@ -239,47 +209,52 @@ export class TreeReducers {
     }
 
     @logReducer
-    async MoveRight(event: KeyboardEvent): Promise<Reducer<IState>> {
-        return (state: IState) => {
-            const selectedItem = state.Selection?.Focus.node.item;
-            const message = selectedItem.Message;
+    async MoveRight(event: KeyboardEvent): Promise<Reducer<TreeState>> {
+        return (state: TreeState) => {
+            const message = state.Selected.Message;
             const messageIndex = message.Context.Messages.indexOf(message);
             if (messageIndex == 0)
                 return state;
             const prevMessage = message.Context.Messages[messageIndex - 1];
-
-            const subContext = prevMessage.GetOrCreateSubContext();
-            const newMessage = message.MoveTo(subContext, subContext.Messages.length);
-            const newPath = [...selectedItem.Path.slice(0, -1), prevMessage.State.id, newMessage.State.id];
+            const newMessage = prevMessage.AddMessage(message.State);
+            // if (prevMessage.SubContext == null) {
+            //     this.stateService.CreateSubContext(prevMessage);
+            // }
+            // this.stateService.MoveMessage(message, prevMessage.SubContext.State);
+            const newPath = [...state.Selected.Path.slice(0, -1), prevMessage.State.id, message.State.id];
+            state.Selected.Path = newPath;
+            state.Selected.Message = newMessage;
+            state.ItemsMap.delete(state.Selected.Path.join(TreePresenter.Separator));
+            state.ItemsMap.set(newPath.join(TreePresenter.Separator), state.Selected);
+            const newParentItem = state.ItemsMap.get(state.Selected.Path.slice(0, -1).join(TreePresenter.Separator));
+            newParentItem.Length++;
             return {
                 ...state,
-                // Selection: new CaretSelection(newPath, state.Selection?.Focus.offset)
             }
         }
     }
 
     @logReducer
-    async MoveLeft(event: KeyboardEvent): Promise<Reducer<IState>> {
-        return (state: IState) => {
-            const selectedItem = state.Selection?.Focus.node.item;
-            const message = selectedItem.Message;
-            if (selectedItem.Path.length < 2)
+    async MoveLeft(event: KeyboardEvent): Promise<Reducer<TreeState>> {
+        return (state: TreeState) => {
+            const message = state.Selected.Message;
+            if (state.Selected.Path.length < 2)
                 // root children shouldn`t move left
                 return state;
 
-            const parent = state.ItemsMap.get(selectedItem.Path.slice(0, -1).join(TreePresenter.Separator));
+            const parent = state.ItemsMap.get(state.Selected.Path.slice(0, -1).join(TreePresenter.Separator));
             const parentIndex = parent.Message.Context.Messages.indexOf(parent.Message);
 
-            selectedItem.Message = message.MoveTo(parent.Message.Context, parentIndex + 1);
-            state.ItemsMap.delete(selectedItem.Path.join(TreePresenter.Separator));
-            selectedItem.Path = [...parent.Path.slice(0, -1), message.State.id];
-            state.ItemsMap.set(selectedItem.Path.join(TreePresenter.Separator), selectedItem);
-            // const parentItemIndex = state.Items.toArray().indexOf(parent);
-            // state.Items.removeAt(state.Items.toArray().indexOf(selectedItem));
-            // state.Items.insert(parentItemIndex + parent.Length, selectedItem);
-            // selectedItem.Message = parent.Message.Context.MessageMap.get(message.State.id);
-            // selectedItem.Message.State = message.State;
-            // parent.Length--;
+            message.Actions.Move(message.State.ContextURI, parent.Message.State.ContextURI, parentIndex + 1);
+            const newPath = [...parent.Path.slice(0, -1), message.State.id];
+            state.Selected.Path = newPath;
+            state.ItemsMap.delete(state.Selected.Path.join(TreePresenter.Separator));
+            state.ItemsMap.set(newPath.join(TreePresenter.Separator), state.Selected);
+            const parentItemIndex = state.Items.toArray().indexOf(parent);
+            const index = state.Items.toArray().indexOf(state.Selected);
+            state.Items.removeAt(state.Selected);
+            state.Items.insert(parentItemIndex + parent.Length, state.Selected);
+            parent.Length--;
             return {
                 ...state,
             }
@@ -287,17 +262,16 @@ export class TreeReducers {
     }
 
     @logReducer
-    async MoveUp(event: KeyboardEvent): Promise<Reducer<IState>> {
-        return (state: IState) => {
-            const selectedItem = state.Selection?.Focus.node.item;
-            const message = selectedItem.Message;
+    async MoveUp(event: KeyboardEvent): Promise<Reducer<TreeState>> {
+        return (state: TreeState) => {
+            const message = state.Selected.Message;
             const messageIndex = message.Context.Messages.indexOf(message);
             if (messageIndex == 0)
                 return state;
             message.Actions.Reorder(messageIndex - 1);
-            const itemIndex = state.Items.toArray().indexOf(selectedItem);
+            const itemIndex = state.Items.toArray().indexOf(state.Selected);
             state.Items.removeAt(itemIndex);
-            state.Items.insert(itemIndex - 1, selectedItem)
+            state.Items.insert(itemIndex - 1, state.Selected)
             return {
                 ...state,
             }
@@ -305,40 +279,38 @@ export class TreeReducers {
     }
 
     @logReducer
-    async MoveDown(event: KeyboardEvent): Promise<Reducer<IState>> {
-        return (state: IState) => {
-            const selectedItem = state.Selection?.Focus.node.item;
-            const message = selectedItem.Message;
+    async MoveDown(event: KeyboardEvent): Promise<Reducer<TreeState>> {
+        return (state: TreeState) => {
+            const message = state.Selected.Message;
             const messageIndex = message.Context.Messages.indexOf(message);
             if (messageIndex == message.Context.Messages.length - 1)
                 return state;
             message.Actions.Reorder(messageIndex + 1);
-            const itemIndex = state.Items.toArray().indexOf(selectedItem);
+            const itemIndex = state.Items.toArray().indexOf(state.Selected);
             state.Items.removeAt(itemIndex);
-            state.Items.insert(itemIndex + 1, selectedItem);
+            state.Items.insert(itemIndex + 1, state.Selected)
             return {
                 ...state,
             }
         }
     }
-
 }
 
 
 export const keyMap: {
     [key: string]: keyof TreeReducers
 } = {
-    ShiftTab: "MoveLeft",
-    Tab: "MoveRight",
+    CtrlArrowLeft: "MoveLeft",
+    CtrlArrowRight: "MoveRight",
     CtrlArrowUp: "MoveUp",
     CtrlArrowDown: "MoveDown",
     CtrlKeyC: "Copy",
     CtrlKeyV: "Paste",
     ShiftDelete: "Remove",
-    // ArrowDown: "Down",
-    // ArrowUp: "Up",
-    ShiftEnter: "AddChild",
-    ShiftNumpadEnter: "AddChild",
+    ArrowDown: "Down",
+    ArrowUp: "Up",
+    CtrlEnter: "AddChild",
+    CtrlNumpadEnter: "AddChild",
     NumpadEnter: "AddNext",
     Enter: "AddNext",
     Paste: "Paste",
@@ -352,7 +324,7 @@ function logReducer(target, key, descr) {
             const instance = this;
             // console.groupCollapsed(key);
             // console.log('reducer', data);
-            const reducer: Reducer<IState> = await descr.value.call(instance, data);
+            const reducer: Reducer<TreeState> = await descr.value.call(instance, data);
             return state => {
                 const newState = reducer.call(instance, state);
                 // console.info(newState);

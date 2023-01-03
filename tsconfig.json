@@ -6,6 +6,9 @@
       "@model": [
         "./model"
       ],
+      "@proxy": [
+        "./proxy"
+      ],
       "@infr/*": [
         "./infr/*"
       ],

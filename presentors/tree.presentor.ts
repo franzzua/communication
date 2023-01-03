@@ -1,6 +1,6 @@
 import {Injectable} from "@cmmn/core";
-import {MessageProxy} from "@services";
-import {IState} from "../ui/tree/tree.template";
+import {ContextProxy, MessageProxy} from "@services";
+import {ObservableList} from "@cmmn/cell";
 
 @Injectable()
 export class TreePresenter {
@@ -45,10 +45,10 @@ export class TreePresenter {
         return existed.Length;
     }
 
-    public UpdateTree(state: IState, path = []): void {
+    public UpdateTree(state: IState): void {
         let index = 0;
         for (const msg of state.Root.Messages) {
-            index += this.updateTree(msg, state, path, index);
+            index += this.updateTree(msg, state, [], index);
         }
         while (index < state.Items.length){
             state.Items.removeAt(index);
@@ -62,4 +62,10 @@ export type TreeItem = {
     Message: MessageProxy;
     IsOpened: boolean;
     Length: number;
+}
+
+export type IState = {
+    Items: ObservableList<TreeItem>;
+    Root: ContextProxy;
+    ItemsMap: Map<string, TreeItem>;
 }
