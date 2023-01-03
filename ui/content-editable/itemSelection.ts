@@ -5,7 +5,7 @@ export abstract class ItemSelection<T> {
 
     public static GetCurrent<T>(): ItemSelection<T> {
         const selection = window.getSelection();
-        switch (selection.type) {
+        switch (selection?.type) {
             case  'Caret':
                 const element = this.getSpan<T>(selection.anchorNode);
                 if (!element.item)

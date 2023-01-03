@@ -26,6 +26,5 @@ export function getTestContainer() {
 }
 
 export function clearMocks() {
-    proxy.clear();
 }
 

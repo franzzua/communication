@@ -1,4 +1,4 @@
-import {ModelMap, ModelProxy, proxy} from "@cmmn/domain/proxy";
+import {ModelKey, ModelMap, ModelProxy, proxy} from "@cmmn/domain/proxy";
 import {Context, Message} from "@model";
 import {IContextActions} from "@domain";
 import {MessageProxy} from "./message-proxy";
@@ -15,10 +15,10 @@ export class ContextProxy extends ModelProxy<Context, IContextActions> {
     }
 
     @proxy.map<Context>(Message, c => c.Messages)
-    MessageMap: ModelMap<MessageProxy>;
+    MessageMap: Map<ModelKey, MessageProxy>;
 
     @proxy.map<Context>(Message, c => c.Parents)
-    ParentsMap: ModelMap<MessageProxy>;
+    ParentsMap: Map<ModelKey, MessageProxy>;
 
     public CreateMessage(message: Message, index = this.Messages.length): MessageProxy {
         this.Actions.CreateMessage(message, index);

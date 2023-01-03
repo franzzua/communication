@@ -1,6 +1,6 @@
 import {Injectable} from "@cmmn/core";
 import {Context, DomainState} from "@model";
-import {EntityLocator, ModelMap, ModelProxy, proxy, Stream} from "@cmmn/domain/proxy";
+import {EntityLocator, ModelKey, ModelMap, ModelProxy, proxy, Stream} from "@cmmn/domain/proxy";
 import type {IDomainActions} from "@domain";
 import {ContextProxy} from "./context-proxy";
 
@@ -18,6 +18,6 @@ export class DomainProxy extends ModelProxy<DomainState, IDomainActions> {
     }
 
     @proxy.map<DomainState>(Context, d => d.Contexts)
-    ContextsMap: ModelMap<ContextProxy>;
+    ContextsMap: Map<ModelKey, ContextProxy>;
 }
 

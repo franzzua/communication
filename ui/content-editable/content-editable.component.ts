@@ -5,7 +5,6 @@ import {compare, debounced, Fn, Injectable} from "@cmmn/core";
 import {ItemSelection} from "./itemSelection";
 import {cell, Cell, ObservableList} from "@cmmn/cell";
 import {DomainProxy} from "@proxy";
-import {RouterService} from "../../app/services/router.service";
 import {Context} from "@model";
 import {ContextProxy} from "@proxy";
 import {ContentEditableState} from "./types";
@@ -14,7 +13,7 @@ import {ContentEditableReducers} from "./content-editable.reducers";
 import {utc} from "@cmmn/core";
 
 @Injectable(true)
-@component({name: 'content-editable', template: null, style})
+@component({name: 'content-editable', template: () => void 0, style})
 export class ContentEditableComponent extends HtmlComponent<void> {
     @property()
     private uri!: string;
@@ -23,7 +22,6 @@ export class ContentEditableComponent extends HtmlComponent<void> {
     Selection: ItemSelection<TreeItem> = ItemSelection.GetCurrent();
 
     constructor(private root: DomainProxy,
-                private routerService: RouterService,
                 private presenter: TreePresenter,
                 private reducers: ContentEditableReducers) {
         super();
@@ -121,6 +119,8 @@ export class ContentEditableComponent extends HtmlComponent<void> {
         const added = new Set(items);
 
         for (let child of children) {
+            if (child instanceof  Comment)
+                continue;
             if (child.item && !added.has(child.item)) {
                 // Deleted in Model
                 child.remove();
@@ -177,7 +177,7 @@ export class ContentEditableComponent extends HtmlComponent<void> {
         const newNode = document.createElement('span') as ItemElement;
         newNode.item = item;
         newNode.index = child?.index ?? this.element.children.length;
-        newNode.innerText = item.Message.State.Content;
+        newNode.innerHTML = item.Message.State.Content;
         newNode.className = `item level-${item.Path.length}`
         newNode.style.setProperty('--level', item.Path.length.toString());
         if (child) {
