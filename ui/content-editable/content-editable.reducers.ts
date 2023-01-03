@@ -5,6 +5,7 @@ import type {Reducer} from "../reducers";
 import {Fn, Injectable, utc} from "@cmmn/core";
 import {ContextProxy} from "@services";
 import {ItemSelection} from "./itemSelection";
+import {TreeState} from "../tree/types";
 
 
 export type ReducerStore<TState> = {
@@ -322,6 +323,18 @@ export class ContentEditableReducers {
         }
     }
 
+    AddMessage(data: { item: TreeItem; content: string; index: number }): Reducer<TreeState> {
+        return state => {
+            const newMessage = data.item.Message.Context.CreateMessage({
+                Content: data.content,
+                id: Fn.ulid(),
+                CreatedAt: utc(),
+                UpdatedAt: utc(),
+                ContextURI: data.item.Message.Context.State.URI,
+            }, data.index);
+            return state;
+        }
+    }
 }
 
 

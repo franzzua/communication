@@ -189,7 +189,7 @@ export class TreeReducers {
         return (state: TreeState) => {
             const message = state.Selected.Message;
             const selectedIndex = state.Items.toArray().indexOf(state.Selected);
-            const next = state.Items[selectedIndex + 1];
+            const next = state.Items.toArray()[selectedIndex + 1];
             state.Items.removeAt(state.Items.toArray().indexOf(state.Selected));
             if (next && next.Message.Context == message.Context) {
                 message.Actions.Remove();
@@ -198,7 +198,7 @@ export class TreeReducers {
                     Selected: next,
                 };
             } else {
-                const prev = state.Items[selectedIndex - 1];
+                const prev = state.Items.toArray()[selectedIndex - 1];
                 message.Actions.Remove();
                 return {
                     ...state,

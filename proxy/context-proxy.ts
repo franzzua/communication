@@ -20,9 +20,9 @@ export class ContextProxy extends ModelProxy<Context, IContextActions> {
     @proxy.map<Context>(Message, c => c.Parents)
     ParentsMap: ModelMap<MessageProxy>;
 
-    public CreateMessage(message: Message): MessageProxy {
-        this.Actions.CreateMessage(message);
-        this.State.Messages.push(message.id);
+    public CreateMessage(message: Message, index = this.Messages.length): MessageProxy {
+        this.Actions.CreateMessage(message, index);
+        this.State.Messages.splice(index, 0, message.id);
         const result = this.MessageMap.get(message.id);
         result.State = message;
         return result;
