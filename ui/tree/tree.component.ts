@@ -5,7 +5,7 @@ import {keyMap, TreeReducers} from "./tree-reducers";
 import {TreeItem, TreePresenter} from "../../presentors/tree.presentor";
 import {RouterService} from "../../app/services/router.service";
 import {Injectable} from "@cmmn/core";
-import {KeyboardAspect} from "./keyboardAspect";
+import {KeyboardAspect} from "../keyboardAspect";
 import {Context} from "@model";
 import style from "./tree.style.less";
 import {Cell, cell} from "@cmmn/cell";

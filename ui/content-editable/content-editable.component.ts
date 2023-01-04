@@ -1,7 +1,7 @@
 import {action, component, effect, HtmlComponent, property} from "@cmmn/ui";
 import style from "./content-editable.style.less";
 import {TreeItem, TreePresenter} from "../../presentors/tree.presentor";
-import {compare, debounced, Fn, Injectable} from "@cmmn/core";
+import {compare, debounce, debounced, Fn, Injectable} from "@cmmn/core";
 import {ItemSelection} from "./itemSelection";
 import {cell, Cell, ObservableList} from "@cmmn/cell";
 import {DomainProxy} from "@proxy";
@@ -11,12 +11,18 @@ import {ContentEditableState} from "./types";
 import {ReducerQueueState} from "../reducers";
 import {ContentEditableReducers} from "./content-editable.reducers";
 import {utc} from "@cmmn/core";
+import {keyMap} from "../tree/tree-reducers";
+import {KeyboardListener} from "@cmmn/ui";
+import {mergeFromModel, mergeFromUI} from "./merge";
 
 @Injectable(true)
 @component({name: 'content-editable', template: () => void 0, style})
 export class ContentEditableComponent extends HtmlComponent<void> {
+    public static DebounceTime = 40;
     @property()
     private uri!: string;
+    @property()
+    private id: string = Fn.ulid();
 
     @cell
     Selection: ItemSelection<TreeItem> = ItemSelection.GetCurrent();
@@ -25,12 +31,12 @@ export class ContentEditableComponent extends HtmlComponent<void> {
                 private presenter: TreePresenter,
                 private reducers: ContentEditableReducers) {
         super();
-        Cell.OnChange(() => this.Items.toArray().map(x => x.Message.State.id), {
+        Cell.OnChange(() => this.Items.toArray().map(x => x.Message.State), {
             compare
         }, () => this.merge())
     }
 
-    @cell({compareKey: a => a.State, compare: Context.equals})
+    @cell({compareKey: a => a?.State, compare: Context.equals})
     get ContextProxy(): ContextProxy {
         return this.uri && this.root.ContextsMap.get(this.uri);
     }
@@ -42,14 +48,14 @@ export class ContentEditableComponent extends HtmlComponent<void> {
         ItemsMap: new Map<string, TreeItem>()
     });
 
-    get Items() {
+    public get Items() {
         const s = this.$reducerState.get();
         this.presenter.UpdateTree(s);
         return s.Items;
     }
 
     @action(function (this: ContentEditableComponent) {
-        return this.ContextProxy.State.URI;
+        return this.ContextProxy?.State.URI;
     })
     private InitAction() {
         const context = this.ContextProxy;
@@ -62,14 +68,23 @@ export class ContentEditableComponent extends HtmlComponent<void> {
         this.element.setAttribute('contenteditable', '')
         this.element.setAttribute('autofocus', '')
         this.element.setAttribute('tabindex', '0');
+        this.element.setAttribute('id', this.id);
         this.element.focus();
     }
+    private keyboardListener = new KeyboardListener(this.element);
 
-    // @event('click')
-    // onClick(e: PointerEvent) {
-    //     const item = e.target['item'] as TreeItem;
-    //     this.InvokeAction(this.treeStore.Focus(item));
-    // }
+    @effect()
+    private listenKeyboard() {
+        return this.keyboardListener.on('keydown', event => {
+            const modifiers = ['Alt', 'Ctrl', 'Shift'].filter(x => event[x.toLowerCase() + 'Key']);
+            const modKey = modifiers.join('') + event.code;
+            if (modKey in keyMap) {
+                event.preventDefault();
+                const reducer = this.reducers[keyMap[modKey]](event as any);
+                this.$reducerState.Invoke(reducer);
+            }
+        })
+    }
 
     @event(document, 'selectionchange')
     onSelectionChange(e: Event) {
@@ -81,97 +96,75 @@ export class ContentEditableComponent extends HtmlComponent<void> {
             ...state,
             Selection: this.Selection
         }));
-        console.log(
-            this.Items.toArray().indexOf(this.Selection?.Focus.item),
-            this.Selection?.Focus.item?.Message.State.Content,
-            this.Selection?.Focus.item?.Length,
-        );
+        // console.log(
+        //     this.id,
+        //     this.Items.toArray().indexOf(this.Selection?.Focus.item),
+        //     this.Selection?.Focus.item?.Message.State.Content,
+        //     this.Selection?.Focus.item?.Length,
+        // );
     }
 
-    get childNodes() {
-        return Array.from(this.element.childNodes) as Array<ItemElement>;
+    public get childNodes() {
+        return (Array.from(this.element.childNodes) as Array<ItemElement>)
+            .orderBy(x => x.style.order);
     }
 
-    private addMessage(data: { item: TreeItem; content: string; }, child: ItemElement) {
-        const index = data.item.Message.Context.Messages.indexOf(data.item.Message);
-        const newMessage = data.item.Message.Context.CreateMessage({
-            Content: data.content,
+    private addMessageAfter(item: TreeItem, content: string, child: ItemElement) {
+        const context = item?.Message.Context ?? this.$reducerState.get().Root;
+        const index = context.Messages.indexOf(item?.Message);
+        const newMessage = context.CreateMessage({
+            Content: content,
             id: Fn.ulid(),
             CreatedAt: utc(),
             UpdatedAt: utc(),
-            ContextURI: data.item.Message.Context.State.URI,
-        }, index);
+            ContextURI: context.State.URI,
+        }, index + 1);
         const newItem = {
             Message: newMessage,
             IsOpened: false,
-            Path: data.item.Path.slice(0, -1).concat([newMessage.State.id]),
+            Path: (item?.Path.slice(0, -1) ?? []).concat([newMessage.State.id]),
             Length: 0
         };
-        const span = this.insertBefore(newItem, child);
+        child.index = (child?.previousSibling?.index ?? -1) + 1;
+        child.item = newItem;
+        return newItem;
     }
 
     @event('input')
-    @debounced(40)
-    merge(fromUI?: Event) {
-        console.log(this.Items.toArray().map(x => x.Message.State.Content));
-        const children = this.childNodes;
-        const items = this.Items.toArray();
-        const added = new Set(items);
+    onInputEvent(e: Event) {
+        this.mergeDebounced(true);
+    }
+    merge(fromUI?: boolean) {
+        if (fromUI) {
+            const diff = mergeFromUI(this.Items.toArray(), this.childNodes);
+            for (let [message, change] of diff.update) {
+                message.Actions.UpdateText(change.content);
+            }
+            for (let {item, content, child} of diff.add) {
 
-        for (let child of children) {
-            if (child instanceof  Comment)
-                continue;
-            if (child.item && !added.has(child.item)) {
-                // Deleted in Model
+                this.addMessageAfter(item, content, child);
+            }
+            for (let message of diff.delete) {
+                message.Actions.Remove();
+            }
+        }else{
+            const diff = mergeFromModel(this.Items.toArray(), this.childNodes);
+            // console.log(diff)
+            for (let {item, before} of diff.add) {
+                this.insertBefore(item, before);
+            }
+            for (let child of diff.delete) {
                 child.remove();
-                continue;
             }
-            const texts = recursiveGetText(child).split('\n');
-            const content = texts.pop();
-            if (child.item) {
-                if (fromUI) {
-                    // Updated in UI
-                    if (child.item.Message.State.Content !== content) {
-                        this.InvokeAction(this.reducers.UpdateContent({
-                            item: child.item,
-                            content: content
-                        }));
-                    }
-                }else {
-                    if (child.textContent !== child.item.Message.State.Content)
-                        child.textContent = child.item.Message.State.Content
-                }
-            } else {
-                // Added in UI
-                const item = child.previousSibling.item;
-                this.addMessage({item, content: content}, child)
-            }
-            if (child.innerHTML !== content)
-                child.innerHTML = content;
-            for (let content of texts) {
-                // Added in UI
-                const item = child.item;
-                this.addMessage({item, content}, child)
-            }
-
-        }
-
-        for (let index = 0; index < items.length; index++) {
-            const item = items[index];
-            if (children[index]?.item == item) {
-                continue;
-            }
-            if (fromUI) {
-                // Deleted in UI
-                item.Message.Actions.Remove();
-                console.log('delete', item.Message.State.Content);
-            } else {
-                // Added in Model
-                const newNode = this.insertBefore(item, children[index]);
-                children.splice(index, 0, newNode);
+            for (let [child, {content, index}] of diff.update) {
+                child.innerHTML = content
+                child.index = index;
+                child.style.order = index.toString();
             }
         }
     }
+
+    private mergeDebounced = debounce(this.merge.bind(this), ContentEditableComponent.DebounceTime);
 
     private insertBefore(item: TreeItem, child: ItemElement) {
         const newNode = document.createElement('span') as ItemElement;
@@ -180,6 +173,7 @@ export class ContentEditableComponent extends HtmlComponent<void> {
         newNode.innerHTML = item.Message.State.Content;
         newNode.className = `item level-${item.Path.length}`
         newNode.style.setProperty('--level', item.Path.length.toString());
+        newNode.style.order = newNode.index.toString();
         if (child) {
             child.index++;
             this.element.insertBefore(newNode, child);
@@ -212,10 +206,12 @@ export function event(nameOrTarget: keyof HTMLElementEventMap | EventTarget,
     return (target, key, descr) => {
         HtmlComponent.GlobalEvents.on('connected', instance => {
             if (instance instanceof target.constructor) {
-                element ??= instance.element;
+                const current = element ?? instance.element;
                 const listener = instance[key].bind(instance);
-                element.addEventListener(name, listener, options);
-                instance.once('dispose', () => element.removeEventListener(name, listener, options));
+                current.addEventListener(name, listener, options);
+                instance.once('dispose', () => {
+                    current.removeEventListener(name, listener, options)
+                });
             }
         });
         return descr;
@@ -226,18 +222,5 @@ export type ItemElement<T = TreeItem> = HTMLSpanElement & {
     item: T;
     index: number;
     previousSibling: ItemElement<T>;
-}
-
-function recursiveGetText(node: Node) {
-    if (node instanceof HTMLBRElement)
-        return '\n';
-    if (node instanceof Text)
-        return node.textContent;
-    if (node instanceof Comment)
-        return '';
-    const texts = [];
-    for (let childNode of Array.from(node.childNodes)) {
-        texts.push(recursiveGetText(childNode));
-    }
-    return texts.join('');
+    nextSibling: ItemElement<T>;
 }

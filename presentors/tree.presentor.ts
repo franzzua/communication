@@ -34,6 +34,7 @@ export class TreePresenter {
             existed.Length = 1;
             existed.Path = newPath;
         }
+        const sta = existed.Message.State;
         index++;
         if (existed.IsOpened && existed.Message.SubContext) {
             for (const msg of existed.Message.SubContext.Messages) {

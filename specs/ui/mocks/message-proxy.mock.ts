@@ -30,9 +30,12 @@ export class MessageProxyMock implements IMessageActions {
     }
 
     async Remove(): Promise<void> {
+        this.Context.messages.removeAt(this.Context.Messages.indexOf(this));
     }
 
     async Reorder(newOrder: number): Promise<void> {
+        this.Context.messages.removeAt(this.Context.Messages.indexOf(this));
+        this.Context.messages.insert(newOrder, this);
     }
 
     async UpdateText(text: string): Promise<void> {

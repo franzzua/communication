@@ -9,8 +9,8 @@ import { DomainProxy } from "@proxy";
 @Injectable()
 export class TestApp extends Application {
 
-    constructor(container: Container) {
-        super(container);
+    constructor(public cont: Container) {
+        super(cont);
     }
 
     public static async Build() {

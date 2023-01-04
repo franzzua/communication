@@ -1,18 +1,21 @@
 import {Context} from "@model";
 import {MessageProxyMock} from "./message-proxy.mock";
+import {cell, ObservableList} from "@cmmn/cell";
 
 export class ContextProxyMock {
     constructor(test: string) {
     }
 
-    private messages: Array<MessageProxyMock> = [
+    @cell
+    public readonly messages = new ObservableList([
         new MessageProxyMock(this, '1'),
         new MessageProxyMock(this, '2'),
         new MessageProxyMock(this, '3'),
-    ];
+    ]);
+
 
     get Messages(): ReadonlyArray<MessageProxyMock> {
-        return this.messages;
+        return this.messages.toArray();
     }
 
     get State() {
@@ -26,7 +29,7 @@ export class ContextProxyMock {
 
     CreateMessage(message, index = this.Messages.length) {
         const result = new MessageProxyMock(this, message.id, message.Content);
-        this.messages.push(result);
+        this.messages.insert(index, result);
         return result;
     }
 }
