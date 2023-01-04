@@ -27,16 +27,17 @@ export class TreePresenter {
         } else {
             const currentIndex = state.Items.toArray().indexOf(existed);
             if (currentIndex !== index){
-                state.Items.removeAt(currentIndex);
+                if (currentIndex != -1) {
+                    state.Items.removeAt(currentIndex);
+                }
                 state.Items.insert(index, existed);
             }
             existed.Message = msg;
             existed.Length = 1;
             existed.Path = newPath;
         }
-        const sta = existed.Message.State;
         index++;
-        if (existed.IsOpened && existed.Message.SubContext) {
+        if (existed.IsOpened && existed.Message.State.SubContextURI) {
             for (const msg of existed.Message.SubContext.Messages) {
                 const length = this.updateTree(msg, state, newPath, index);
                 existed.Length += length;
@@ -59,6 +60,8 @@ export class TreePresenter {
 }
 
 export type TreeItem = {
+    Index?: number;
+    Parent?: TreeItem;
     Path: string[];
     Message: MessageProxy;
     IsOpened: boolean;

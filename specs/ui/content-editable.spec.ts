@@ -1,4 +1,4 @@
-import {afterEach, beforeEach, describe, expect, test, jest} from "@jest/globals";
+import {describe, expect, test, jest} from "@jest/globals";
 import {Fn} from "@cmmn/core";
 import {TestApp} from "./entry/test-app";
 import {DomainProxy} from "../../proxy";
@@ -10,6 +10,7 @@ import {MessageProxyMock} from "./mocks/message-proxy.mock";
 const wait = () => Fn.asyncDelay(5);
 
 async function getContext(id: string) {
+    console.log('-----------'+ id+'----------');
     ContentEditableComponent.DebounceTime = 1;
     const app = await TestApp.Build();
     const proxy = app.cont.get<DomainProxyMock>(DomainProxy);
@@ -22,7 +23,12 @@ async function getContext(id: string) {
     await wait();
     return {app, context, ce};
 }
-
+test('initial', async () => {
+    const {ce, context, app} = await getContext('initial');
+    expect(ce.component.childNodes.map(x => +x.innerHTML)).toEqual([1,2,3]);
+    ce.remove();
+    app.destroy();
+});
 describe('model', () => {
 
     test('update', async () => {
@@ -51,6 +57,18 @@ describe('model', () => {
         ce.remove();
         app.destroy();
     });
+
+
+    test('move', async () => {
+        const {ce, context, app} = await getContext('move');
+        const x = context.messages.toArray()[2];
+        context.messages.removeAt(2);
+        context.messages.insert(0, x);
+        await wait();
+        expect(ce.component.childNodes.map(x => +x.innerHTML)).toEqual([3,1,2]);
+        ce.remove();
+        app.destroy();
+    });
 })
 describe('ui', () => {
 
@@ -73,6 +91,19 @@ describe('ui', () => {
         ce.dispatchEvent(new Event('input'));
         await wait();
         expect(context.Messages[3].State.Content).toEqual('5');
+        ce.remove();
+        app.destroy();
+    })
+    test('add-br', async () => {
+        const {ce, context, app} = await getContext('add-first');
+        const child = document.createElement('span');
+        child.innerHTML = '<br>'
+        child.style.order = '1.2'
+        ce.insertBefore(child, ce.component.childNodes[2]);
+        ce.dispatchEvent(new Event('input'));
+        await wait();
+        expect(context.Messages.map(x => x.State.Content)).toEqual(['1', '2', '','3']);
+        expect(ce.component.childNodes.map(x => x.innerHTML)).toEqual(['1', '2', '','3']);
         ce.remove();
         app.destroy();
     })
@@ -100,7 +131,7 @@ describe('ui', () => {
         app.destroy();
     })
 
-    test('move', async () => {
+    test('move down', async () => {
         const {ce, context, app} = await getContext('move');
         global.setSelection({
             type: 'Caret',
@@ -117,6 +148,28 @@ describe('ui', () => {
         await wait();
         expect(context.Messages.map(x => x.State.Content)).toEqual(['2', '1', '3']);
         expect(ce.component.childNodes.map(x => x.innerHTML)).toEqual(['2', '1', '3']);
+        ce.remove();
+        app.destroy();
+    })
+
+
+    test('move up', async () => {
+        const {ce, context, app} = await getContext('move');
+        global.setSelection({
+            type: 'Caret',
+            anchorNode: ce.component.childNodes[2]
+        });
+        ce.dispatchEvent(new Event('selectionchange', {
+            bubbles: true
+        }));
+        ce.dispatchEvent(new KeyboardEvent('keydown', {
+            ctrlKey: true,
+            code: 'ArrowUp',
+            bubbles: true
+        } as any))
+        await wait();
+        expect(context.Messages.map(x => x.State.Content)).toEqual(['1', '3', '2']);
+        expect(ce.component.childNodes.map(x => x.innerHTML)).toEqual(['1', '3', '2']);
         ce.remove();
         app.destroy();
     })

@@ -6,8 +6,6 @@
   "scripts": {
     "compile": "cmmn compile --watch",
     "web:bundle": "cmmn bundle main --watch",
-    "test:bundle": "cmmn bundle test --watch",
-    "test:serve": "cmmn serve test",
     "serve": "cmmn serve -b",
     "web:prod": "cmmn bundle main --prod",
     "server:bundle": "cmmn bundle server --watch",
@@ -70,24 +68,6 @@
       "mount": {},
       "browser": true,
       "port": 4001
-    },
-    "test": {
-      "input": "dist/esm/specs/ui/entry/index.js",
-      "module": "es",
-      "html": "./specs/ui/entry/index.html",
-      "dedupe": [
-        "lib0"
-      ],
-      "external": [
-        "@cmmn.*",
-        "luxon"
-      ],
-      "alias": {
-        "luxon": "luxon/build/es6/luxon.js"
-      },
-      "mount": {},
-      "browser": true,
-      "port": 4006
     },
     "worker": {
       "dedupe": [

@@ -65,7 +65,10 @@ export class MessageProxy extends ModelProxy<Message, IMessageActions> {
 
 
     public MoveTo(context: ContextProxy, index: number): MessageProxy {
-        this.Context.State.Messages.remove(this.State.id);
+        this.Context.State = {
+            ...this.Context.State,
+            Messages: this.Context.State.Messages.filter(x => x != this.State.id)
+        };
         this.Context.Actions.RemoveMessage(this.State.id);
         const newState = {
             ...this.State,
@@ -84,6 +87,7 @@ export class MessageProxy extends ModelProxy<Message, IMessageActions> {
         };
         const result = context.MessageMap.get(newState.id);
         result.State = newState;
+        console.log(context.Messages.map(x => x.State.Content));
         return result;
     }
 }

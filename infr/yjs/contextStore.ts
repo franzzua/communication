@@ -4,6 +4,7 @@ import {cell, Cell} from "@cmmn/cell";
 import {ResolvablePromise, utc} from "@cmmn/core";
 import {Context, Message} from "@model";
 import {ContextMap} from "@domain/model";
+import {Permutation} from "@domain/helpers/permutation";
 
 export class ContextStore {
 
@@ -93,6 +94,7 @@ export class ContextStore {
     }
 
     set State(value: Context){
+        value.Permutation = Permutation.Diff(value.Messages.orderBy(x => x), value.Messages);
         this.contextMap.Items.set(value.URI, Context.ToJSON(value));
         const existed = new Set(this.messageStore.Items.keys());
         for (let id of value.Messages) {

@@ -28,7 +28,6 @@ export const Routes: (Route & {
         template: (html, params) => html`
             <div style="display: flex; flex-flow: column nowrap; flex: 1;">
                 <content-editable style="flex: 1" uri=${params.uri ? atob(decodeURIComponent(params.uri)) : null}/>
-                <ctx-tree style="flex: 1" uri=${params.uri ? atob(decodeURIComponent(params.uri)) : null}/>
             </div>
         `
     },
