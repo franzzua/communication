@@ -39,6 +39,13 @@ export abstract class ItemSelection<T> {
     }
 
     public abstract GetItemSelection(item: T, index: number): { from?; to?; at?; } | null;
+
+    set(node: HTMLElement) {
+        const selection = window.getSelection();
+        if (selection.focusNode !== node)
+            selection.setBaseAndExtent(node, 0, node, 0);
+
+    }
 }
 
 export class CaretSelection<T> extends ItemSelection<T> {

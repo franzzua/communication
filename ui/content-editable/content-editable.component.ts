@@ -58,8 +58,13 @@ export class ContentEditableComponent extends HtmlComponent<void> {
             // @ts-ignore
             this.element.children[i].style.order = i;
         }
+        const selected = this.Selection?.Focus.item;
         const diff = this.diffApply.getMergeDiff(this.ItemsCollection, true);
         this.diffApply.apply(diff);
+        if (selected){
+            const newSelected = this.diffApply.cache.get(selected.Message);
+            this.Selection.set(newSelected);
+        }
     }
 
 

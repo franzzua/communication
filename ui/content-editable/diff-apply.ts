@@ -8,7 +8,7 @@ export class DiffApply {
 
     }
 
-    private cache = new Map<MessageProxy, ItemElement>();
+    cache = new Map<MessageProxy, ItemElement>();
 
     getMergeDiff(collection: Iterable<TreeItem>, fromUI: boolean) {
         this.fixChildren();
@@ -109,8 +109,27 @@ export class DiffApply {
         for (let {item, child} of diff.ui.updated) {
             item.Message.Actions.UpdateText(child.innerHTML);
         }
-        for (let {item, child} of diff.ui.added) {
-            this.addMessageAfter(item, child);
+        if (diff.ui.added.length) {
+            if (this.component.Selection) {
+                const selected = this.component.Selection?.Focus.item;
+                const selectedChild = this.cache.get(selected.Message);
+                const lastAdded = diff.ui.added[diff.ui.added.length - 1];
+                if (lastAdded.child.nextSibling !== selectedChild){
+                    diff.ui.added.pop();
+                    selected.Message.Actions.UpdateText(lastAdded.child.textContent);
+                    lastAdded.child.item = selected;
+                    lastAdded.child.index = selected.Index + diff.ui.added.length;
+                    this.addMessageBefore(selected, selectedChild);
+                }
+                for (let { child} of diff.ui.added) {
+                    this.addMessageBefore(selected, child);
+                }
+            }else {
+                const lastNextItem = diff.ui.added[diff.ui.added.length - 1].child.nextSibling?.item;
+                for (let {child} of diff.ui.added) {
+                    this.addMessageBefore(lastNextItem, child);
+                }
+            }
         }
         for (let {item, child} of diff.ui.deleted) {
             item.Message.Actions.Remove();
@@ -132,23 +151,21 @@ export class DiffApply {
                 child.index = item.Index;
                 this.component.element.insertBefore(child, this.component.childNodes[item.Index]);
             }
-            child.style.order = item.Index.toString();
         }
 
 
     }
 
-    private addMessageAfter(item: TreeItem, child: ItemElement) {
-        item ??= this.component.Selection?.Focus.item ?? child.previousSibling?.item;
+    private addMessageBefore(item: TreeItem, child: ItemElement) {
         const context = item?.Message.Context ?? this.component.ContextProxy;
-        const index = context.Messages.indexOf(item?.Message);
+        const index = item ? context.Messages.indexOf(item?.Message) : context.Messages.length;
         const newMessage = context.CreateMessage({
             Content: child.textContent,
             id: Fn.ulid(),
             CreatedAt: utc(),
             UpdatedAt: utc(),
             ContextURI: context.State.URI,
-        }, index + 1);
+        }, index);
         const newItem = {
             Message: newMessage,
             IsOpened: false,
@@ -165,7 +182,7 @@ export class DiffApply {
         const newNode = document.createElement('span') as ItemElement;
         this.cache.set(item.Message, newNode);
         newNode.item = item;
-        newNode.index = child?.index ?? this.component.childNodes.length;
+        newNode.index = item.Index;
         newNode.innerHTML = item.Message.State.Content;
         newNode.className = `item level-${item.Path.length}`
         newNode.style.setProperty('--level', item.Path.length.toString());

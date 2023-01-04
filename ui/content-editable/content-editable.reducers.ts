@@ -108,13 +108,14 @@ export class ContentEditableReducers {
         return (state: ContentEditableState) => {
             const selectedItem = state.Selection?.Focus.item;
             const message = selectedItem.Message;
-            const messageIndex = selectedItem.Index - (selectedItem.Parent?.Index ?? -1) - 1;
+            const messageIndex = message.Context.Messages.indexOf(message);
             if (messageIndex == 0)
                 return state;
             const prevMessage = message.Context.Messages[messageIndex - 1];
 
             const subContext = prevMessage.GetOrCreateSubContext();
             message.MoveTo(subContext, subContext.Messages.length);
+            console.log('move', message.State.Content, 'to', prevMessage.State.Content);
             return state;
         }
     }
@@ -129,22 +130,9 @@ export class ContentEditableReducers {
                 return state;
 
             const parent = selectedItem.Parent;
-            const parentIndex = parent.Index - (parent.Parent?.Index ?? -1) - 1;
-
-            // selectedItem.Message = message.MoveTo(parent.Message.Context, parentIndex + 1);
-            // state.ItemsMap.delete(selectedItem.Path.join(TreePresenter.Separator));
-            // selectedItem.Path = [...parent.Path.slice(0, -1), message.State.id];
-            // state.ItemsMap.set(selectedItem.Path.join(TreePresenter.Separator), selectedItem);
-            selectedItem.Message.MoveTo(parent.Message.Context, parentIndex);
-            // const parentItemIndex = state.Items.toArray().indexOf(parent);
-            // state.Items.removeAt(state.Items.toArray().indexOf(selectedItem));
-            // state.Items.insert(parentItemIndex + parent.Length, selectedItem);
-            // selectedItem.Message = parent.Message.Context.MessageMap.get(message.State.id);
-            // selectedItem.Message.State = message.State;
-            // parent.Length--;
-            return {
-                ...state,
-            }
+            const parentIndex = parent.Message.Context.Messages.indexOf(parent.Message);
+            selectedItem.Message.MoveTo(parent.Message.Context, parentIndex + 1);
+            return state;
         }
     }
 
