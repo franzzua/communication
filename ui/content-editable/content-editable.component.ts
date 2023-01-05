@@ -11,6 +11,7 @@ import {ItemsCollection} from "./items-collection";
 import {DiffApply} from "./diff-apply";
 import {Reducer} from "../reducers";
 import {ContentEditableState} from "./types";
+import {DateTime} from "luxon";
 
 @Injectable(true)
 @component({name: 'content-editable', template: () => void 0, style})
@@ -153,6 +154,7 @@ export function event(nameOrTarget: keyof HTMLElementEventMap | EventTarget,
 
 export type ItemElement<T = TreeItem> = HTMLSpanElement & {
     item: T;
+    updatedAt: DateTime;
     index: number;
     previousSibling: ItemElement<T>;
     nextSibling: ItemElement<T>;

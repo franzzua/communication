@@ -1,4 +1,4 @@
-import {describe, expect, test, jest} from "@jest/globals";
+import {describe, expect, test} from "@jest/globals";
 import {Fn} from "@cmmn/core";
 import {TestApp} from "./entry/test-app";
 import {DomainProxy} from "../../proxy";
@@ -6,11 +6,13 @@ import {ExtendedElement} from "@cmmn/ui";
 import {ContentEditableComponent} from "../../ui/content-editable/content-editable.component";
 import {DomainProxyMock} from "./mocks/domain-proxy.mock";
 import {MessageProxyMock} from "./mocks/message-proxy.mock";
+import {CaretSelection} from "../../ui/content-editable/itemSelection";
+import {ContextProxyMock} from "./mocks/context-proxy.mock";
 
 const wait = () => Fn.asyncDelay(5);
 
 async function getContext(id: string) {
-    console.log('-----------'+ id+'----------');
+    console.log('-----------' + id + '----------');
     ContentEditableComponent.DebounceTime = 1;
     const app = await TestApp.Build();
     const proxy = app.cont.get<DomainProxyMock>(DomainProxy);
@@ -23,9 +25,10 @@ async function getContext(id: string) {
     await wait();
     return {app, context, ce};
 }
+
 test('initial', async () => {
     const {ce, context, app} = await getContext('initial');
-    expect(ce.component.childNodes.map(x => +x.innerHTML)).toEqual([1,2,3]);
+    expect(ce.component.childNodes.map(x => +x.innerHTML)).toEqual([1, 2, 3]);
     ce.remove();
     app.destroy();
 });
@@ -44,7 +47,7 @@ describe('model', () => {
         const {ce, context, app} = await getContext('remove');
         context.messages.removeAt(1);
         await wait();
-        expect(ce.component.childNodes.map(x => +x.innerHTML)).toEqual([1,3]);
+        expect(ce.component.childNodes.map(x => +x.innerHTML)).toEqual([1, 3]);
         ce.remove();
         app.destroy();
     });
@@ -53,7 +56,7 @@ describe('model', () => {
         const {ce, context, app} = await getContext('add');
         context.messages.insert(1, new MessageProxyMock(context, '5'));
         await wait();
-        expect(ce.component.childNodes.map(x => +x.innerHTML)).toEqual([1,5,2,3]);
+        expect(ce.component.childNodes.map(x => +x.innerHTML)).toEqual([1, 5, 2, 3]);
         ce.remove();
         app.destroy();
     });
@@ -65,11 +68,17 @@ describe('model', () => {
         context.messages.removeAt(2);
         context.messages.insert(0, x);
         await wait();
-        expect(ce.component.childNodes.map(x => +x.innerHTML)).toEqual([3,1,2]);
+        expect(ce.component.childNodes.map(x => +x.innerHTML)).toEqual([3, 1, 2]);
         ce.remove();
         app.destroy();
     });
 })
+
+function checkContent(ce: ExtendedElement<ContentEditableComponent>, context: ContextProxyMock, array: number[]) {
+    expect(context.Messages.map(x => +x.State.Content)).toEqual(array);
+    expect(ce.component.childNodes.map(x => +x.innerHTML)).toEqual(array);
+}
+
 describe('ui', () => {
 
     test('update', async () => {
@@ -94,6 +103,26 @@ describe('ui', () => {
         ce.remove();
         app.destroy();
     })
+
+    test('add-selection', async () => {
+        const {ce, context, app} = await getContext('add');
+        ce.component.Selection = new CaretSelection(
+            ce.component.childNodes[0].item, 0, 0
+        );
+        const child = document.createElement('span');
+        child.innerHTML = '5';
+        child.style.order = '3';
+        ce.insertBefore(child, ce.component.childNodes[1]);
+        const child2 = document.createElement('span');
+        child2.innerHTML = '6';
+        child2.style.order = '3';
+        ce.insertBefore(child2, ce.component.childNodes[1]);
+        ce.dispatchEvent(new Event('input'));
+        await wait();
+        checkContent(ce, context, [1, 6, 5, 2, 3]);
+        ce.remove();
+        app.destroy();
+    })
     test('add-br', async () => {
         const {ce, context, app} = await getContext('add-first');
         const child = document.createElement('span');
@@ -102,8 +131,8 @@ describe('ui', () => {
         ce.insertBefore(child, ce.component.childNodes[2]);
         ce.dispatchEvent(new Event('input'));
         await wait();
-        expect(context.Messages.map(x => x.State.Content)).toEqual(['1', '2', '','3']);
-        expect(ce.component.childNodes.map(x => x.innerHTML)).toEqual(['1', '2', '','3']);
+        expect(context.Messages.map(x => x.State.Content)).toEqual(['1', '2', '', '3']);
+        expect(ce.component.childNodes.map(x => x.innerHTML)).toEqual(['1', '2', '', '3']);
         ce.remove();
         app.destroy();
     })

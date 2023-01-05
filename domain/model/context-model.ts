@@ -27,11 +27,11 @@ export class ContextModel implements ModelLike<Context, IContextActions>, IConte
     }
 
     public get State(): Readonly<Context> {
-        return this.contextStore.State;
+        return this.contextStore.$state.get();
     }
 
     public set State(value: Readonly<Context>) {
-        this.contextStore.State = value;
+        this.contextStore.$state.set(value);
     }
 
     public* getParents(): IterableIterator<MessageModel> {

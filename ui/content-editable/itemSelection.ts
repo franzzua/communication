@@ -42,9 +42,10 @@ export abstract class ItemSelection<T> {
 
     set(node: HTMLElement) {
         const selection = window.getSelection();
-        if (selection.focusNode !== node)
+        if (selection && !selection.containsNode(node, true)) {
+            console.log('set selection', node);
             selection.setBaseAndExtent(node, 0, node, 0);
-
+        }
     }
 }
 

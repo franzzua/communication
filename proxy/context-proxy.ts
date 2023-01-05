@@ -22,9 +22,17 @@ export class ContextProxy extends ModelProxy<Context, IContextActions> {
 
     public CreateMessage(message: Message, index = this.Messages.length): MessageProxy {
         this.Actions.CreateMessage(message, index);
-        this.State.Messages.splice(index, 0, message.id);
+        this.State = {
+            ...this.State,
+            Messages: [
+                ...this.State.Messages.slice(0, index),
+                message.id,
+                ...this.State.Messages.slice(index)
+            ]
+        };
         const result = this.MessageMap.get(message.id);
         result.State = message;
+        console.log('add', this.Messages);
         return result;
     }
 }

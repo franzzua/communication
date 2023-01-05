@@ -20,11 +20,11 @@ export class DiffApply {
         //     model: []
         // }
         const children = new Set(Array.from(this.component.childNodes) as ItemElement[]);
-        console.log('_____________');
+        // console.log('_____________');
         for (let item of collection) {
             // state.ui.push(currentChild?.textContent);
             // state.model.push(item.Message.State.Content);
-            console.log(item.Path.map(() => '').join('\t')+item.Message.State.Content);
+            // console.log(item.Path.map(() => '').join('\t')+item.Message.State.Content);
             while (currentChild && !currentChild.item) {
                 // added in UI
                 ui.added.push({
@@ -38,12 +38,19 @@ export class DiffApply {
                 model.added.push({child: null, item});
                 continue;
             }
+            console.log('child', (currentChild.textContent??'null')||'-', 'item', item.Message.State.Content||'-');
+            if (!currentChild.parentElement) {
+                // deleted in UI
+                ui.deleted.push({child: currentChild, item});
+                children.delete(currentChild);
+                continue;
+            }
             if (currentChild.item.Message == item.Message) {
                 // updated but where?
                 if (fromUI) {
                     if (currentChild.innerHTML !== item.Message.State.Content)
                         ui.updated.push({child: currentChild, item});
-                } else {
+                } else if (!currentChild.updatedAt.equals(item.Message.State.UpdatedAt)) {
                     model.updated.push({child: currentChild, item});
                 }
                 children.delete(currentChild);
@@ -58,7 +65,7 @@ export class DiffApply {
             }
             children.delete(child);
             if (child.parentElement) {
-                // deleted in Model
+                // moved in Model
                 model.updated.push({child, item});
             } else {
                 // deleted in UI
@@ -74,27 +81,29 @@ export class DiffApply {
             }
         }
         // console.table(state);
-        console.table({
-            ui: {
-                updated: ui.updated.map(x => x.child.textContent).join(', '),
-                deleted: ui.deleted.map(x => x.item.Message.State.Content).join(', '),
-                added: ui.added.map(x => x.child.textContent).join(', '),
-            },
-            model: {
-                updated: model.updated.map(x => x.item.Message.State.Content).join(', '),
-                deleted: model.deleted.map(x => x.child.textContent).join(', '),
-                added: model.added.map(x => x.item.Message.State.Content).join(', '),
-            }
-        })
+        if (!ui.isEmpty() || !model.isEmpty()) {
+            console.table({
+                ui: {
+                    updated: ui.updated.map(x => x.child.textContent || '-').join(', '),
+                    deleted: ui.deleted.map(x => x.item.Message.State.Content || '-').join(', '),
+                    added: ui.added.map(x => x.child.textContent || '-').join(', '),
+                },
+                model: {
+                    updated: model.updated.map(x => x.item.Message.State.Content || '-').join(', '),
+                    deleted: model.deleted.map(x => x.child.textContent || '-').join(', '),
+                    added: model.added.map(x => x.item.Message.State.Content || '-').join(', '),
+                }
+            })
+        }
         return {ui, model};
     }
 
     fixChildren() {
-        for (let child of Array.from(this.component.element.children)) {
+        for (let child of Array.from(this.component.element.childNodes)) {
             if (child instanceof Comment)
                 continue;
             const text = recursiveGetText(child);
-            if (child instanceof HTMLSpanElement || child.localName === 'span')
+            if (child instanceof HTMLSpanElement || (child as HTMLElement).localName === 'span')
                 child.textContent = text;
             else {
                 child.remove();
@@ -106,6 +115,9 @@ export class DiffApply {
     }
 
     apply(diff: { ui: Diff, model: Diff }) {
+        if (diff.ui.isEmpty() && diff.model.isEmpty()) {
+            return;
+        }
         for (let {item, child} of diff.ui.updated) {
             item.Message.Actions.UpdateText(child.innerHTML);
         }
@@ -113,18 +125,19 @@ export class DiffApply {
             if (this.component.Selection) {
                 const selected = this.component.Selection?.Focus.item;
                 const selectedChild = this.cache.get(selected.Message);
+                // selected element children belongs to last element
                 const lastAdded = diff.ui.added[diff.ui.added.length - 1];
-                if (lastAdded.child.nextSibling !== selectedChild){
+                if (lastAdded.child.nextSibling !== selectedChild) {
                     diff.ui.added.pop();
                     selected.Message.Actions.UpdateText(lastAdded.child.textContent);
-                    lastAdded.child.item = selected;
-                    lastAdded.child.index = selected.Index + diff.ui.added.length;
-                    this.addMessageBefore(selected, selectedChild);
+                    selected.Message.State = {...selected.Message.State, Content: lastAdded.child.textContent};
+                    this.setChildItem(lastAdded.child, selected);
+                    diff.ui.added.unshift({child: selectedChild, item: null});
                 }
-                for (let { child} of diff.ui.added) {
+                for (let {child} of diff.ui.added) {
                     this.addMessageBefore(selected, child);
                 }
-            }else {
+            } else {
                 const lastNextItem = diff.ui.added[diff.ui.added.length - 1].child.nextSibling?.item;
                 for (let {child} of diff.ui.added) {
                     this.addMessageBefore(lastNextItem, child);
@@ -138,15 +151,12 @@ export class DiffApply {
         for (let {item, child} of diff.model.added) {
             this.insertBefore(item, child);
         }
-        for (let {child} of diff.model.deleted) {
+        for (let {child, item} of diff.model.deleted) {
             child.remove();
+            this.cache.delete(item.Message);
         }
         for (let {child, item} of diff.model.updated) {
-            if (child.innerHTML != item.Message.State.Content)
-                child.innerHTML = item.Message.State.Content;
-            child.className = `item level-${item.Path.length}`
-            child.style.setProperty('--level', item.Path.length.toString());
-            child.item = item;
+            this.setChildItem(child, item);
             if (child.index !== item.Index) {
                 child.index = item.Index;
                 this.component.element.insertBefore(child, this.component.childNodes[item.Index]);
@@ -172,21 +182,26 @@ export class DiffApply {
             Path: (item?.Path.slice(0, -1) ?? []).concat([newMessage.State.id]),
             Length: 0
         };
+        this.setChildItem(child, newItem);
         child.index = (item?.Index ?? -1) + 1;
-        child.item = newItem;
         return newItem;
     }
 
+    private setChildItem(child: ItemElement, item: TreeItem) {
+        if (child.innerHTML != item.Message.State.Content)
+            child.innerHTML = item.Message.State.Content;
+        child.className = `item level-${item.Path.length}`
+        child.style.setProperty('--level', item.Path.length.toString());
+        child.item = item;
+        child.updatedAt = item.Message.State.UpdatedAt;
+        child.id = item.Path.join(':');
+        this.cache.set(item.Message, child);
+    }
 
     private insertBefore(item: TreeItem, child: ItemElement) {
         const newNode = document.createElement('span') as ItemElement;
-        this.cache.set(item.Message, newNode);
-        newNode.item = item;
+        this.setChildItem(newNode, item);
         newNode.index = item.Index;
-        newNode.innerHTML = item.Message.State.Content;
-        newNode.className = `item level-${item.Path.length}`
-        newNode.style.setProperty('--level', item.Path.length.toString());
-        // newNode.style.order = newNode.index.toString();
         if (child) {
             child.index++;
             this.component.element.insertBefore(newNode, child);
@@ -202,7 +217,11 @@ export class Diff {
     added: { child?: ItemElement; item?: TreeItem }[] = [];
     updated: { child?: ItemElement; item?: TreeItem }[] = [];
 
-    equals(diff: Diff){
+    isEmpty() {
+        return this.deleted.length == 0 && this.added.length == 0 && this.updated.length == 0;
+    }
+
+    equals(diff: Diff) {
         return diff === this;
     }
 }

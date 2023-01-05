@@ -1,7 +1,7 @@
 import {ContextJSON, MessageJSON} from "@domain";
 import {SyncStore} from "@cmmn/sync";
 import {cell, Cell} from "@cmmn/cell";
-import {ResolvablePromise, utc} from "@cmmn/core";
+import {compare, ResolvablePromise, utc} from "@cmmn/core";
 import {Context, Message} from "@model";
 import {ContextMap} from "@domain/model";
 import {Permutation} from "@domain/helpers/permutation";
@@ -83,7 +83,7 @@ export class ContextStore {
         };
     }
 
-    get State(){
+    public $state = new Cell(() => {
         const state = this.GetState();
         if (!state.Context)
             return Context.FromJSON({URI: this.URI} as any);
@@ -91,31 +91,32 @@ export class ContextStore {
         const ordered = Array.from(state.Messages).orderBy(x => x);
         context.Messages = context.Permutation?.Invoke(ordered) ?? ordered;
         return context;
-    }
-
-    set State(value: Context){
-        value.Permutation = Permutation.Diff(value.Messages.orderBy(x => x), value.Messages);
-        this.contextMap.Items.set(value.URI, Context.ToJSON(value));
-        const existed = new Set(this.messageStore.Items.keys());
-        for (let id of value.Messages) {
-            if (existed.has(id)) {
-                existed.delete(id);
-                continue;
+    }, {
+        compare,
+        onExternal: value => {
+            value.Permutation = Permutation.Diff(value.Messages.orderBy(x => x), value.Messages);
+            this.contextMap.Items.set(value.URI, Context.ToJSON(value));
+            const existed = new Set(this.messageStore.Items.keys());
+            for (let id of value.Messages) {
+                if (existed.has(id)) {
+                    existed.delete(id);
+                    continue;
+                }
+                this.AddMessage({
+                    id: id,
+                    UpdatedAt: utc().toISO(),
+                    CreatedAt: utc().toISO(),
+                    Content: '',
+                    ContextURI: this.URI
+                });
             }
-            this.AddMessage({
-                id: id,
-                UpdatedAt: utc().toISO(),
-                CreatedAt: utc().toISO(),
-                Content: '',
-                ContextURI: this.URI
-            });
+            for (let id of existed){
+                this.DeleteMessage({
+                    id: id
+                })
+            }
         }
-        for (let id of existed){
-            this.DeleteMessage({
-                id: id
-            })
-        }
-    }
+    })
 
     GetMessageCell(id: string) {
         return new Cell(() => {
@@ -125,6 +126,7 @@ export class ContextStore {
             const result = this.messageStore.Items.get(id);
             return result && Message.FromJSON(result);
         }, {
+            compare,
             onExternal: value => {
                 this.messageStore.Items.set(value.id, Message.ToJSON(value));
             }

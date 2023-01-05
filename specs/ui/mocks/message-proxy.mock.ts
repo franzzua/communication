@@ -2,6 +2,7 @@ import {IMessageActions} from "@domain";
 import {ContextProxyMock} from "./context-proxy.mock";
 import {Message} from "@model";
 import { Cell } from "@cmmn/cell";
+import { utc } from "@cmmn/core";
 
 export class MessageProxyMock implements IMessageActions {
     constructor(private context: ContextProxyMock,
@@ -11,7 +12,8 @@ export class MessageProxyMock implements IMessageActions {
 
     private stateCell: Cell<Message> = new Cell({
         id: this.id,
-        Content: this.content
+        Content: this.content,
+        UpdatedAt: utc()
     } as Message);
 
     get State() {
@@ -41,7 +43,8 @@ export class MessageProxyMock implements IMessageActions {
     async UpdateText(text: string): Promise<void> {
         this.stateCell.set({
             ...this.State,
-            Content: text
+            Content: text,
+            UpdatedAt: utc()
         });
     }
 
