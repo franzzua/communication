@@ -153,9 +153,7 @@ describe('ui', () => {
         ce.component.childNodes[0].remove();
         ce.dispatchEvent(new Event('input'));
         await wait();
-        expect(context.Messages.length).toEqual(2);
-        expect(context.Messages[0].State.Content).toEqual('2');
-        expect(context.Messages[1].State.Content).toEqual('3');
+        checkContent(ce, context, [2,3]);
         ce.remove();
         app.destroy();
     })

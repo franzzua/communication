@@ -12,6 +12,7 @@ import {DiffApply} from "./diff-apply";
 import {Reducer} from "../reducers";
 import {ContentEditableState} from "./types";
 import {DateTime} from "luxon";
+import {ElementCache} from "./element-cache";
 
 @Injectable(true) @component({name: 'content-editable', template: () => void 0, style})
 export class ContentEditableComponent extends HtmlComponent<void> {
@@ -88,19 +89,19 @@ export class ContentEditableComponent extends HtmlComponent<void> {
 
     @event(document, 'selectionchange') onSelectionChange() {
         if (this.Selection) {
-            const childSelected = this.diffApply.cache.get(this.Selection.Focus.item.Message);
-            if (childSelected)
-                childSelected.style.color = null;
+            // const childSelected = this.diffApply.cache.get(this.Selection.Focus.item.Message);
+            // if (childSelected)
+            //     childSelected.style.color = null;
         }
         let selection = ItemSelection.GetCurrent<TreeItem>();
         if (!selection) {
             if (!this.Selection)
                 return;
-            const oldSelection = this.diffApply.cache.get(this.Selection.Focus.item.Message);
-            const selection2 = ItemSelection.set<TreeItem>(oldSelection);
-            if (!selection2)
-                return;
-            selection =selection2;
+            // const oldSelection = this.diffApply.cache.get(this.Selection.Focus.item.Message);
+            // const selection2 = ItemSelection.set<TreeItem>(oldSelection);
+            // if (!selection2)
+            //     return;
+            // selection =selection2;
         }
         this.Selection = selection;
         this.InvokeAction(state => ({
@@ -108,10 +109,10 @@ export class ContentEditableComponent extends HtmlComponent<void> {
         }));
         console.log(this.id, // this.Items.toArray().indexOf(this.Selection?.Focus.item),
             this.Selection?.Focus.item?.Message.State.Content, this.Selection?.Focus.item?.Length,);
-        const childSelected = this.diffApply.cache.get(this.Selection.Focus.item.Message);
-        if (childSelected) {
-            childSelected.style.color = 'white';
-        }
+        // const childSelected = this.diffApply.cache.get(this.Selection.Focus.item.Message);
+        // if (childSelected) {
+        //     childSelected.style.color = 'white';
+        // }
     }
 
     public get childNodes() {

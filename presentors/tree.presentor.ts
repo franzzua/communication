@@ -1,6 +1,7 @@
 import {Injectable} from "@cmmn/core";
 import {ContextProxy, MessageProxy} from "@services";
 import {ObservableList} from "@cmmn/cell";
+import { Message } from "@model";
 
 @Injectable()
 export class TreePresenter {
@@ -61,6 +62,7 @@ export class TreePresenter {
 
 export type TreeItem = {
     Index?: number;
+    State?: Message;
     Parent?: TreeItem;
     Path: string[];
     Message: MessageProxy;

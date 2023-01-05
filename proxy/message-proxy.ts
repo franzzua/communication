@@ -90,4 +90,12 @@ export class MessageProxy extends ModelProxy<Message, IMessageActions> {
         console.log(context.Messages.map(x => x.State.Content));
         return result;
     }
+
+    public UpdateContent(content: string){
+        this.Actions.UpdateText(content);
+        this.State = {
+            ...this.State,
+            Content: content
+        }
+    }
 }

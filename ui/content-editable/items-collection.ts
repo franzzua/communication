@@ -23,6 +23,9 @@ export class ItemsCollection extends EventEmitter<any> {
             const newPath = [...path, msg.State.id];
             const existed = {
                 Message: msg,
+                get State(){
+                    return this.Message.State;
+                },
                 Path: newPath,
                 IsOpened: level < 5,
                 Length: 1,
@@ -30,7 +33,7 @@ export class ItemsCollection extends EventEmitter<any> {
                 Parent: parent
             } as TreeItem;
             yield existed;
-            if (existed.IsOpened && existed.Message.State.SubContextURI) {
+            if (existed.IsOpened && existed.Message.SubContext) {
                 for (let treeItem of this.iterate(existed.Message.SubContext, newPath, counter, existed)) {
                     yield treeItem;
                 }

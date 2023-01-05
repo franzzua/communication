@@ -32,6 +32,10 @@ export class MessageProxyMock implements IMessageActions {
     async CreateSubContext(uri: string, parentURI: string): Promise<void> {
     }
 
+    public UpdateContent(content: string){
+        this.UpdateText(content);
+    }
+
     async Move(fromURI: string, toURI: string, toIndex: number): Promise<void> {
     }
 
