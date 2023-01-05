@@ -40,12 +40,13 @@ export abstract class ItemSelection<T> {
 
     public abstract GetItemSelection(item: T, index: number): { from?; to?; at?; } | null;
 
-    set(node: HTMLElement) {
+    static set<T>(node: HTMLElement) {
         const selection = window.getSelection();
         if (selection && !selection.containsNode(node, true)) {
             console.log('set selection', node);
             selection.setBaseAndExtent(node, 0, node, 0);
         }
+        return this.GetCurrent<T>();
     }
 }
 

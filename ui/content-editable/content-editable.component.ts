@@ -13,36 +13,28 @@ import {Reducer} from "../reducers";
 import {ContentEditableState} from "./types";
 import {DateTime} from "luxon";
 
-@Injectable(true)
-@component({name: 'content-editable', template: () => void 0, style})
+@Injectable(true) @component({name: 'content-editable', template: () => void 0, style})
 export class ContentEditableComponent extends HtmlComponent<void> {
     public static DebounceTime = 40;
-    @property()
-    private uri!: string;
-    @property()
-    private id: string = Fn.ulid();
+    @property() private uri!: string;
+    @property() private id: string = Fn.ulid();
     private diffApply = new DiffApply(this);
-    @cell
-    Selection: ItemSelection<TreeItem> = ItemSelection.GetCurrent();
+    @cell Selection: ItemSelection<TreeItem> = ItemSelection.GetCurrent();
 
-    constructor(private root: DomainProxy,
-                private reducers: ContentEditableReducers) {
+    constructor(private root: DomainProxy, private reducers: ContentEditableReducers) {
         super();
         // Cell.OnChange(() => this.Items.toArray().map(x => x.Message.State), () => this.merge())
     }
 
-    @cell({compareKey: a => a?.State, compare: Context.equals})
-    get ContextProxy(): ContextProxy {
+    @cell({compareKey: a => a?.State, compare: Context.equals}) get ContextProxy(): ContextProxy {
         return this.uri && this.root.ContextsMap.get(this.uri);
     }
 
-    @cell
-    get ItemsCollection(): ItemsCollection {
+    @cell get ItemsCollection(): ItemsCollection {
         return new ItemsCollection(this.ContextProxy);
     }
 
-    @cell
-    get Diff(){
+    @cell get Diff() {
         return this.diffApply.getMergeDiff(this.ItemsCollection, false);
     }
 
@@ -51,26 +43,26 @@ export class ContentEditableComponent extends HtmlComponent<void> {
     })
     private DiffAction(diff: any) {
         this.diffApply.apply(diff);
+        this.onSelectionChange();
     }
 
-    @event('input')
-    onInputEvent(e: Event) {
+    @event('input') onInputEvent(e: Event) {
         for (let i = 0; i < this.element.children.length; i++) {
             // @ts-ignore
             this.element.children[i].style.order = i;
         }
-        const selected = this.Selection?.Focus.item;
+        // const selected = this.Selection?.Focus.item;
         const diff = this.diffApply.getMergeDiff(this.ItemsCollection, true);
         this.diffApply.apply(diff);
-        if (selected){
-            const newSelected = this.diffApply.cache.get(selected.Message);
-            this.Selection.set(newSelected);
-        }
+        // if (selected){
+        //     const newSelected = this.diffApply.cache.get(selected.Message);
+        //     this.Selection.set(newSelected);
+        // }
+        this.onSelectionChange();
     }
 
 
-    @effect()
-    initElement() {
+    @effect() initElement() {
         this.element.setAttribute('contenteditable', '')
         this.element.setAttribute('autofocus', '')
         this.element.setAttribute('tabindex', '0');
@@ -94,22 +86,32 @@ export class ContentEditableComponent extends HtmlComponent<void> {
         })
     }
 
-    @event(document, 'selectionchange')
-    onSelectionChange() {
-        const selection = ItemSelection.GetCurrent<TreeItem>();
-        if (!selection)
-            return;
+    @event(document, 'selectionchange') onSelectionChange() {
+        if (this.Selection) {
+            const childSelected = this.diffApply.cache.get(this.Selection.Focus.item.Message);
+            if (childSelected)
+                childSelected.style.color = null;
+        }
+        let selection = ItemSelection.GetCurrent<TreeItem>();
+        if (!selection) {
+            if (!this.Selection)
+                return;
+            const oldSelection = this.diffApply.cache.get(this.Selection.Focus.item.Message);
+            const selection2 = ItemSelection.set<TreeItem>(oldSelection);
+            if (!selection2)
+                return;
+            selection =selection2;
+        }
         this.Selection = selection;
         this.InvokeAction(state => ({
-            ...state,
-            Selection: this.Selection
+            ...state, Selection: this.Selection
         }));
-        console.log(
-            this.id,
-            // this.Items.toArray().indexOf(this.Selection?.Focus.item),
-            this.Selection?.Focus.item?.Message.State.Content,
-            this.Selection?.Focus.item?.Length,
-        );
+        console.log(this.id, // this.Items.toArray().indexOf(this.Selection?.Focus.item),
+            this.Selection?.Focus.item?.Message.State.Content, this.Selection?.Focus.item?.Length,);
+        const childSelected = this.diffApply.cache.get(this.Selection.Focus.item.Message);
+        if (childSelected) {
+            childSelected.style.color = 'white';
+        }
     }
 
     public get childNodes() {
@@ -119,8 +121,7 @@ export class ContentEditableComponent extends HtmlComponent<void> {
 
     InvokeAction(reducer: Reducer<ContentEditableState> | Promise<Reducer<ContentEditableState>>) {
         Promise.resolve(reducer).then(x => x({
-            Items: this.ItemsCollection,
-            Selection: this.Selection
+            Items: this.ItemsCollection, Selection: this.Selection
         })).catch(console.error)
     }
 
@@ -131,9 +132,7 @@ export class ContentEditableComponent extends HtmlComponent<void> {
 
 export function event(target: EventTarget, name: keyof HTMLElementEventMap, options?: boolean | AddEventListenerOptions)
 export function event(name: keyof HTMLElementEventMap, options?: boolean | AddEventListenerOptions)
-export function event(nameOrTarget: keyof HTMLElementEventMap | EventTarget,
-                      optionsOrTarget: boolean | AddEventListenerOptions | string,
-                      options?: boolean | AddEventListenerOptions) {
+export function event(nameOrTarget: keyof HTMLElementEventMap | EventTarget, optionsOrTarget: boolean | AddEventListenerOptions | string, options?: boolean | AddEventListenerOptions) {
     let element = (typeof nameOrTarget === "string" ? null : nameOrTarget) as EventTarget;
     const name = (typeof nameOrTarget === "string" ? nameOrTarget : optionsOrTarget) as keyof HTMLElementEventMap;
     options = (typeof nameOrTarget === "string" ? optionsOrTarget : options) as boolean | AddEventListenerOptions;
@@ -153,9 +152,5 @@ export function event(nameOrTarget: keyof HTMLElementEventMap | EventTarget,
 }
 
 export type ItemElement<T = TreeItem> = HTMLSpanElement & {
-    item: T;
-    updatedAt: DateTime;
-    index: number;
-    previousSibling: ItemElement<T>;
-    nextSibling: ItemElement<T>;
+    item: T; updatedAt: DateTime; index: number; previousSibling: ItemElement<T>; nextSibling: ItemElement<T>;
 }

@@ -38,7 +38,8 @@ export class DiffApply {
                 model.added.push({child: null, item});
                 continue;
             }
-            console.log('child', (currentChild.textContent??'null')||'-', 'item', item.Message.State.Content||'-');
+            console.log('child', (currentChild.textContent??'null')||'-', 'item',
+                item.Message.State.Content||'-', item.Index);
             if (!currentChild.parentElement) {
                 // deleted in UI
                 ui.deleted.push({child: currentChild, item});
@@ -50,7 +51,7 @@ export class DiffApply {
                 if (fromUI) {
                     if (currentChild.innerHTML !== item.Message.State.Content)
                         ui.updated.push({child: currentChild, item});
-                } else if (!currentChild.updatedAt.equals(item.Message.State.UpdatedAt)) {
+                } else if (this.isUpdateNeeded(currentChild, item)) {
                     model.updated.push({child: currentChild, item});
                 }
                 children.delete(currentChild);
@@ -65,8 +66,10 @@ export class DiffApply {
             }
             children.delete(child);
             if (child.parentElement) {
-                // moved in Model
-                model.updated.push({child, item});
+                if (this.isUpdateNeeded(child, item)) {
+                    // moved in Model
+                    model.updated.push({child, item});
+                }
             } else {
                 // deleted in UI
                 ui.deleted.push({child, item});
@@ -78,6 +81,16 @@ export class DiffApply {
                 model.deleted.push({child, item: child.item});
             } else {
                 ui.added.push({child, item: child.item});
+            }
+        }
+        if (model.added.length > 0 && model.deleted.length > 0){
+            for (let added of model.added.slice()) {
+                const deleted = model.deleted.find(x => x.child.index == added.child.index);
+                if (deleted){
+                    model.added.remove(added);
+                    model.deleted.remove(deleted);
+                    model.updated.push(added);
+                }
             }
         }
         // console.table(state);
@@ -96,6 +109,12 @@ export class DiffApply {
             })
         }
         return {ui, model};
+    }
+
+    isUpdateNeeded(child: ItemElement, item: TreeItem){
+        return !child.updatedAt.equals(item.Message.State.UpdatedAt) ||
+            child.index !== item.Index ||
+            child.id !== item.Path.join(':')
     }
 
     fixChildren() {
@@ -157,10 +176,6 @@ export class DiffApply {
         }
         for (let {child, item} of diff.model.updated) {
             this.setChildItem(child, item);
-            if (child.index !== item.Index) {
-                child.index = item.Index;
-                this.component.element.insertBefore(child, this.component.childNodes[item.Index]);
-            }
         }
 
 
@@ -183,7 +198,6 @@ export class DiffApply {
             Length: 0
         };
         this.setChildItem(child, newItem);
-        child.index = (item?.Index ?? -1) + 1;
         return newItem;
     }
 
@@ -195,6 +209,10 @@ export class DiffApply {
         child.item = item;
         child.updatedAt = item.Message.State.UpdatedAt;
         child.id = item.Path.join(':');
+        if (child.index !== undefined && child.index !== item.Index) {
+            child.index = item.Index;
+            this.component.element.insertBefore(child, this.component.childNodes[item.Index]);
+        }
         this.cache.set(item.Message, child);
     }
 

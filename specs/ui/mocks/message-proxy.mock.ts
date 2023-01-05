@@ -20,6 +20,10 @@ export class MessageProxyMock implements IMessageActions {
         return this.stateCell.get();
     }
 
+    set State(value) {
+        this.stateCell.set(value);
+    }
+
     Actions: IMessageActions = this;
 
     async Attach(uri: string): Promise<void> {
