@@ -6,7 +6,6 @@ import {ExtendedElement} from "@cmmn/ui";
 import {ContentEditableComponent} from "../../ui/content-editable/content-editable.component";
 import {DomainProxyMock} from "./mocks/domain-proxy.mock";
 import {MessageProxyMock} from "./mocks/message-proxy.mock";
-import {CaretSelection} from "../../ui/content-editable/itemSelection";
 import {ContextProxyMock} from "./mocks/context-proxy.mock";
 
 const wait = () => Fn.asyncDelay(5);
@@ -106,9 +105,10 @@ describe('ui', () => {
 
     test('add-selection', async () => {
         const {ce, context, app} = await getContext('add');
-        ce.component.Selection = new CaretSelection(
-            ce.component.childNodes[0].item, 0, 0
-        );
+        global.setSelection({
+            type: 'Caret',
+            anchorNode: ce.component.childNodes[0]
+        });
         const child = document.createElement('span');
         child.innerHTML = '5';
         child.style.order = '3';
@@ -124,15 +124,17 @@ describe('ui', () => {
         app.destroy();
     })
     test('add-br', async () => {
-        const {ce, context, app} = await getContext('add-first');
+        const {ce, context, app} = await getContext('add-br');
+        global.setSelection({
+            type: null,
+        });
         const child = document.createElement('span');
         child.innerHTML = '<br>'
         child.style.order = '1.2'
         ce.insertBefore(child, ce.component.childNodes[2]);
         ce.dispatchEvent(new Event('input'));
         await wait();
-        expect(context.Messages.map(x => x.State.Content)).toEqual(['1', '2', '', '3']);
-        expect(ce.component.childNodes.map(x => x.innerHTML)).toEqual(['1', '2', '', '3']);
+        checkContent(ce, context,[1, 0, 2, 3]);
         ce.remove();
         app.destroy();
     })

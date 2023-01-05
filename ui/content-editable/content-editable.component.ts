@@ -12,15 +12,19 @@ import {DiffApply} from "./diff-apply";
 import {Reducer} from "../reducers";
 import {ContentEditableState} from "./types";
 import {DateTime} from "luxon";
-import {ElementCache} from "./element-cache";
+import {ElementCache, ElementInfo} from "./element-cache";
 
 @Injectable(true) @component({name: 'content-editable', template: () => void 0, style})
 export class ContentEditableComponent extends HtmlComponent<void> {
     public static DebounceTime = 40;
-    @property() private uri!: string;
-    @property() private id: string = Fn.ulid();
+    @property()
+    private uri!: string;
+    @property()
+    private id: string = Fn.ulid();
+    public elementCache = new ElementCache<TreeItem, Node>();
     private diffApply = new DiffApply(this);
-    @cell Selection: ItemSelection<TreeItem> = ItemSelection.GetCurrent();
+    @cell
+    Selection: ItemSelection<ElementInfo<TreeItem, Node>> = ItemSelection.GetCurrent(this.elementCache);
 
     constructor(private root: DomainProxy, private reducers: ContentEditableReducers) {
         super();
@@ -36,7 +40,7 @@ export class ContentEditableComponent extends HtmlComponent<void> {
     }
 
     @cell get Diff() {
-        return this.diffApply.getMergeDiff(this.ItemsCollection, false);
+        return this.elementCache.getMergeDiff(this.ItemsCollection, this.element.firstChild,false);
     }
 
     @action(function (this: ContentEditableComponent) {
@@ -48,12 +52,9 @@ export class ContentEditableComponent extends HtmlComponent<void> {
     }
 
     @event('input') onInputEvent(e: Event) {
-        for (let i = 0; i < this.element.children.length; i++) {
-            // @ts-ignore
-            this.element.children[i].style.order = i;
-        }
         // const selected = this.Selection?.Focus.item;
-        const diff = this.diffApply.getMergeDiff(this.ItemsCollection, true);
+        this.fixChildren();
+        const diff = this.elementCache.getMergeDiff(this.ItemsCollection, this.element.firstChild, true);
         this.diffApply.apply(diff);
         // if (selected){
         //     const newSelected = this.diffApply.cache.get(selected.Message);
@@ -61,6 +62,23 @@ export class ContentEditableComponent extends HtmlComponent<void> {
         // }
         this.onSelectionChange();
     }
+
+    fixChildren() {
+        for (let child of Array.from(this.element.childNodes)) {
+            if (child instanceof Comment)
+                continue;
+            const text = recursiveGetText(child);
+            if (child instanceof HTMLSpanElement || (child as HTMLElement).localName === 'span')
+                child.textContent = text;
+            else {
+                child.remove();
+                const span = document.createElement('span')
+                span.textContent = text;
+                this.element.appendChild(span);
+            }
+        }
+    }
+
 
 
     @effect() initElement() {
@@ -89,11 +107,11 @@ export class ContentEditableComponent extends HtmlComponent<void> {
 
     @event(document, 'selectionchange') onSelectionChange() {
         if (this.Selection) {
-            // const childSelected = this.diffApply.cache.get(this.Selection.Focus.item.Message);
-            // if (childSelected)
-            //     childSelected.style.color = null;
+            const childSelected = this.Selection.Focus.item.element;
+            if (childSelected instanceof HTMLElement)
+                childSelected.style.color = null;
         }
-        let selection = ItemSelection.GetCurrent<TreeItem>();
+        let selection = ItemSelection.GetCurrent(this.elementCache);
         if (!selection) {
             if (!this.Selection)
                 return;
@@ -107,8 +125,7 @@ export class ContentEditableComponent extends HtmlComponent<void> {
         this.InvokeAction(state => ({
             ...state, Selection: this.Selection
         }));
-        console.log(this.id, // this.Items.toArray().indexOf(this.Selection?.Focus.item),
-            this.Selection?.Focus.item?.Message.State.Content, this.Selection?.Focus.item?.Length,);
+        console.log(this.id, this.Selection?.Focus.item?.element.textContent);
         // const childSelected = this.diffApply.cache.get(this.Selection.Focus.item.Message);
         // if (childSelected) {
         //     childSelected.style.color = 'white';
@@ -154,4 +171,19 @@ export function event(nameOrTarget: keyof HTMLElementEventMap | EventTarget, opt
 
 export type ItemElement<T = TreeItem> = HTMLSpanElement & {
     item: T; updatedAt: DateTime; index: number; previousSibling: ItemElement<T>; nextSibling: ItemElement<T>;
+}
+
+
+function recursiveGetText(node: Node) {
+    if (node instanceof HTMLBRElement)
+        return '';
+    if (node instanceof Text)
+        return node.textContent;
+    if (node instanceof Comment)
+        return '';
+    const texts = [];
+    for (let childNode of Array.from(node.childNodes)) {
+        texts.push(recursiveGetText(childNode));
+    }
+    return texts.join('');
 }

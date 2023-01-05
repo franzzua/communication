@@ -16,7 +16,7 @@ export class ContentEditableReducers {
     @logReducer
     async Copy(event: ClipboardEvent): Promise<Reducer<ContentEditableState>> {
         return (state: ContentEditableState) => {
-            const message = state.Selection?.Focus?.item.Message;
+            const message = state.Selection?.Focus?.item.item.Message;
             if (message) {
                 const json = {
                     Content: message.State.Content,
@@ -51,12 +51,12 @@ export class ContentEditableReducers {
                     parsed.id = Fn.ulid();
                     parsed.CreatedAt = utc();
                     parsed.UpdatedAt = utc();
-                    state.Selection?.Focus?.item.Message.Context.Actions.CreateMessage(parsed);
+                    state.Selection?.Focus?.item.item.Message.Context.Actions.CreateMessage(parsed);
                 }
             } catch (e) {
                 const paragraphs = clipboard.split('\n');
                 for (let paragraph of paragraphs) {
-                    state.Selection?.Focus?.item.Message.AddMessage({
+                    state.Selection?.Focus?.item.item.Message.AddMessage({
                         id: Fn.ulid(),
                         Content: paragraph,
                         CreatedAt: utc(),
@@ -72,7 +72,8 @@ export class ContentEditableReducers {
     async Switch(event: KeyboardEvent): Promise<Reducer<ContentEditableState>> {
         return (state: ContentEditableState) => {
             if (state.Selection) {
-                state.Selection.Focus.item.IsOpened = !state.Selection?.Focus?.item.IsOpened;
+                // TODO:
+                // state.Selection.Focus.item.IsOpened = !state.Selection?.Focus?.item.IsOpened;
             }
             return state;
         }
@@ -82,7 +83,7 @@ export class ContentEditableReducers {
     @logReducer
     async Remove(event: KeyboardEvent): Promise<Reducer<ContentEditableState>> {
         return (state: ContentEditableState) => {
-            const item = state.Selection?.Focus.item;
+            const item = state.Selection?.Focus.item.item;
             const message = item.Message;
             const selectedIndex = item.Index;
             const next = state.Items[selectedIndex + 1];
@@ -106,7 +107,7 @@ export class ContentEditableReducers {
     @logReducer
     async MoveRight(event: KeyboardEvent): Promise<Reducer<ContentEditableState>> {
         return (state: ContentEditableState) => {
-            const selectedItem = state.Selection?.Focus.item;
+            const selectedItem = state.Selection?.Focus.item.item;
             const message = selectedItem.Message;
             const messageIndex = message.Context.Messages.indexOf(message);
             if (messageIndex == 0)
@@ -123,7 +124,7 @@ export class ContentEditableReducers {
     @logReducer
     async MoveLeft(event: KeyboardEvent): Promise<Reducer<ContentEditableState>> {
         return (state: ContentEditableState) => {
-            const selectedItem = state.Selection?.Focus.item;
+            const selectedItem = state.Selection?.Focus.item.item;
             const message = selectedItem.Message;
             if (selectedItem.Path.length < 2)
                 // root children shouldn`t move left
@@ -140,7 +141,7 @@ export class ContentEditableReducers {
     async MoveUp(event: KeyboardEvent): Promise<Reducer<ContentEditableState>> {
         return (state: ContentEditableState) => {
             const selectedItem = state.Selection?.Focus.item;
-            const message = selectedItem.Message;
+            const message = selectedItem.item.Message;
             const messageIndex = message.Context.Messages.indexOf(message);
             if (messageIndex == 0)
                 return state;
@@ -153,7 +154,7 @@ export class ContentEditableReducers {
     async MoveDown(event: KeyboardEvent): Promise<Reducer<ContentEditableState>> {
         return (state: ContentEditableState) => {
             const selectedItem = state.Selection?.Focus.item;
-            const message = selectedItem.Message;
+            const message = selectedItem.item.Message;
             const messageIndex = message.Context.Messages.indexOf(message);
             if (messageIndex == message.Context.Messages.length - 1)
                 return state;

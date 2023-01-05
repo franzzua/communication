@@ -1,22 +1,25 @@
 import {ItemElement} from "./content-editable.component";
+import {ElementCache, ElementInfo} from "./element-cache";
+import {TreeItem} from "../../presentors/tree.presentor";
 
 export abstract class ItemSelection<T> {
     public Type: 'Caret' | 'Range';
 
-    public static GetCurrent<T>(): ItemSelection<T> {
+    public static GetCurrent(cache: ElementCache<TreeItem, Node>): ItemSelection<ElementInfo<TreeItem, Node>> {
         const selection = window.getSelection();
         switch (selection?.type) {
             case  'Caret':
-                const element = this.getSpan<T>(selection.anchorNode);
-                if (!element.item)
+                const element = this.getSpan<TreeItem>(selection.anchorNode);
+                const cached = cache.get(element);
+                if (!cached)
                     return null;
-                return new CaretSelection<T>(
-                    element.item,
-                    element.index,
+                return new CaretSelection<ElementInfo<TreeItem, Node>>(
+                    cached,
+                    cached.item.Index,
                     selection.anchorOffset,
                 );
             case  'Range':
-                return new RangeSelection<T>(selection);
+                return new RangeSelection<ElementInfo<TreeItem, Node>>(selection);
             default:
                 return null;
         }
@@ -27,26 +30,21 @@ export abstract class ItemSelection<T> {
     public Direction: 'ltr' | 'rtl';
 
 
-    protected static getSpan<T>(node: Node): {item: T, index: number} {
+    protected static getSpan<T>(node: Node): Node {
         if (node instanceof Text) {
             node = node.parentElement;
         }
-        const element = (node as ItemElement<T>);
-        return  {
-            item: element.item,
-            index: element.index
-        }
+        return node;
     }
 
     public abstract GetItemSelection(item: T, index: number): { from?; to?; at?; } | null;
 
-    static set<T>(node: HTMLElement) {
+    static set(node: HTMLElement) {
         const selection = window.getSelection();
         if (selection && !selection.containsNode(node, true)) {
             console.log('set selection', node);
             selection.setBaseAndExtent(node, 0, node, 0);
         }
-        return this.GetCurrent<T>();
     }
 }
 
@@ -71,14 +69,14 @@ export class RangeSelection<T> extends ItemSelection<T> {
 
     constructor(selection: globalThis.Selection) {
         super();
-        this.Anchor = {
-            ...ItemSelection.getSpan(selection.anchorNode),
-            offset: selection.anchorOffset,
-        };
-        this.Focus = {
-            ...ItemSelection.getSpan(selection.focusNode),
-            offset: selection.focusOffset,
-        };
+        // this.Anchor = {
+        //     ...ItemSelection.getSpan(selection.anchorNode),
+        //     offset: selection.anchorOffset,
+        // };
+        // this.Focus = {
+        //     ...ItemSelection.getSpan(selection.focusNode),
+        //     offset: selection.focusOffset,
+        // };
         this.Direction = (this.Anchor.index < this.Focus.index) ? 'ltr' : 'rtl';
     }
 

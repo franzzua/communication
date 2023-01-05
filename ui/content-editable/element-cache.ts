@@ -129,7 +129,7 @@ export class ElementInfo<TItem extends {
 
 
     public hasChanges(item: TItem) {
-        return !this.item.State.UpdatedAt.equals(item.State.UpdatedAt) ||
+        return !this.item.State?.UpdatedAt.equals(item.State.UpdatedAt) ||
             this.item.Index !== item.Index ||
             this.id !== item.Path.join(':') ||
             this.element.textContent !== item.State.Content;
