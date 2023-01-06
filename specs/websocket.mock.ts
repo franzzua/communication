@@ -1,4 +1,4 @@
-import {EventEmitter} from "../yjsWebRTC/shared/observable";
+import {EventEmitter} from "@cmmn/core";
 
 export class WebsocketMock extends EventEmitter<{
     message: any,

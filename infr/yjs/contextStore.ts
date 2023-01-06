@@ -1,10 +1,11 @@
 import {ContextJSON, MessageJSON} from "@domain";
 import {SyncStore} from "@cmmn/sync";
+import {WebRtcProvider} from "@cmmn/sync/webrtc/client";
 import {cell, Cell} from "@cmmn/cell";
 import {compare, ResolvablePromise, utc} from "@cmmn/core";
 import {Context, Message} from "@model";
-import {ContextMap} from "@domain/model";
 import {Permutation} from "@domain/helpers/permutation";
+import {ResourceTokenApi} from "@infr/resource-token-api.service";
 
 export class ContextStore {
 
@@ -16,27 +17,24 @@ export class ContextStore {
     public IsSynced = false;
 
     constructor(protected URI: string,
-                private token: Promise<string>,
+                private api: ResourceTokenApi,
                 private contextMap: SyncStore<ContextJSON>) {
         this.Join();
     }
 
-    public async GetRemoteProvider() {
-        const token = await this.api.GetToken(this.URI);
-        const user = this.api.GetUserInfo()
-
-        const room = await ContextStore.provider.joinRoom(this.URI, this.doc, {
-            token,
-            user,
-            maxConns: 70 + Math.floor(Math.random() * 70),
-            filterBcConns: true,
-            peerOpts: {}
-        } as any);
-    }
+    private static provider = new WebRtcProvider(
+        [`${location.origin.replace(/^http/, 'ws')}/api`],
+    );
 
     async Join() {
         await this.contextMap.useIndexedDB();
         await this.messageStore.useIndexedDB();
+        const token = await this.api.GetToken(this.URI);
+
+        await ContextStore.provider.joinRoom(this.URI, {
+            token: token,
+            user: this.api.GetUserInfo().id
+        }).addAdapter(this.contextMap.adapter);
         const state = this.GetState();
         if (!state.Context) {
             this.UpdateContext({
@@ -149,5 +147,5 @@ export class ContextStore {
 
 export type IState = {
     Context: Readonly<ContextJSON>;
-    Messages: ReadonlyMap<string, Readonly<MessageJSON>>;
+    Messages: ReadonlySet<string>;
 };

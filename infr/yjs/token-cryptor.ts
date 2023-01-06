@@ -1,9 +1,7 @@
 import {SymmetricCryptor} from "./yWebRtc/symmetric-cryptor";
 import {Cryptor} from "@infr/yjs/yWebRtc/cryptor";
 import {ResourceTokenApi} from "@infr/resource-token-api.service";
-import {Encoder, toUint8Array, writeVarString} from "lib0/encoding";
 import {TokenVerifier} from "@infr/token-verifier.service";
-import {Decoder, readVarString} from "lib0/decoding";
 
 export class TokenCryptor extends Cryptor {
     private token = this.api.GetToken(this.uri);

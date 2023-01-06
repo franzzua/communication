@@ -6,6 +6,6 @@ import {TokenVerifier} from "@infr/token-verifier.service";
 
 const acc = JSON.parse(localStorage.getItem('account'));
 
-export const InfrContainer = Container.withProviders(
+export const InfrContainer = () => Container.withProviders(
     YjsRepository, ResourceTokenStore, TokenVerifier, ResourceTokenApi,
 )

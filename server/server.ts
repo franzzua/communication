@@ -14,7 +14,7 @@ async function run() {
         .with(InhauthContainer)
         .withControllers(ContextController, WebrtcController, PublicKeyController)
         .with(ServerContainer)
-        .start(3003);
+        .start(+(process.env.PORT || 4004));
     // const server = new http.Server();
 }
 

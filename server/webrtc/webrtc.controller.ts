@@ -1,19 +1,21 @@
 import {controller, Get} from "@cmmn/server";
-import {SocketStream} from "fastify-websocket";
+import {SocketStream} from "@fastify/websocket";
 import {FastifyRequest} from "fastify";
 import {bind, Injectable} from "@cmmn/core";
-import {YjsWebrtcController} from "../../yjsWebRTC/server/yjs-webrtc-controller.service";
+import {WebrtcController as BaseWebrtcController} from "@cmmn/sync/webrtc/server";
+import {TokenParser} from "../services/token.parser";
 
 @Injectable()
 @controller('/api')
-export class WebrtcController{
+export class WebrtcController extends BaseWebrtcController{
 
-    constructor(private yjs: YjsWebrtcController) {
+    constructor(parser: TokenParser) {
+        super(parser)
     }
 
     @Get('', {webSocket: true})
     public async onConnection(connection: SocketStream, request: FastifyRequest) {
-        this.yjs.handleConnection(connection.socket);
+        super.handleConnection(connection.socket);
     }
 
 
