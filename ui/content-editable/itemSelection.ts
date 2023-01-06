@@ -2,10 +2,10 @@ import {ItemElement} from "./content-editable.component";
 import {ElementCache, ElementInfo} from "./element-cache";
 import {TreeItem} from "../../presentors/tree.presentor";
 
-export abstract class ItemSelection<T> {
+export abstract class ItemSelection {
     public Type: 'Caret' | 'Range';
 
-    public static GetCurrent(cache: ElementCache<TreeItem, Node>): ItemSelection<ElementInfo<TreeItem, Node>> {
+    public static GetCurrent(cache: ElementCache<TreeItem, Node>): ItemSelection {
         const selection = window.getSelection();
         switch (selection?.type) {
             case  'Caret':
@@ -13,20 +13,20 @@ export abstract class ItemSelection<T> {
                 const cached = cache.get(element);
                 if (!cached)
                     return null;
-                return new CaretSelection<ElementInfo<TreeItem, Node>>(
+                return new CaretSelection(
                     cached,
                     cached.item.Index,
                     selection.anchorOffset,
                 );
             case  'Range':
-                return new RangeSelection<ElementInfo<TreeItem, Node>>(selection);
+                return new RangeSelection(selection);
             default:
                 return null;
         }
     }
 
-    public Anchor: SelectionItem<T>;
-    public Focus: SelectionItem<T>;
+    public Anchor: SelectionItem<ElementInfo<TreeItem, Node>>;
+    public Focus: SelectionItem<ElementInfo<TreeItem, Node>>;
     public Direction: 'ltr' | 'rtl';
 
 
@@ -37,7 +37,7 @@ export abstract class ItemSelection<T> {
         return node;
     }
 
-    public abstract GetItemSelection(item: T, index: number): { from?; to?; at?; } | null;
+    public abstract GetItemSelection(item: ElementInfo<TreeItem, Node>, index: number): { from?; to?; at?; } | null;
 
     static set(node: HTMLElement) {
         const selection = window.getSelection();
@@ -46,25 +46,35 @@ export abstract class ItemSelection<T> {
             selection.setBaseAndExtent(node, 0, node, 0);
         }
     }
+
+    public Update(elementCache: ElementCache<TreeItem, Node>) {
+        this.Focus.item = elementCache.get(this.Focus.item.item);
+        this.Anchor.item = elementCache.get(this.Anchor.item.item);
+        window.getSelection().setBaseAndExtent(
+            this.Focus.item.element, this.Focus.offset,
+            this.Anchor.item.element, this.Anchor.offset,
+        );
+        return this;
+    }
 }
 
-export class CaretSelection<T> extends ItemSelection<T> {
+export class CaretSelection extends ItemSelection {
     public Type: 'Caret' = 'Caret';
 
-    constructor(item: T, index: number, offset: number) {
+    constructor(item: ElementInfo<TreeItem, Node>, index: number, offset: number) {
         super();
         this.Anchor = this.Focus = {item, index, offset};
         this.Direction = 'ltr';
     }
 
-    GetItemSelection(item: T, index: number) {
+    GetItemSelection(item: ElementInfo<TreeItem, Node>, index: number) {
         if (item === this.Focus?.item)
             return {at: this.Focus.offset};
         return null;
     }
 }
 
-export class RangeSelection<T> extends ItemSelection<T> {
+export class RangeSelection extends ItemSelection {
     public Type: 'Range' = 'Range';
 
     constructor(selection: globalThis.Selection) {
@@ -80,7 +90,7 @@ export class RangeSelection<T> extends ItemSelection<T> {
         this.Direction = (this.Anchor.index < this.Focus.index) ? 'ltr' : 'rtl';
     }
 
-    GetItemSelection(item: T, index: number) {
+    GetItemSelection(item: ElementInfo<TreeItem, Node>, index: number) {
         if (this.Direction == 'ltr') {
             if (this.Anchor.index == index) {
                 return {from: this.Anchor.offset};

@@ -17,6 +17,7 @@ export class ElementCache<TItem extends {
     nextSibling: TElement;
 }> {
     private cache = new Map<string, ElementInfo<TItem, TElement>>();
+    private nodeCache = new Map<TElement, ElementInfo<TItem, TElement>>();
 
     public get(item: TItem | TElement): ElementInfo<TItem, TElement> {
         if (!item)
@@ -27,7 +28,7 @@ export class ElementCache<TItem extends {
         const ui = new Diff<TItem, TElement>();
         const model = new Diff<TItem, TElement>();
 
-        const checked = new Set<string>();
+        const checked = new Set<TElement>();
         // console.log('_____________');
         for (let item of items) {
             const currentChild = this.get(item);
@@ -39,7 +40,7 @@ export class ElementCache<TItem extends {
                 ui.deleted.push({child: currentChild.element, item});
                 continue;
             }
-            checked.add(currentChild.id);
+            checked.add(currentChild.element);
             if (!currentChild.hasChanges(item)) {
                 continue;
             }
@@ -51,9 +52,9 @@ export class ElementCache<TItem extends {
         }
 
         for (let current = firstChild; current != undefined; current = current.nextSibling) {
-            if (checked.has(current.id))
+            if (checked.has(current))
                 continue;
-            const element = this.cache.get(current.id)
+            const element = this.nodeCache.get(current)
             if (element) {
                 //model deleted
                 model.deleted.push({child: current, item: element.item});
@@ -102,10 +103,14 @@ export class ElementCache<TItem extends {
         this.cache.set(id, new ElementInfo<TItem, TElement>(
             id, element, item
         ));
+        this.nodeCache.set(element, new ElementInfo<TItem, TElement>(
+            id, element, item
+        ));
     }
 
     remove(child: TElement) {
         this.cache.delete(child.id);
+        this.nodeCache.delete(child);
     }
 }
 

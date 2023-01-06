@@ -13,6 +13,7 @@ import {Reducer} from "../reducers";
 import {ContentEditableState} from "./types";
 import {DateTime} from "luxon";
 import {ElementCache, ElementInfo} from "./element-cache";
+import {CustomEvent} from "linkedom";
 
 @Injectable(true) @component({name: 'content-editable', template: () => void 0, style})
 export class ContentEditableComponent extends HtmlComponent<void> {
@@ -24,7 +25,7 @@ export class ContentEditableComponent extends HtmlComponent<void> {
     public elementCache = new ElementCache<TreeItem, Node>();
     private diffApply = new DiffApply(this);
     @cell
-    Selection: ItemSelection<ElementInfo<TreeItem, Node>> = ItemSelection.GetCurrent(this.elementCache);
+    Selection: ItemSelection = ItemSelection.GetCurrent(this.elementCache);
 
     constructor(private root: DomainProxy, private reducers: ContentEditableReducers) {
         super();
@@ -106,26 +107,20 @@ export class ContentEditableComponent extends HtmlComponent<void> {
     }
 
     @event(document, 'selectionchange') onSelectionChange() {
-        if (this.Selection) {
-            const childSelected = this.Selection.Focus.item.element;
-            if (childSelected instanceof HTMLElement)
-                childSelected.style.color = null;
+        if (this.Selection?.Focus.item.element instanceof HTMLElement){
+            this.Selection.Focus.item.element.style.color = null;
         }
-        let selection = ItemSelection.GetCurrent(this.elementCache);
-        if (!selection) {
-            if (!this.Selection)
-                return;
-            // const oldSelection = this.diffApply.cache.get(this.Selection.Focus.item.Message);
-            // const selection2 = ItemSelection.set<TreeItem>(oldSelection);
-            // if (!selection2)
-            //     return;
-            // selection =selection2;
-        }
+        let selection = ItemSelection.GetCurrent(this.elementCache)
+            ?? this.Selection?.Update(this.elementCache);
+        if (!selection)
+            return;
         this.Selection = selection;
         this.InvokeAction(state => ({
             ...state, Selection: this.Selection
         }));
-        console.log(this.id, this.Selection?.Focus.item?.element.textContent);
+        if (this.Selection?.Focus.item.element instanceof HTMLElement){
+            this.Selection.Focus.item.element.style.color = 'white';
+        }
         // const childSelected = this.diffApply.cache.get(this.Selection.Focus.item.Message);
         // if (childSelected) {
         //     childSelected.style.color = 'white';
