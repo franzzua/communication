@@ -105,7 +105,7 @@ export class EditorComponent extends HtmlComponent<void> {
     }
 
     @event(document, 'selectionchange') onSelectionChange() {
-        if (this.Selection?.Focus.item.element instanceof HTMLElement){
+        if (this.Selection?.Focus.item?.element instanceof HTMLElement){
             this.Selection.Focus.item.element.style.color = null;
         }
         let selection = ItemSelection.GetCurrent(this.elementCache)

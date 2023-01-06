@@ -47,8 +47,10 @@ export abstract class ItemSelection {
     }
 
     public Update(elementCache: ElementCache<EditorItem, Node>) {
-        this.Focus.item = elementCache.get(this.Focus.item.item);
-        this.Anchor.item = elementCache.get(this.Anchor.item.item);
+        this.Focus.item = elementCache.get(this.Focus.item.element);
+        this.Anchor.item = elementCache.get(this.Anchor.item.element);
+        if (!this.Focus.item || !this.Anchor.item)
+            return  null;
         window.getSelection().setBaseAndExtent(
             this.Focus.item.element, this.Focus.offset,
             this.Anchor.item.element, this.Anchor.offset,

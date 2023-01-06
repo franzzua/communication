@@ -64,6 +64,7 @@ export class ElementCache<TItem extends {
         }
 
         if (model.added.length > 0 && model.deleted.length > 0) {
+            // match by index
             for (let added of model.added.slice()) {
                 const deleted = model.deleted.find(x => x.item.Index == added.item.Index);
                 if (deleted) {
@@ -72,6 +73,24 @@ export class ElementCache<TItem extends {
                     model.updated.push({child: deleted.child, item: added.item});
                 }
             }
+            // match by content
+            for (let added of model.added.slice()) {
+                const deleted = model.deleted.find(x => x.item.State.Content == added.item.State.Content);
+                if (deleted) {
+                    model.added.remove(added);
+                    model.deleted.remove(deleted);
+                    model.updated.push({child: deleted.child, item: added.item});
+                }
+            }
+            // match by default
+            const minLength = Math.min(model.added.length, model.deleted.length);
+            for (let i = 0; i < minLength; i++){
+                let added = model.added[i];
+                let deleted = model.deleted[i];
+                model.updated.push({child: deleted.child, item: added.item});
+            }
+            model.added.splice(0, minLength);
+            model.deleted.splice(0, minLength);
         }
         // console.table(state);
         if (!ui.isEmpty() || !model.isEmpty()) {
