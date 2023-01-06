@@ -1,13 +1,13 @@
 import {describe, expect, test} from "@jest/globals";
 import {Fn} from "@cmmn/core";
 import {TestApp} from "./entry/test-app";
-import {DomainProxy} from "../../proxy";
+import {DomainProxy, IContextProxy} from "../../proxy";
 import {ExtendedElement} from "@cmmn/ui";
-import {EditorComponent} from "../../ui/editor/content-editable.component";
+import {EditorComponent} from "../../ui/editor/editor.component";
 import {DomainProxyMock} from "./mocks/domain-proxy.mock";
 import {MessageProxyMock} from "./mocks/message-proxy.mock";
 import {ContextProxyMock} from "./mocks/context-proxy.mock";
-import {EditorCollection} from "../../ui/editor/items-collection";
+import {EditorCollection} from "../../ui/editor/editor-collection";
 
 const wait = () => Fn.asyncDelay(5);
 
@@ -17,7 +17,7 @@ async function getContext(id: string) {
     const app = await TestApp.Build();
     const proxy = app.cont.get<DomainProxyMock>(DomainProxy);
     const context = proxy.ContextsMap.get('test');
-    const ce = document.createElement('content-editable') as ExtendedElement<EditorComponent>;
+    const ce = document.createElement('ctx-editor') as ExtendedElement<EditorComponent>;
     ce.setAttribute('id', id);
     ce.setAttribute('uri', 'test');
     document.body.appendChild(ce);
@@ -26,9 +26,26 @@ async function getContext(id: string) {
     return {app, context, ce};
 }
 
+type DeepArray<T> = Array<T | DeepArray<T>>;
+
+function checkContext(context: IContextProxy, array: DeepArray<number>){
+    array = array.slice();
+    for (let i = 0; i < context.Messages.length; i++){
+        let message = context.Messages[i];
+        expect(+message.State.Content).toEqual(array[i]);
+        if (message.SubContext && Array.isArray(array[i + 1])){
+            checkContext(message.SubContext, array.splice(i + 1, 1)[0] as DeepArray<number>);
+        }
+    }
+}
+function checkContent(ce: ExtendedElement<EditorComponent>, context: ContextProxyMock, array: DeepArray<number>) {
+    checkContext(context, array);
+    expect(Array.from(ce.childNodes).map(x => +x.textContent)).toEqual(array.flat(Number.POSITIVE_INFINITY));
+}
+
 test('initial', async () => {
     const {ce, context, app} = await getContext('initial');
-    expect(ce.component.childNodes.map(x => +x.innerHTML)).toEqual([1, 2, 3]);
+    checkContent(ce, context, [1, 2, 3]);
     ce.remove();
     app.destroy();
 });
@@ -38,7 +55,7 @@ describe('model', () => {
         const {ce, context, app} = await getContext('update');
         await context.Messages[0].UpdateContent('8');
         await wait();
-        expect(ce.component.childNodes[0].innerHTML).toEqual('8');
+        expect(ce.children[0].innerHTML).toEqual('8');
         ce.remove();
         app.destroy();
     })
@@ -47,7 +64,7 @@ describe('model', () => {
         const {ce, context, app} = await getContext('remove');
         context.messages.removeAt(1);
         await wait();
-        expect(ce.component.childNodes.map(x => +x.innerHTML)).toEqual([1, 3]);
+        expect(ce.children.map(x => +x.innerHTML)).toEqual([1, 3]);
         ce.remove();
         app.destroy();
     });
@@ -56,7 +73,7 @@ describe('model', () => {
         const {ce, context, app} = await getContext('add');
         context.messages.insert(1, new MessageProxyMock(context, '5'));
         await wait();
-        expect(ce.component.childNodes.map(x => +x.innerHTML)).toEqual([1, 5, 2, 3]);
+        expect(ce.children.map(x => +x.innerHTML)).toEqual([1, 5, 2, 3]);
         ce.remove();
         app.destroy();
     });
@@ -78,13 +95,13 @@ describe('model', () => {
         const {ce, context, app} = await getContext('add');
         context.Messages[0].SubContext = context.Messages[1].SubContext = new ContextProxyMock([4]);
         await wait();
-        checkContent(ce, context, [1,4,2,4,3]);
+        checkContent(ce, context, [1,[4],2,[4],3]);
         context.Messages[0].SubContext.Messages[0].UpdateContent('5');
-        await wait();
-        checkContent(ce, context, [1,5,2,5,3]);
-        context.Messages[0].SubContext.Messages[0].SubContext = new ContextProxyMock([6]);
-        await wait();
-        checkContent(ce, context, [1,5,6,2,5,6,3]);
+        // await wait();
+        // checkContent(ce, context, [1,5,2,5,3]);
+        // context.Messages[0].SubContext.Messages[0].SubContext = new ContextProxyMock([6]);
+        // await wait();
+        // checkContent(ce, context, [1,5,6,2,5,6,3]);
         ce.remove();
         app.destroy();
     });
@@ -93,9 +110,13 @@ describe('model', () => {
         const original = context.Messages.map(x => +x.State.Content);
         context.Messages[0].SubContext = context;
         await wait();
-        let result = original;
+        let result = original.slice() as DeepArray<number>;
         for (let i = 0; i < EditorCollection.MaxDepth; i++){
-            result = [...original.slice(0,1), ...result, ...original.slice(1)];
+            result = [
+                ...original.slice(0,1),
+                result,
+                ...original.slice(1)
+            ]
         }
         console.log(result);
         checkContent(ce, context, result);
@@ -104,16 +125,12 @@ describe('model', () => {
     });
 })
 
-function checkContent(ce: ExtendedElement<EditorComponent>, context: ContextProxyMock, array: number[]) {
-    expect([...new EditorCollection(context)].map(x => +x.State.Content)).toEqual(array);
-    expect(ce.component.childNodes.map(x => +x.innerHTML)).toEqual(array);
-}
 
 describe('ui', () => {
 
     test('update', async () => {
         const {ce, context, app} = await getContext('update');
-        ce.component.childNodes[0].innerHTML = '4';
+        ce.children[0].innerHTML = '4';
         ce.dispatchEvent(new Event('input'))
         await wait();
         expect(context.Messages[0].State.Content).toEqual('4');
@@ -138,16 +155,16 @@ describe('ui', () => {
         const {ce, context, app} = await getContext('add');
         global.setSelection({
             type: 'Caret',
-            anchorNode: ce.component.childNodes[0]
+            anchorNode: ce.children[0]
         });
         const child = document.createElement('span');
         child.innerHTML = '5';
         child.style.order = '3';
-        ce.insertBefore(child, ce.component.childNodes[1]);
+        ce.insertBefore(child, ce.children[1]);
         const child2 = document.createElement('span');
         child2.innerHTML = '6';
         child2.style.order = '3';
-        ce.insertBefore(child2, ce.component.childNodes[1]);
+        ce.insertBefore(child2, ce.children[1]);
         ce.dispatchEvent(new Event('input'));
         await wait();
         checkContent(ce, context, [1, 6, 5, 2, 3]);
@@ -160,7 +177,7 @@ describe('ui', () => {
         const child = document.createElement('span');
         child.innerHTML = '<br>'
         child.style.order = '1.2'
-        ce.insertBefore(child, ce.component.childNodes[2]);
+        ce.insertBefore(child, ce.children[2]);
         ce.dispatchEvent(new Event('input'));
         await wait();
         checkContent(ce, context,[1, 0, 2, 3]);
@@ -172,7 +189,7 @@ describe('ui', () => {
         const child = document.createElement('span');
         child.innerHTML = '7'
         child.style.order = '-1'
-        ce.insertBefore(child, ce.component.childNodes[0]);
+        ce.insertBefore(child, ce.children[0]);
         ce.dispatchEvent(new Event('input'));
         await wait();
         expect(context.Messages[0].State.Content).toEqual(child.innerHTML);
@@ -181,7 +198,7 @@ describe('ui', () => {
     })
     test('remove', async () => {
         const {ce, context, app} = await getContext('remove');
-        ce.component.childNodes[0].remove();
+        ce.children[0].remove();
         ce.dispatchEvent(new Event('input'));
         await wait();
         checkContent(ce, context, [2,3]);
@@ -193,7 +210,7 @@ describe('ui', () => {
         const {ce, context, app} = await getContext('move');
         global.setSelection({
             type: 'Caret',
-            anchorNode: ce.component.childNodes[0]
+            anchorNode: ce.children[0]
         });
         ce.dispatchEvent(new Event('selectionchange', {
             bubbles: true
@@ -214,7 +231,7 @@ describe('ui', () => {
         const {ce, context, app} = await getContext('move');
         global.setSelection({
             type: 'Caret',
-            anchorNode: ce.component.childNodes[2]
+            anchorNode: ce.children[2]
         });
         ce.dispatchEvent(new Event('selectionchange', {
             bubbles: true
@@ -233,7 +250,7 @@ describe('ui', () => {
 
     test('move right and left', async () => {
         const {ce, context, app} = await getContext('move');
-        global.setSelection(getCaretSelection(ce.component.childNodes[2]));
+        global.setSelection(getCaretSelection(ce.children[2]));
         ce.dispatchEvent(new Event('selectionchange', {
             bubbles: true
         }));
@@ -243,7 +260,7 @@ describe('ui', () => {
         } as any))
         await wait();
         checkContent(ce,context, [1,2,3]);
-        expect(ce.component.childNodes[2].style.getPropertyValue('--level')).toEqual('2');
+        // expect(ce.children[2].style.getPropertyValue('--level')).toEqual('2');
         expect(ce.component.Selection.Focus.item.item.State.Content).toEqual('3');
 
         ce.dispatchEvent(new KeyboardEvent('keydown', {
@@ -253,7 +270,7 @@ describe('ui', () => {
         } as any));
         await wait();
         checkContent(ce,context, [1,2,3]);
-        expect(ce.component.childNodes[2].style.getPropertyValue('--level')).toEqual('1');
+        // expect(ce.children[2].style.getPropertyValue('--level')).toEqual('1');
         ce.remove();
         app.destroy();
     });

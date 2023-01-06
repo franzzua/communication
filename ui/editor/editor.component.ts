@@ -1,5 +1,5 @@
 import {action, component, effect, HtmlComponent, KeyboardListener, property} from "@cmmn/ui";
-import style from "./content-editable.style.less";
+import style from "./editor.style.less";
 import {Fn, Injectable} from "@cmmn/core";
 import {ItemSelection} from "./itemSelection";
 import {cell} from "@cmmn/cell";
@@ -13,7 +13,7 @@ import {DateTime} from "luxon";
 import {ElementCache} from "./element-cache";
 import {EditorCollection} from "./editor-collection";
 
-@Injectable(true) @component({name: 'content-editable', template: () => void 0, style})
+@Injectable(true) @component({name: 'ctx-editor', template: () => void 0, style})
 export class EditorComponent extends HtmlComponent<void> {
     public static DebounceTime = 40;
     @property()
