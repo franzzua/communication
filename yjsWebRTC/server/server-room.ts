@@ -1,7 +1,9 @@
 import {ClientConnection} from "./client-connection";
+import {bind} from "@cmmn/core";
+import type {SignalServerMessage} from "../shared/types";
 
 export class ServerRoom {
-    private users: ClientConnection[] = [];
+    private users = new Map<string, ClientConnection>();
 
     constructor(private name: string) {
 
@@ -17,11 +19,20 @@ export class ServerRoom {
         connection.send({
             type: "announce",
             room: this.name,
-            users: this.users.map(x => x.userInfo)
-        })
-        this.users.push(connection);
+            users: Array.from(this.users.values()).map(x => x.userInfo)
+        });
+        if (this.users.has(connection.userInfo.user))
+            this.users.get(connection.userInfo.user).close();
+        this.users.set(connection.userInfo.user, connection);
+        connection.on('signal', this.onSignal);
+        connection.on('close', () => this.users.delete(connection.userInfo.user))
     }
 
+
+    @bind
+    private onSignal(message: SignalServerMessage) {
+        this.users.get(message.to)?.send(message);
+    }
 }
 
 // export class YWebrtcHandler {

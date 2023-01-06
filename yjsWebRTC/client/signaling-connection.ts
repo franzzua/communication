@@ -1,8 +1,18 @@
-import {Observable} from "lib0/observable.js";
-import {SignalingMessage, SignalingRegistrationInfo, SignalingServerMessage, SignalMessage} from "../shared/types";
+import {
+    AnnounceMessage, SignalClientMessage,
+    SignalingMessage,
+    SignalingRegistrationInfo,
+    SignalingServerMessage,
+    SignalServerMessage,
+    SignalData
+} from "../shared/types";
 import {bind} from "@cmmn/core";
+import {EventEmitter} from "../shared/observable";
 
-export class SignalingConnection extends Observable<any> {
+export class SignalingConnection extends EventEmitter<{
+    signal: SignalEvent,
+    announce: AnnounceEvent
+}> {
 
 
     private connected$ = new Promise(resolve => this.socket.onopen = resolve);
@@ -11,6 +21,8 @@ export class SignalingConnection extends Observable<any> {
     constructor(private socket: WebSocket) {
         super();
         this.socket.onmessage = this.onMessage;
+        this.socket.onclose = console.log;
+        this.socket.onerror = console.log;
     }
 
     public async connect() {
@@ -18,12 +30,16 @@ export class SignalingConnection extends Observable<any> {
     }
 
     public async disconnect() {
-        this.socket.close();
     }
 
     private encoder = new TextEncoder();
 
     private send(data: SignalingMessage) {
+        if (this.socket.readyState == WebSocket.CLOSED ||
+            this.socket.readyState == WebSocket.CLOSING) {
+            console.log('closing or closed state')
+            return;
+        }
         // const buffer = this.encoder.encode(JSON.stringify(data));
         this.socket.send(JSON.stringify(data));
     }
@@ -32,14 +48,27 @@ export class SignalingConnection extends Observable<any> {
 
     @bind
     private onMessage(event: MessageEvent) {
-        const stringData = typeof event.data === "string" ? event.data :  this.decoder.decode(event.data);
+        const stringData = typeof event.data === "string" ? event.data : this.decoder.decode(event.data);
         const message = JSON.parse(stringData) as SignalingServerMessage;
         switch (message.type) {
             case "signal":
-                this.emit('signal', [message]);
+                this.emit('signal', {
+                    from: {
+                        user: message.from.user,
+                        accessMode: message.from.accessMode,
+                        signaling: this
+                    },
+                    signal: message.signal,
+                });
                 break;
             case "announce":
-                this.emit('announce', [message.room, message.users]);
+                this.emit('announce', {
+                    room: message.room,
+                    users: message.users.map(x => ({
+                        ...x,
+                        signaling: this
+                    }))
+                });
                 break;
         }
     };
@@ -52,8 +81,24 @@ export class SignalingConnection extends Observable<any> {
         });
     }
 
-    public async sendSignal(msg: SignalMessage) {
+    public sendSignal(msg: SignalClientMessage) {
         this.send(msg);
     }
+}
+
+export type SignalEvent = {
+    from: UserInfo,
+    signal: SignalData
+}
+
+export type AnnounceEvent = {
+    room: string;
+    users: UserInfo[];
+}
+
+export type UserInfo = {
+    user: string;
+    accessMode: 'read' | 'write';
+    signaling: SignalingConnection;
 }
 

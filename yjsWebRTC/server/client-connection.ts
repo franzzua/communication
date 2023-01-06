@@ -1,12 +1,20 @@
 import {WebSocket} from "ws";
-import {SignalingServerMessage} from "../shared/types";
+import {SignalingMessage, SignalingServerMessage, SignalServerMessage} from "../shared/types";
+import {EventEmitter} from "../shared/observable";
+import {bind} from "@cmmn/core";
 
-export class ClientConnection {
+export class ClientConnection extends EventEmitter<{
+    signal: SignalServerMessage,
+    close: void
+}>{
     constructor(private socket: WebSocket,
                 public userInfo: {
                     user: string, accessMode: 'read' | 'write'
                 }) {
+        super();
         this.listenPingPong();
+        this.socket.on('message', this.onMessage);
+        this.socket.on('close', () => this.emit('close'));
     }
 
     private listenPingPong() {
@@ -32,6 +40,25 @@ export class ClientConnection {
     public send(message: SignalingServerMessage) {
         // const buffer = new Buffer(JSON.stringify(message), 'utf8');
         this.socket.send(JSON.stringify(message),);
+    }
+
+    private decoder = new TextDecoder();
+
+    @bind
+    private onMessage(data: string | Buffer) {
+        const stringData = typeof data === "string" ? data : this.decoder.decode(data);
+        const message = JSON.parse(stringData) as SignalingMessage;
+        if (message.type !== 'signal')
+            return;
+        this.emit('signal', {
+            ...message,
+            from: this.userInfo
+        });
+    }
+
+    public close() {
+        super.dispose();
+        this.socket.close();
     }
 }
 

@@ -3,6 +3,7 @@ import {Api} from "@infr/api";
 import {TokenCryptor} from "@infr/yjs/token-cryptor";
 import {TokenVerifier} from "@infr/token-verifier.service";
 
+
 @Injectable()
 export class ResourceTokenApi extends Api {
     private tokens = new Map<string, Promise<string>>();
@@ -29,6 +30,7 @@ export class ResourceTokenApi extends Api {
             "Resource-Token": t
         })));
     }
+
 
     public getCryptor(URI: string) {
         return new TokenCryptor(URI, this, new TokenVerifier(this));

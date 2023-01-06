@@ -1,30 +1,38 @@
-import {Instance, Options, SignalData} from "simple-peer";
-import SimplePeer from "simple-peer/simplepeer.min.js"
-import {Observable} from "lib0/observable";
-import {UserInfo} from "../shared/types";
+import {UserInfo} from "./signaling-connection";
+import {PeerDataChannel} from "./peer-data-channel";
+import {MessageType} from "@infr/yjs/yWebRtc/room";
 
-export class PeerConnection extends Observable<any> {
+export class PeerConnection extends PeerDataChannel {
 
-
-    private constructor(private peer: Instance) {
-        super();
-        peer.on('signal', data => this.emit('signal', [data]));
+    public constructor(private dataChannel: RTCDataChannel, private user: UserInfo) {
+        super(user.accessMode);
+        console.log('connected', user.user, user.accessMode, dataChannel.label);
+        let type: MessageType = null;
+        this.dataChannel.addEventListener('close', () => this.emit('close'));
+        this.dataChannel.addEventListener('message', event => {
+            const data: Uint8Array = new Uint8Array(event.data);
+            if (type == null)
+                type = data[0];
+            else {
+                this.emit(type, new Uint8Array(data));
+                type = null;
+            }
+        });
     }
 
-    public static answer(user: UserInfo, signal: SignalData, options: Options) {
-        const peer: Instance = new SimplePeer({
-            initiator: false,
-            ...options
-        });
-        peer.signal(signal);
-        return new PeerConnection(peer);
+    private open$ = this.dataChannel.readyState == "open"
+        ? Promise.resolve()
+        : new Promise(resolve => this.dataChannel.onopen = resolve);
+
+    public async send(type: MessageType, data: Uint8Array) {
+        await this.open$;
+        this.dataChannel.send(Uint8Array.of(type));
+        this.dataChannel.send(data);
     }
 
-    public static initiate(user: UserInfo, peerOpts: SimplePeer.Options) {
-        const peer: Instance = new SimplePeer({
-            initiator: true,
-            ...peerOpts
-        });
-        return new PeerConnection(peer);
+    public disconnect() {
+        this.dataChannel.close();
+        super.disconnect();
     }
 }
+

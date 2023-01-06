@@ -12,10 +12,9 @@ import {MessageSerializer} from "@infr/yjs/yWebRtc/message-serializer";
 import {Cryptor} from "@infr/yjs/yWebRtc/cryptor";
 
 export enum MessageType {
-    Sync1 = 0,
-    Sync2 = 2,
-    SyncUpdate = 7,
-    QueryAwareness = 3,
+    UpdateRequest = 0,
+    Update = 7,
+    AwarenessRequest = 3,
     Awareness = 1,
 
     AddPeer = 4,
@@ -169,21 +168,21 @@ export class Room {
         const decoder = decoding.createDecoder(new Uint8Array(buf));
         const messageType = decoding.readVarUint(decoder) as MessageType;
         switch (messageType) {
-            case MessageType.Sync1: {
+            case MessageType.UpdateRequest: {
                 decoding.readVarUint(decoder)
                 return this.serializer.writeSync1(decoder);
             }
-            case MessageType.Sync2:
+            case MessageType.Update:
                 decoding.readVarUint(decoder)
                 this.serializer.writeSync2(decoder);
                 if (!this.synced && syncedCallback) {
                     syncedCallback()
                 }
                 return;
-            case MessageType.SyncUpdate:
+            case MessageType.Update:
                 decoding.readVarUint(decoder)
                 return this.serializer.writeUpdate(decoder);
-            case MessageType.QueryAwareness:
+            case MessageType.AwarenessRequest:
                 return this.serializer.getAwarenessMessage();
             case MessageType.Awareness:
                 return this.serializer.writeAwareness(decoder);

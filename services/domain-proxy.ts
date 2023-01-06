@@ -1,8 +1,8 @@
 import {Injectable} from "@cmmn/core";
 import {Context, DomainState} from "@model";
-import {ModelProxy, proxy, Stream} from "@cmmn/domain";
+import {ModelProxy, proxy, Stream} from "@cmmn/domain/proxy";
 import type {IDomainActions} from "@domain";
-import {ModelMap} from "@cmmn/domain";
+import {ModelMap} from "@cmmn/domain/proxy";
 import {ContextProxy} from "./context-proxy";
 
 @Injectable()

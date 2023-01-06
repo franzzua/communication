@@ -1,6 +1,6 @@
 import {Container, Injectable} from "@cmmn/core";
 import {ContextModel} from "./context-model";
-import {IFactory, Model, ModelAction, ModelPath} from "@cmmn/domain";
+import {IFactory, Model, ModelAction, ModelPath} from "@cmmn/domain/worker";
 import {YjsRepository} from "@infr/yjs/yjsRepository";
 import {DomainModel} from "@domain/model/domain-model";
 

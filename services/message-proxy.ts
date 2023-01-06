@@ -1,4 +1,4 @@
-import {ModelProxy, proxy} from "@cmmn/domain";
+import {ModelProxy, proxy} from "@cmmn/domain/proxy";
 import {Context, DomainState, Message} from "@model";
 import {IMessageActions} from "@domain";
 import {utc, Fn} from "@cmmn/core";

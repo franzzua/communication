@@ -1,11 +1,8 @@
 import {Map as YMap} from "yjs";
 import {ContextJSON, MessageJSON} from "@domain";
 import {YjsStore} from "@infr/yjs/yjsStore";
-import {cellx, ICellx} from "@cmmn/core";
-import {WebrtcProvider} from "@infr/yjs/yWebRtc";
-import {TokenCryptor} from "@infr/yjs/token-cryptor";
+import {cellx, Fn, ICellx} from "@cmmn/core";
 import {ResourceTokenApi} from "@infr/resource-token-api.service";
-import {TokenVerifier} from "@infr/token-verifier.service";
 import {YjsWebRTCProvider} from "@yjs/webrtc";
 
 export class ContextStore extends YjsStore {
@@ -14,12 +11,13 @@ export class ContextStore extends YjsStore {
 
     private messageArray = this.doc.getArray<YMap<any>>('messages');
 
-    private provider = new YjsWebRTCProvider(
+    private static provider = new YjsWebRTCProvider(
         [`${location.origin.replace(/^http/, 'ws')}/api`],
     );
 
     constructor(uri: string, private api: ResourceTokenApi) {
         super(uri);
+        console.warn('context store', uri);
         this.contextMap.observeDeep(() => this.State(this.GetState()))
         this.messageArray.observeDeep(() => this.State(this.GetState()));
         this.IsLoaded$.then(() => this.State(this.GetState()));
@@ -28,8 +26,11 @@ export class ContextStore extends YjsStore {
 
     public async GetRemoteProvider() {
         const token = await this.api.GetToken(this.URI);
-        const room = await this.provider.joinRoom(this.URI, this.doc, {
+        const user = this.api.GetUserInfo()
+
+        const room = await ContextStore.provider.joinRoom(this.URI, this.doc, {
             token,
+            user,
             maxConns: 70 + Math.floor(Math.random() * 70),
             filterBcConns: true,
             peerOpts: {}
@@ -51,7 +52,8 @@ export class ContextStore extends YjsStore {
     }
 
     private readMessages(): Map<string, MessageJSON> {
-        return new Map(this.messageArray.toArray().map(yMap => yMap.toJSON()).map(x => [x.id, x]));
+        const array = this.messageArray.toArray().map(yMap => yMap.toJSON());
+        return new Map(array.map(x => [x.id, x]));
     }
 
     private readContext(): ContextJSON {

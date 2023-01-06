@@ -4,7 +4,7 @@ import {ContextJSON} from "@domain/contracts/json";
 import {Permutation} from "@domain/helpers/permutation";
 import {Context, Message} from "@model";
 import {Factory} from "./factory";
-import {Model} from "@cmmn/domain";
+import {Model} from "@cmmn/domain/worker";
 import {ContextStore} from "@infr/yjs/contextStore";
 import {DateTime, Fn, utc} from "@cmmn/core";
 

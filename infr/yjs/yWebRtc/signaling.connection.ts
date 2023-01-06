@@ -51,7 +51,6 @@ export class SignalingConnection extends WebSocket {
             case 'signal':
                 if (data.to === room.peerId) {
                     const connection = webrtcConns.getOrAdd(data.from, () => new WebrtcConnection(this, false, data.from, room));
-                    // TODO: unusable? to delete?
                     connection.peer.signal(data.signal)
                 }
                 break

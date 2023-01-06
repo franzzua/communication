@@ -12,7 +12,7 @@ export class MessageSerializer {
 
     public writeSync1(decoder: Decoder) {
         const encoder = encoding.createEncoder();
-        encoding.writeVarUint(encoder, MessageType.Sync2);
+        encoding.writeVarUint(encoder, MessageType.Update);
         syncProtocol.readSyncStep1(decoder, encoder, this.doc);
         return encoding.toUint8Array(encoder);
     }
@@ -31,14 +31,14 @@ export class MessageSerializer {
 
     public getSync1Message() {
         const encoderSync = encoding.createEncoder()
-        encoding.writeVarUint(encoderSync, MessageType.Sync1)
+        encoding.writeVarUint(encoderSync, MessageType.UpdateRequest)
         syncProtocol.writeSyncStep1(encoderSync, this.doc)
         return encoding.toUint8Array(encoderSync);
     }
 
     public getSync2Message() {
         const encoderState = encoding.createEncoder()
-        encoding.writeVarUint(encoderState, MessageType.Sync2)
+        encoding.writeVarUint(encoderState, MessageType.Update)
         syncProtocol.writeSyncStep2(encoderState, this.doc)
         return encoding.toUint8Array(encoderState);
     }
@@ -52,14 +52,14 @@ export class MessageSerializer {
 
     public getQueryAwarenessMessage() {
         const encoderAwarenessQuery = encoding.createEncoder()
-        encoding.writeVarUint(encoderAwarenessQuery, MessageType.QueryAwareness)
+        encoding.writeVarUint(encoderAwarenessQuery, MessageType.AwarenessRequest)
         return encoding.toUint8Array(encoderAwarenessQuery);
     }
 
 
     public getUpdate(update) {
         const encoder = encoding.createEncoder();
-        encoding.writeVarUint(encoder, MessageType.SyncUpdate);
+        encoding.writeVarUint(encoder, MessageType.Update);
         syncProtocol.writeUpdate(encoder, update);
         return encoding.toUint8Array(encoder);
     }

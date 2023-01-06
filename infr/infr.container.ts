@@ -4,10 +4,8 @@ import {ResourceTokenStore} from "@infr/yjs/resource-token-store";
 import {ResourceTokenApi} from "@infr/resource-token-api.service";
 import {TokenVerifier} from "@infr/token-verifier.service";
 
+const acc = JSON.parse(localStorage.getItem('account'));
+
 export const InfrContainer = Container.withProviders(
-    YjsRepository, ResourceTokenStore, TokenVerifier, {
-        provide: ResourceTokenApi, useValue: new ResourceTokenApi().withHeaders({
-            'authorization': JSON.stringify({user: 'andrey'}),
-        })
-    }
+    YjsRepository, ResourceTokenStore, TokenVerifier, ResourceTokenApi,
 )

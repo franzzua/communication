@@ -1,4 +1,4 @@
-import {EventEmitter} from "@cmmn/core";
+import {EventEmitter} from "cellx";
 
 export class KeyboardAspect extends EventEmitter {
 
@@ -10,20 +10,24 @@ export class KeyboardAspect extends EventEmitter {
             const modifiers = ['Alt', 'Ctrl', 'Shift'].filter(x => event[x.toLowerCase() + 'Key']);
             const modKey = modifiers.join('') + event.code;
             this._eventsQueue.push({event, modKey});
-            this.emit('change');
+            this.emit('change', undefined);
         })
         element.addEventListener('copy', event => {
             this._eventsQueue.push({event, modKey: 'Copy'});
-            this.emit('change');
+            this.emit('change', undefined);
         })
         element.addEventListener('paste', event => {
             this._eventsQueue.push({event, modKey: 'Paste'});
-            this.emit('change');
+            this.emit('change', undefined);
         })
-        navigator.clipboard.addEventListener('paste', event => {
-            this._eventsQueue.push({event, modKey: 'Paste'});
-            this.emit('change');
-        })
+        if (navigator.clipboard) {
+            navigator.clipboard.addEventListener('paste', event => {
+                this._eventsQueue.push({event, modKey: 'Paste'});
+                this.emit('change', undefined);
+            })
+        }else{
+
+        }
 
     }
 

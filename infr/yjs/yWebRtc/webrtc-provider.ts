@@ -8,7 +8,6 @@ import {bind} from "@cmmn/core";
 import {Cryptor} from "@infr/yjs/yWebRtc/cryptor";
 import {SymmetricCryptor} from "@infr/yjs/yWebRtc/symmetric-cryptor";
 import {AsIsCryptor} from "@infr/yjs/yWebRtc/as-is-cryptor";
-import {Doc} from "yjs";
 
 /**
  * @extends Observable<string>

@@ -1,4 +1,4 @@
-import {Model} from "@cmmn/domain";
+import {Model} from "@cmmn/domain/worker";
 import {IDomainActions} from "@domain";
 import {DomainState} from "@model";
 import {ContextModel} from "@domain/model/context-model";
