@@ -4,6 +4,7 @@ import type {Reducer} from "../reducers";
 import {Fn, Injectable, utc} from "@cmmn/core";
 import {ContextProxy} from "@services";
 import {TreeState} from "./types";
+import {IContextProxy} from "@proxy";
 
 
 export type ReducerStore<TState> = {
@@ -19,14 +20,14 @@ export class TreeReducers {
     @logReducer
     async UpdateContent(data: { item: TreeItem, content: string }): Promise<Reducer<TreeState>> {
         return state => {
-            data.item.Message.Actions.UpdateText(data.content);
+            data.item.Message.UpdateContent(data.content);
             // this.stateService.UpdateContent(data.item.Message, data.content);
             // data.item.Message.Content = data.content;
             return ({...state, Selected: data.item});
         }
     }
 
-    Init(root: ContextProxy): Reducer<TreeState> {
+    Init(root: IContextProxy): Reducer<TreeState> {
         return state => {
             const newState = ({
                 ...state,
@@ -81,7 +82,7 @@ export class TreeReducers {
                     parsed.id = Fn.ulid();
                     parsed.CreatedAt = utc();
                     parsed.UpdatedAt = utc();
-                    state.Selected.Message.Context.Actions.CreateMessage(parsed);
+                    state.Selected.Message.Context.CreateMessage(parsed);
                 }
             } catch (e) {
                 const paragraphs = clipboard.split('\n');
@@ -123,7 +124,7 @@ export class TreeReducers {
                 if (parentPath.length > 0) {
                     return state.ItemsMap.get(parentPath.join('/')).Message.AddMessage(newMessage);
                 } else {
-                    state.Root.Actions.CreateMessage(newMessage);
+                    state.Root.CreateMessage(newMessage);
                     return state.Root.MessageMap.get(newMessage.id);
                 }
             })();
@@ -192,14 +193,14 @@ export class TreeReducers {
             const next = state.Items.toArray()[selectedIndex + 1];
             state.Items.removeAt(state.Items.toArray().indexOf(state.Selected));
             if (next && next.Message.Context == message.Context) {
-                message.Actions.Remove();
+                message.Context.RemoveMessage(message);
                 return {
                     ...state,
                     Selected: next,
                 };
             } else {
                 const prev = state.Items.toArray()[selectedIndex - 1];
-                message.Actions.Remove();
+                message.Context.RemoveMessage(message);
                 return {
                     ...state,
                     Selected: prev,
@@ -245,7 +246,7 @@ export class TreeReducers {
             const parent = state.ItemsMap.get(state.Selected.Path.slice(0, -1).join(TreePresenter.Separator));
             const parentIndex = parent.Message.Context.Messages.indexOf(parent.Message);
 
-            message.Actions.Move(message.State.ContextURI, parent.Message.State.ContextURI, parentIndex + 1);
+            message.MoveTo(parent.Message.Context, parentIndex + 1);
             const newPath = [...parent.Path.slice(0, -1), message.State.id];
             state.Selected.Path = newPath;
             state.ItemsMap.delete(state.Selected.Path.join(TreePresenter.Separator));
@@ -268,7 +269,7 @@ export class TreeReducers {
             const messageIndex = message.Context.Messages.indexOf(message);
             if (messageIndex == 0)
                 return state;
-            message.Actions.Reorder(messageIndex - 1);
+            message.MoveTo(message.Context, messageIndex - 1);
             const itemIndex = state.Items.toArray().indexOf(state.Selected);
             state.Items.removeAt(itemIndex);
             state.Items.insert(itemIndex - 1, state.Selected)
@@ -285,7 +286,7 @@ export class TreeReducers {
             const messageIndex = message.Context.Messages.indexOf(message);
             if (messageIndex == message.Context.Messages.length - 1)
                 return state;
-            message.Actions.Reorder(messageIndex + 1);
+            message.MoveTo(message.Context, messageIndex + 1);
             const itemIndex = state.Items.toArray().indexOf(state.Selected);
             state.Items.removeAt(itemIndex);
             state.Items.insert(itemIndex + 1, state.Selected)

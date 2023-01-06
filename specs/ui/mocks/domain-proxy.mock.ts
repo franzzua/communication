@@ -7,7 +7,7 @@ export class DomainProxyMock {
 
 
     _contextsMap = new Map<string, ContextProxyMock>([
-        ['test', new ContextProxyMock('test')]
+        ['test', new ContextProxyMock([1,2,3])]
     ]);
 
     // @ts-ignore

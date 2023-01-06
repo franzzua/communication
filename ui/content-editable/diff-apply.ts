@@ -41,7 +41,7 @@ export class DiffApply {
             }
         }
         for (let {item, child} of diff.ui.deleted) {
-            item.Message.Actions.Remove();
+            item.Message.Context.RemoveMessage(item.Message);
         }
 
         for (let {item} of diff.model.added) {

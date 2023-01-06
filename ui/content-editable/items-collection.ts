@@ -1,9 +1,10 @@
 import {EventEmitter} from "@cmmn/core";
-import {ContextProxy} from "@proxy";
+import {IContextProxy} from "@proxy";
 import {TreeItem} from "../../presentors/tree.presentor";
 
 export class ItemsCollection extends EventEmitter<any> {
-    constructor(private root: ContextProxy) {
+    static MaxDepth = 5;
+    constructor(private root: IContextProxy) {
         super();
     }
 
@@ -13,7 +14,7 @@ export class ItemsCollection extends EventEmitter<any> {
         }
     }
 
-    private* iterate(context: ContextProxy, path = [],
+    private* iterate(context: IContextProxy, path = [],
                      counter = {index: 0},
                      parent: TreeItem = null): IterableIterator<TreeItem> {
         for (let msg of context.Messages) {
@@ -27,7 +28,7 @@ export class ItemsCollection extends EventEmitter<any> {
                     return this.Message.State;
                 },
                 Path: newPath,
-                IsOpened: level < 5,
+                IsOpened: level < ItemsCollection.MaxDepth,
                 Length: 1,
                 Index: counter.index++,
                 Parent: parent

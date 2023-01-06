@@ -69,7 +69,7 @@ export class ElementCache<TItem extends {
                 if (deleted) {
                     model.added.remove(added);
                     model.deleted.remove(deleted);
-                    model.updated.push(added);
+                    model.updated.push({child: deleted.child, item: added.item});
                 }
             }
         }

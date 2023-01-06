@@ -1,10 +1,10 @@
-import {IMessageActions} from "@domain";
 import {ContextProxyMock} from "./context-proxy.mock";
 import {Message} from "@model";
-import { Cell } from "@cmmn/cell";
-import { utc } from "@cmmn/core";
+import {Cell, cell} from "@cmmn/cell";
+import {utc} from "@cmmn/core";
+import { IContextProxy, IMessageProxy} from "@proxy";
 
-export class MessageProxyMock implements IMessageActions {
+export class MessageProxyMock implements IMessageProxy {
     constructor(private context: ContextProxyMock,
                 private id: string,
                 private content = id) {
@@ -23,35 +23,21 @@ export class MessageProxyMock implements IMessageActions {
     set State(value) {
         this.stateCell.set(value);
     }
-
-    Actions: IMessageActions = this;
-
-    async Attach(uri: string): Promise<void> {
+    @cell
+    get SubContext(): IContextProxy {
+        return null;
+    }
+    set SubContext(value: IContextProxy) {
     }
 
-    async CreateSubContext(uri: string, parentURI: string): Promise<void> {
+    GetOrCreateSubContext() {
+        return this.SubContext = new ContextProxyMock([]);
     }
 
-    public UpdateContent(content: string){
-        this.UpdateText(content);
-    }
-
-    async Move(fromURI: string, toURI: string, toIndex: number): Promise<void> {
-    }
-
-    async Remove(): Promise<void> {
-        this.Context.messages.removeAt(this.Context.Messages.indexOf(this));
-    }
-
-    async Reorder(newOrder: number): Promise<void> {
-        this.Context.messages.removeAt(this.Context.Messages.indexOf(this));
-        this.Context.messages.insert(newOrder, this);
-    }
-
-    async UpdateText(text: string): Promise<void> {
+    public UpdateContent(content: string) {
         this.stateCell.set({
             ...this.State,
-            Content: text,
+            Content: content,
             UpdatedAt: utc()
         });
     }
@@ -59,5 +45,23 @@ export class MessageProxyMock implements IMessageActions {
     // @ts-ignore
     get Context() {
         return this.context;
+    }
+
+    AddMessage(message: Message): IMessageProxy {
+        return undefined;
+    }
+
+    MoveTo(context: IContextProxy, index: number): IMessageProxy {
+        if (context == this.Context){
+            this.Context.messages.removeAt(this.Context.Messages.indexOf(this));
+            this.Context.messages.insert(index, this);
+            return this;
+        }else{
+            this.Context.RemoveMessage(this);
+            const result = context.CreateMessage(this.State, index);;
+            console.log(this.Context.Messages.map(x => x.State.Content));
+            console.log(context.Messages.map(x => x.State.Content));
+            return  result;
+        }
     }
 }

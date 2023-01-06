@@ -13,6 +13,7 @@ import {Reducer, ReducerQueueState} from "../reducers";
 import {ObservableList} from "@cmmn/cell";
 import {TreeState} from "./types";
 import {effect} from "@cmmn/ui";
+import {IContextProxy} from "@proxy";
 
 @Injectable(true)
 @component({name: 'ctx-tree', template, style})
@@ -31,7 +32,7 @@ export class TreeComponent extends HtmlComponent<IState, IEvents> implements IEv
     private uri!: string;
 
     @cell
-    get ContextProxy(): ContextProxy {
+    get ContextProxy(): IContextProxy {
         return this.uri && this.root.ContextsMap.get(this.uri);
     }
 

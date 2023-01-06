@@ -1,19 +1,14 @@
 import {ContentEditableState} from "./types";
 import {Message} from "@model";
-import {TreeItem, TreePresenter} from "../../presentors/tree.presentor";
 import type {Reducer} from "../reducers";
 import {Fn, Injectable, utc} from "@cmmn/core";
 
 export class ContentEditableReducers {
-
-    async Focus(x: TreeItem): Promise<Reducer<ContentEditableState>> {
-        return (state: ContentEditableState) => ({
-            ...state,
-            Selected: x
-        });
-    }
+    public static KeyMap: Record<string, (e) => Promise<Reducer<ContentEditableState>>> = {};
 
     @logReducer
+    @onKeyPress('CtrlKeyC')
+    @onKeyPress('Copy')
     async Copy(event: ClipboardEvent): Promise<Reducer<ContentEditableState>> {
         return (state: ContentEditableState) => {
             const message = state.Selection?.Focus?.item.item.Message;
@@ -35,6 +30,8 @@ export class ContentEditableReducers {
     }
 
     @logReducer
+    @onKeyPress('CtrlKeyV')
+    @onKeyPress('Paste')
     async Paste(event: ClipboardEvent): Promise<Reducer<ContentEditableState>> {
         const clipboard = event.clipboardData?.getData("text/plain")
             ?? await navigator.clipboard.readText();
@@ -51,7 +48,7 @@ export class ContentEditableReducers {
                     parsed.id = Fn.ulid();
                     parsed.CreatedAt = utc();
                     parsed.UpdatedAt = utc();
-                    state.Selection?.Focus?.item.item.Message.Context.Actions.CreateMessage(parsed);
+                    state.Selection?.Focus?.item.item.Message.Context.CreateMessage(parsed);
                 }
             } catch (e) {
                 const paragraphs = clipboard.split('\n');
@@ -81,6 +78,7 @@ export class ContentEditableReducers {
 
 
     @logReducer
+    @onKeyPress('ShiftDelete')
     async Remove(event: KeyboardEvent): Promise<Reducer<ContentEditableState>> {
         return (state: ContentEditableState) => {
             const item = state.Selection?.Focus.item.item;
@@ -88,14 +86,14 @@ export class ContentEditableReducers {
             const selectedIndex = item.Index;
             const next = state.Items[selectedIndex + 1];
             if (next && next.Message.Context == message.Context) {
-                message.Actions.Remove();
+                message.Context.RemoveMessage(message);
                 return {
                     ...state,
                     Selected: next,
                 };
             } else {
                 const prev = state.Items[selectedIndex - 1];
-                message.Actions.Remove();
+                message.Context.RemoveMessage(message);
                 return {
                     ...state,
                     Selected: prev,
@@ -105,6 +103,7 @@ export class ContentEditableReducers {
     }
 
     @logReducer
+    @onKeyPress('Tab')
     async MoveRight(event: KeyboardEvent): Promise<Reducer<ContentEditableState>> {
         return (state: ContentEditableState) => {
             const selectedItem = state.Selection?.Focus.item.item;
@@ -116,12 +115,12 @@ export class ContentEditableReducers {
 
             const subContext = prevMessage.GetOrCreateSubContext();
             message.MoveTo(subContext, subContext.Messages.length);
-            console.log('move', message.State.Content, 'to', prevMessage.State.Content);
             return state;
         }
     }
 
     @logReducer
+    @onKeyPress('ShiftTab')
     async MoveLeft(event: KeyboardEvent): Promise<Reducer<ContentEditableState>> {
         return (state: ContentEditableState) => {
             const selectedItem = state.Selection?.Focus.item.item;
@@ -138,6 +137,7 @@ export class ContentEditableReducers {
     }
 
     @logReducer
+    @onKeyPress('CtrlArrowUp')
     async MoveUp(event: KeyboardEvent): Promise<Reducer<ContentEditableState>> {
         return (state: ContentEditableState) => {
             const selectedItem = state.Selection?.Focus.item;
@@ -145,12 +145,13 @@ export class ContentEditableReducers {
             const messageIndex = message.Context.Messages.indexOf(message);
             if (messageIndex == 0)
                 return state;
-            message.Actions.Reorder(messageIndex - 1);
+            message.MoveTo(message.Context, messageIndex - 1);
             return state;
         }
     }
 
     @logReducer
+    @onKeyPress('CtrlArrowDown')
     async MoveDown(event: KeyboardEvent): Promise<Reducer<ContentEditableState>> {
         return (state: ContentEditableState) => {
             const selectedItem = state.Selection?.Focus.item;
@@ -158,42 +159,21 @@ export class ContentEditableReducers {
             const messageIndex = message.Context.Messages.indexOf(message);
             if (messageIndex == message.Context.Messages.length - 1)
                 return state;
-            message.Actions.Reorder(messageIndex + 1);
+            message.MoveTo(message.Context, messageIndex + 1);
             return {
                 ...state,
             }
         }
     }
+}
 
-    AddMessage(data: { item: TreeItem; content: string; index: number }): Reducer<ContentEditableState> {
-        return state => {
-            const newMessage = data.item.Message.Context.CreateMessage({
-                Content: data.content,
-                id: Fn.ulid(),
-                CreatedAt: utc(),
-                UpdatedAt: utc(),
-                ContextURI: data.item.Message.Context.State.URI,
-            }, data.index);
-            return state;
-        }
+export function onKeyPress(keyCode: string){
+    return (target, key, descr) => {
+        target.constructor.KeyMap[keyCode] = descr.value;
+        return descr;
     }
 }
 
-
-export const keyMap: {
-    [key: string]: keyof ContentEditableReducers
-} = {
-    ShiftTab: "MoveLeft",
-    Tab: "MoveRight",
-    CtrlArrowUp: "MoveUp",
-    CtrlArrowDown: "MoveDown",
-    CtrlKeyC: "Copy",
-    CtrlKeyV: "Paste",
-    ShiftDelete: "Remove",
-    Paste: "Paste",
-    Copy: "Copy",
-    CtrlPeriod: "Switch"
-}
 
 function logReducer(target, key, descr) {
     return {

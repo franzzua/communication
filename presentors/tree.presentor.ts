@@ -2,13 +2,14 @@ import {Injectable} from "@cmmn/core";
 import {ContextProxy, MessageProxy} from "@services";
 import {ObservableList} from "@cmmn/cell";
 import { Message } from "@model";
+import {IContextProxy, IMessageProxy} from "@proxy";
 
 @Injectable()
 export class TreePresenter {
 
     public static Separator = '/';
 
-    private updateTree(msg: MessageProxy, state: IState, path = [], index = 0): number {
+    private updateTree(msg: IMessageProxy, state: IState, path = [], index = 0): number {
         if (!msg.State)
             throw new Error('msg with empty state');
         const level = path.length;
@@ -65,13 +66,13 @@ export type TreeItem = {
     State?: Message;
     Parent?: TreeItem;
     Path: string[];
-    Message: MessageProxy;
+    Message: IMessageProxy;
     IsOpened: boolean;
     Length: number;
 }
 
 export type IState = {
     Items: ObservableList<TreeItem>;
-    Root: ContextProxy;
+    Root: IContextProxy;
     ItemsMap: Map<string, TreeItem>;
 }

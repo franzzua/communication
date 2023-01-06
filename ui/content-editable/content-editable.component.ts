@@ -4,16 +4,15 @@ import {TreeItem} from "../../presentors/tree.presentor";
 import {Fn, Injectable} from "@cmmn/core";
 import {ItemSelection} from "./itemSelection";
 import {cell} from "@cmmn/cell";
-import {ContextProxy, DomainProxy} from "@proxy";
+import {ContextProxy, DomainProxy, IContextProxy} from "@proxy";
 import {Context} from "@model";
-import {ContentEditableReducers, keyMap} from "./content-editable.reducers";
+import {ContentEditableReducers} from "./content-editable.reducers";
 import {ItemsCollection} from "./items-collection";
 import {DiffApply} from "./diff-apply";
 import {Reducer} from "../reducers";
 import {ContentEditableState} from "./types";
 import {DateTime} from "luxon";
-import {ElementCache, ElementInfo} from "./element-cache";
-import {CustomEvent} from "linkedom";
+import {ElementCache} from "./element-cache";
 
 @Injectable(true) @component({name: 'content-editable', template: () => void 0, style})
 export class ContentEditableComponent extends HtmlComponent<void> {
@@ -32,7 +31,7 @@ export class ContentEditableComponent extends HtmlComponent<void> {
         // Cell.OnChange(() => this.Items.toArray().map(x => x.Message.State), () => this.merge())
     }
 
-    @cell({compareKey: a => a?.State, compare: Context.equals}) get ContextProxy(): ContextProxy {
+    @cell({compareKey: a => a?.State, compare: Context.equals}) get ContextProxy(): IContextProxy {
         return this.uri && this.root.ContextsMap.get(this.uri);
     }
 
@@ -97,9 +96,9 @@ export class ContentEditableComponent extends HtmlComponent<void> {
         return this.keyboardListener.on('keydown', event => {
             const modifiers = ['Alt', 'Ctrl', 'Shift'].filter(x => event[x.toLowerCase() + 'Key']);
             const modKey = modifiers.join('') + event.code;
-            if (modKey in keyMap) {
+            if (modKey in ContentEditableReducers.KeyMap) {
                 event.preventDefault();
-                this.InvokeAction(this.reducers[keyMap[modKey]](event as any));
+                this.InvokeAction(ContentEditableReducers.KeyMap[modKey].call(this.reducers, event as any));
 
                 // this.$reducerState.Invoke(reducer);
             }

@@ -1,20 +1,19 @@
 import {Context} from "@model";
 import {MessageProxyMock} from "./message-proxy.mock";
 import {cell, ObservableList} from "@cmmn/cell";
+import {IContextProxy, IMessageProxy, MessageProxy} from "@proxy";
 
-export class ContextProxyMock {
-    constructor(test: string) {
+export class ContextProxyMock implements IContextProxy {
+    constructor(private content: number[]) {
     }
 
     @cell
-    public readonly messages = new ObservableList([
-        new MessageProxyMock(this, '1'),
-        new MessageProxyMock(this, '2'),
-        new MessageProxyMock(this, '3'),
-    ]);
+    public readonly messages = new ObservableList(this.content.map(x =>
+        new MessageProxyMock(this, x.toString()) as IMessageProxy
+    ));
 
 
-    get Messages(): ReadonlyArray<MessageProxyMock> {
+    get Messages(): ReadonlyArray<IMessageProxy> {
         return this.messages.toArray();
     }
 
@@ -27,9 +26,20 @@ export class ContextProxyMock {
     }
 
 
-    CreateMessage(message, index = this.Messages.length) {
+    CreateMessage(message, index = this.Messages.length): IMessageProxy {
         const result = new MessageProxyMock(this, message.id, message.Content);
-        this.messages.insert(index, result);
+        this.messages.insert(index, result as any);
         return result;
+    }
+
+    MessageMap: Map<string, MessageProxy>;
+    ParentsMap: Map<string, MessageProxy>;
+
+    get Parents(): ReadonlyArray<MessageProxy> {
+        return undefined;
+    }
+
+    RemoveMessage(message: IMessageProxy) {
+        this.messages.removeAt(this.Messages.indexOf(message));
     }
 }

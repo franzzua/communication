@@ -7,6 +7,7 @@ import {ContentEditableComponent} from "../../ui/content-editable/content-editab
 import {DomainProxyMock} from "./mocks/domain-proxy.mock";
 import {MessageProxyMock} from "./mocks/message-proxy.mock";
 import {ContextProxyMock} from "./mocks/context-proxy.mock";
+import {ItemsCollection} from "../../ui/content-editable/items-collection";
 
 const wait = () => Fn.asyncDelay(5);
 
@@ -35,7 +36,7 @@ describe('model', () => {
 
     test('update', async () => {
         const {ce, context, app} = await getContext('update');
-        await context.Messages[0].Actions.UpdateText('8');
+        await context.Messages[0].UpdateContent('8');
         await wait();
         expect(ce.component.childNodes[0].innerHTML).toEqual('8');
         ce.remove();
@@ -67,14 +68,44 @@ describe('model', () => {
         context.messages.removeAt(2);
         context.messages.insert(0, x);
         await wait();
-        expect(ce.component.childNodes.map(x => +x.innerHTML)).toEqual([3, 1, 2]);
+        checkContent(ce, context, [3,1,2]);
+        ce.remove();
+        app.destroy();
+    });
+
+
+    test('mirrors', async () => {
+        const {ce, context, app} = await getContext('add');
+        context.Messages[0].SubContext = context.Messages[1].SubContext = new ContextProxyMock([4]);
+        await wait();
+        checkContent(ce, context, [1,4,2,4,3]);
+        context.Messages[0].SubContext.Messages[0].UpdateContent('5');
+        await wait();
+        checkContent(ce, context, [1,5,2,5,3]);
+        context.Messages[0].SubContext.Messages[0].SubContext = new ContextProxyMock([6]);
+        await wait();
+        checkContent(ce, context, [1,5,6,2,5,6,3]);
+        ce.remove();
+        app.destroy();
+    });
+    test('infinity', async () => {
+        const {ce, context, app} = await getContext('add');
+        const original = context.Messages.map(x => +x.State.Content);
+        context.Messages[0].SubContext = context;
+        await wait();
+        let result = original;
+        for (let i = 0; i < ItemsCollection.MaxDepth; i++){
+            result = [...original.slice(0,1), ...result, ...original.slice(1)];
+        }
+        console.log(result);
+        checkContent(ce, context, result);
         ce.remove();
         app.destroy();
     });
 })
 
 function checkContent(ce: ExtendedElement<ContentEditableComponent>, context: ContextProxyMock, array: number[]) {
-    expect(context.Messages.map(x => +x.State.Content)).toEqual(array);
+    expect([...new ItemsCollection(context)].map(x => +x.State.Content)).toEqual(array);
     expect(ce.component.childNodes.map(x => +x.innerHTML)).toEqual(array);
 }
 
@@ -125,9 +156,7 @@ describe('ui', () => {
     })
     test('add-br', async () => {
         const {ce, context, app} = await getContext('add-br');
-        global.setSelection({
-            type: null,
-        });
+        global.setSelection(getCaretSelection(null));
         const child = document.createElement('span');
         child.innerHTML = '<br>'
         child.style.order = '1.2'
@@ -175,8 +204,7 @@ describe('ui', () => {
             bubbles: true
         } as any))
         await wait();
-        expect(context.Messages.map(x => x.State.Content)).toEqual(['2', '1', '3']);
-        expect(ce.component.childNodes.map(x => x.innerHTML)).toEqual(['2', '1', '3']);
+        checkContent(ce,context, [2,1,3]);
         ce.remove();
         app.destroy();
     })
@@ -197,9 +225,52 @@ describe('ui', () => {
             bubbles: true
         } as any))
         await wait();
-        expect(context.Messages.map(x => x.State.Content)).toEqual(['1', '3', '2']);
-        expect(ce.component.childNodes.map(x => x.innerHTML)).toEqual(['1', '3', '2']);
+        checkContent(ce,context, [1,3,2]);
         ce.remove();
         app.destroy();
     })
+
+
+    test('move right and left', async () => {
+        const {ce, context, app} = await getContext('move');
+        global.setSelection(getCaretSelection(ce.component.childNodes[2]));
+        ce.dispatchEvent(new Event('selectionchange', {
+            bubbles: true
+        }));
+        ce.dispatchEvent(new KeyboardEvent('keydown', {
+            code: 'Tab',
+            bubbles: true
+        } as any))
+        await wait();
+        checkContent(ce,context, [1,2,3]);
+        expect(ce.component.childNodes[2].style.getPropertyValue('--level')).toEqual('2');
+        expect(ce.component.Selection.Focus.item.item.State.Content).toEqual('3');
+
+        ce.dispatchEvent(new KeyboardEvent('keydown', {
+            shiftKey: true,
+            code: 'Tab',
+            bubbles: true
+        } as any));
+        await wait();
+        checkContent(ce,context, [1,2,3]);
+        expect(ce.component.childNodes[2].style.getPropertyValue('--level')).toEqual('1');
+        ce.remove();
+        app.destroy();
+    });
 })
+
+function getCaretSelection(node: Node){
+    return {
+        type: node ? 'Caret' : null,
+        anchorNode: node,
+        focusNode: node,
+        anchorOffset: 0,
+        focusOffset: 0,
+        setBaseAndExtent( focus, focusOffset,anchor, anchorOffset){
+            this.focusNode = focus;
+            this.anchorNode = anchor;
+            this.anchorOffset = anchorOffset;
+            this.focusOffset = focusOffset;
+        }
+    }
+}
