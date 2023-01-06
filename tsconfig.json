@@ -4,25 +4,33 @@
     "baseUrl": ".",
     "paths": {
       "@model": [
-        "./model"
+        "model"
       ],
       "@proxy": [
         "./proxy"
       ],
       "@infr/*": [
-        "./infr/*"
+        "infr/*"
       ],
       "@services": [
-        "./services"
+        "services"
       ],
       "@domain/*": [
-        "./domain/*"
+        "domain/*"
       ],
       "@domain": [
-        "./domain"
+        "domain"
+      ],
+      "@yjs/webrtc": [
+        "./yjsWebRTC"
       ]
     }
   },
+
+  "include": [
+    "**/*.ts",
+    "**/*.js"
+  ],
   "exclude": [
     "node_modules",
     "**/*.spec.ts",

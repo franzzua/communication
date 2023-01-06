@@ -11,7 +11,7 @@ export class Authorizer {
         uri: string,
         user?: string,
         token?: ResourceToken
-    }): Promise<ResourceToken | null> {
+    }): Promise<any | null> {
         if (data.user) {
             const acl = this.aclStore.getAcl(data.uri);
             return {
@@ -19,6 +19,7 @@ export class Authorizer {
                 ResourcePath: [],
                 IssueDate: new Date(),
                 Expires: new Date(+new Date() + 1000 * 60 * 60 * 24),
+                User: data.user,
                 AccessMode: AccessMode.control
             }
         }

@@ -21,6 +21,19 @@ export class ContextStore {
         this.Join();
     }
 
+    public async GetRemoteProvider() {
+        const token = await this.api.GetToken(this.URI);
+        const user = this.api.GetUserInfo()
+
+        const room = await ContextStore.provider.joinRoom(this.URI, this.doc, {
+            token,
+            user,
+            maxConns: 70 + Math.floor(Math.random() * 70),
+            filterBcConns: true,
+            peerOpts: {}
+        } as any);
+    }
+
     async Join() {
         await this.contextMap.useIndexedDB();
         await this.messageStore.useIndexedDB();
@@ -136,5 +149,5 @@ export class ContextStore {
 
 export type IState = {
     Context: Readonly<ContextJSON>;
-    Messages: ReadonlySet<string>;
+    Messages: ReadonlyMap<string, Readonly<MessageJSON>>;
 };

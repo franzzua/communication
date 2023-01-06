@@ -20,10 +20,10 @@ export class ContextController {
     async getTokens(request: FastifyRequest, reply: FastifyReply) {
         const uri = request.query['uri'];
         const token = await this.parser.Parse<ResourceToken>(request.headers['ResourceToken'] && request.headers['ResourceToken'][0]);
-        const accessToken = await this.parser.Parse<{ user: string }>(request.headers.authorization);
-        const resultToken = await this.authorizer.Authorize({uri, token, user: accessToken.user});
+        const accessToken = JSON.parse(request.headers.authorization);
+        const resultToken = await this.authorizer.Authorize({uri, token, user: accessToken?.user});
         reply.headers({
-            'ResourceToken': JSON.stringify(resultToken)
+            'ResourceToken': await this.parser.stringify(resultToken)
         });
         reply.code(204);
     }
