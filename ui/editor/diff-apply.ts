@@ -1,17 +1,14 @@
 import {Fn, utc} from "@cmmn/core";
-import {MessageProxy} from "@proxy";
-import {TreeItem} from "../../presentors/tree.presentor";
-import {ContentEditableComponent, ItemElement} from "./content-editable.component";
-import {ElementCache} from "./element-cache";
-import {it} from "@jest/globals";
+import {EditorComponent} from "./editor.component";
+import {EditorItem} from "./types";
 
 export class DiffApply {
-    constructor(private component: ContentEditableComponent) {
+    constructor(private component: EditorComponent) {
 
     }
 
 
-    apply(diff: { ui: Diff<TreeItem, Node>, model: Diff<TreeItem, Node> }) {
+    apply(diff: { ui: Diff<EditorItem, Node>, model: Diff<EditorItem, Node> }) {
         if (diff.ui.isEmpty() && diff.model.isEmpty()) {
             return;
         }
@@ -57,7 +54,7 @@ export class DiffApply {
 
     }
 
-    private addMessageBefore(item: TreeItem, child: Node) {
+    private addMessageBefore(item: EditorItem, child: Node) {
         const context = item?.Message.Context ?? this.component.ContextProxy;
         const index = item ? context.Messages.indexOf(item?.Message) : context.Messages.length;
         const newMessage = context.CreateMessage({
@@ -77,12 +74,12 @@ export class DiffApply {
         return newItem;
     }
 
-    private setChildItem(child: Node, item: TreeItem) {
+    private setChildItem(child: Node, item: EditorItem) {
         if (child.textContent != item.Message.State.Content)
             child.textContent = item.Message.State.Content;
         const info = this.component.elementCache.get(child)
         if (info && info.item.Index !== item.Index) {
-            this.component.element.insertBefore(child, this.component.childNodes[item.Index]);
+            this.component.element.insertBefore(child, this.component.element.childNodes[item.Index]);
         }
         if (child instanceof HTMLSpanElement || child instanceof HTMLElement && child.localName === 'span') {
             const id = item.Path.join(':');
@@ -94,10 +91,9 @@ export class DiffApply {
         }
     }
 
-    private insert(item: TreeItem) {
-        const newNode = document.createElement('span') as ItemElement;
+    private insert(item: EditorItem) {
+        const newNode = document.createElement('span');
         this.setChildItem(newNode, item);
-        newNode.index = item.Index;
         const child = this.component.element.childNodes[item.Index];
         if (child) {
             this.component.element.insertBefore(newNode, child);
@@ -108,7 +104,7 @@ export class DiffApply {
     }
 }
 
-export class Diff<TItem = TreeItem, TElement = ItemElement> {
+export class Diff<TItem = EditorItem, TElement = Node> {
     deleted: { child?: TElement; item?: TItem }[] = [];
     added: { child?: TElement; item?: TItem }[] = [];
     updated: { child?: TElement; item?: TItem }[] = [];

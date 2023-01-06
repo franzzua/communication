@@ -3,21 +3,21 @@ import {Fn} from "@cmmn/core";
 import {TestApp} from "./entry/test-app";
 import {DomainProxy} from "../../proxy";
 import {ExtendedElement} from "@cmmn/ui";
-import {ContentEditableComponent} from "../../ui/content-editable/content-editable.component";
+import {EditorComponent} from "../../ui/editor/content-editable.component";
 import {DomainProxyMock} from "./mocks/domain-proxy.mock";
 import {MessageProxyMock} from "./mocks/message-proxy.mock";
 import {ContextProxyMock} from "./mocks/context-proxy.mock";
-import {ItemsCollection} from "../../ui/content-editable/items-collection";
+import {EditorCollection} from "../../ui/editor/items-collection";
 
 const wait = () => Fn.asyncDelay(5);
 
 async function getContext(id: string) {
     console.log('-----------' + id + '----------');
-    ContentEditableComponent.DebounceTime = 1;
+    EditorComponent.DebounceTime = 1;
     const app = await TestApp.Build();
     const proxy = app.cont.get<DomainProxyMock>(DomainProxy);
     const context = proxy.ContextsMap.get('test');
-    const ce = document.createElement('content-editable') as ExtendedElement<ContentEditableComponent>;
+    const ce = document.createElement('content-editable') as ExtendedElement<EditorComponent>;
     ce.setAttribute('id', id);
     ce.setAttribute('uri', 'test');
     document.body.appendChild(ce);
@@ -94,7 +94,7 @@ describe('model', () => {
         context.Messages[0].SubContext = context;
         await wait();
         let result = original;
-        for (let i = 0; i < ItemsCollection.MaxDepth; i++){
+        for (let i = 0; i < EditorCollection.MaxDepth; i++){
             result = [...original.slice(0,1), ...result, ...original.slice(1)];
         }
         console.log(result);
@@ -104,8 +104,8 @@ describe('model', () => {
     });
 })
 
-function checkContent(ce: ExtendedElement<ContentEditableComponent>, context: ContextProxyMock, array: number[]) {
-    expect([...new ItemsCollection(context)].map(x => +x.State.Content)).toEqual(array);
+function checkContent(ce: ExtendedElement<EditorComponent>, context: ContextProxyMock, array: number[]) {
+    expect([...new EditorCollection(context)].map(x => +x.State.Content)).toEqual(array);
     expect(ce.component.childNodes.map(x => +x.innerHTML)).toEqual(array);
 }
 

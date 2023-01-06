@@ -3,7 +3,7 @@ import {Message} from "@model";
 import type {Reducer} from "../reducers";
 import {Fn, Injectable, utc} from "@cmmn/core";
 
-export class ContentEditableReducers {
+export class EditorReducers {
     public static KeyMap: Record<string, (e) => Promise<Reducer<ContentEditableState>>> = {};
 
     @logReducer

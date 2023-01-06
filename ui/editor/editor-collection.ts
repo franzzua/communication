@@ -1,14 +1,14 @@
 import {EventEmitter} from "@cmmn/core";
 import {IContextProxy} from "@proxy";
-import {TreeItem} from "../../presentors/tree.presentor";
+import {EditorItem} from "./types";
 
-export class ItemsCollection extends EventEmitter<any> {
+export class EditorCollection extends EventEmitter<any> {
     static MaxDepth = 5;
     constructor(private root: IContextProxy) {
         super();
     }
 
-    public* [Symbol.iterator](): IterableIterator<TreeItem> {
+    public* [Symbol.iterator](): IterableIterator<EditorItem> {
         for (let treeItem of this.iterate(this.root)) {
             yield treeItem;
         }
@@ -16,7 +16,7 @@ export class ItemsCollection extends EventEmitter<any> {
 
     private* iterate(context: IContextProxy, path = [],
                      counter = {index: 0},
-                     parent: TreeItem = null): IterableIterator<TreeItem> {
+                     parent: EditorItem = null): IterableIterator<EditorItem> {
         for (let msg of context.Messages) {
             if (!msg.State)
                 throw new Error('msg with empty state');
@@ -28,11 +28,11 @@ export class ItemsCollection extends EventEmitter<any> {
                     return this.Message.State;
                 },
                 Path: newPath,
-                IsOpened: level < ItemsCollection.MaxDepth,
+                IsOpened: level < EditorCollection.MaxDepth,
                 Length: 1,
                 Index: counter.index++,
                 Parent: parent
-            } as TreeItem;
+            } as EditorItem;
             yield existed;
             if (existed.IsOpened && existed.Message.SubContext) {
                 for (let treeItem of this.iterate(existed.Message.SubContext, newPath, counter, existed)) {

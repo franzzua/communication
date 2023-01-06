@@ -1,32 +1,31 @@
 import {action, component, effect, HtmlComponent, KeyboardListener, property} from "@cmmn/ui";
 import style from "./content-editable.style.less";
-import {TreeItem} from "../../presentors/tree.presentor";
 import {Fn, Injectable} from "@cmmn/core";
 import {ItemSelection} from "./itemSelection";
 import {cell} from "@cmmn/cell";
 import {ContextProxy, DomainProxy, IContextProxy} from "@proxy";
 import {Context} from "@model";
-import {ContentEditableReducers} from "./content-editable.reducers";
-import {ItemsCollection} from "./items-collection";
+import {EditorReducers} from "./editor.reducers";
 import {DiffApply} from "./diff-apply";
 import {Reducer} from "../reducers";
-import {ContentEditableState} from "./types";
+import {ContentEditableState, EditorItem} from "./types";
 import {DateTime} from "luxon";
 import {ElementCache} from "./element-cache";
+import {EditorCollection} from "./editor-collection";
 
 @Injectable(true) @component({name: 'content-editable', template: () => void 0, style})
-export class ContentEditableComponent extends HtmlComponent<void> {
+export class EditorComponent extends HtmlComponent<void> {
     public static DebounceTime = 40;
     @property()
     private uri!: string;
     @property()
     private id: string = Fn.ulid();
-    public elementCache = new ElementCache<TreeItem, Node>();
+    public elementCache = new ElementCache<EditorItem, Node>();
     private diffApply = new DiffApply(this);
     @cell
     Selection: ItemSelection = ItemSelection.GetCurrent(this.elementCache);
 
-    constructor(private root: DomainProxy, private reducers: ContentEditableReducers) {
+    constructor(private root: DomainProxy, private reducers: EditorReducers) {
         super();
         // Cell.OnChange(() => this.Items.toArray().map(x => x.Message.State), () => this.merge())
     }
@@ -35,15 +34,15 @@ export class ContentEditableComponent extends HtmlComponent<void> {
         return this.uri && this.root.ContextsMap.get(this.uri);
     }
 
-    @cell get ItemsCollection(): ItemsCollection {
-        return new ItemsCollection(this.ContextProxy);
+    @cell get ItemsCollection(): EditorCollection {
+        return new EditorCollection(this.ContextProxy);
     }
 
     @cell get Diff() {
         return this.elementCache.getMergeDiff(this.ItemsCollection, this.element.firstChild,false);
     }
 
-    @action(function (this: ContentEditableComponent) {
+    @action(function (this: EditorComponent) {
         return this.Diff;
     })
     private DiffAction(diff: any) {
@@ -96,9 +95,9 @@ export class ContentEditableComponent extends HtmlComponent<void> {
         return this.keyboardListener.on('keydown', event => {
             const modifiers = ['Alt', 'Ctrl', 'Shift'].filter(x => event[x.toLowerCase() + 'Key']);
             const modKey = modifiers.join('') + event.code;
-            if (modKey in ContentEditableReducers.KeyMap) {
+            if (modKey in EditorReducers.KeyMap) {
                 event.preventDefault();
-                this.InvokeAction(ContentEditableReducers.KeyMap[modKey].call(this.reducers, event as any));
+                this.InvokeAction(EditorReducers.KeyMap[modKey].call(this.reducers, event as any));
 
                 // this.$reducerState.Invoke(reducer);
             }
@@ -125,11 +124,6 @@ export class ContentEditableComponent extends HtmlComponent<void> {
         //     childSelected.style.color = 'white';
         // }
     }
-
-    public get childNodes() {
-        return (Array.from(this.element.childNodes) as Array<ItemElement>)
-    }
-
 
     InvokeAction(reducer: Reducer<ContentEditableState> | Promise<Reducer<ContentEditableState>>) {
         Promise.resolve(reducer).then(x => x({
@@ -161,10 +155,6 @@ export function event(nameOrTarget: keyof HTMLElementEventMap | EventTarget, opt
         });
         return descr;
     }
-}
-
-export type ItemElement<T = TreeItem> = HTMLSpanElement & {
-    item: T; updatedAt: DateTime; index: number; previousSibling: ItemElement<T>; nextSibling: ItemElement<T>;
 }
 
 
