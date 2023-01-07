@@ -11,7 +11,7 @@
     "server:bundle": "cmmn bundle server --watch",
     "server:run": "node dist/esm/server/server.js",
     "server:watch": "nodemon dist/bundle/server.js",
-    "build": "cmmn compile && cmmn bundle --prod && cp ./.github/workflows/staticwebapp.config.json ./dist"
+    "ci": "cmmn compile -b && cmmn bundle main --prod && cp -r ./assets ./dist/bundle"
   },
   "type": "module",
   "author": "",
@@ -28,8 +28,6 @@
     "@cmmn/ui": "1.6.x",
     "@fastify/websocket": "5",
     "@jest/globals": "latest",
-    "@signal-fire/client": "^1.4.0",
-    "@signal-fire/server": "^0.5.0",
     "@swc/core": "^1.3.0",
     "@swc/jest": "latest",
     "@testdeck/jest": "latest",
@@ -50,9 +48,7 @@
     "node-fetch": "^3.2.10",
     "ts-jest": "latest",
     "typescript": "4.6.x",
-    "typescript-transform-paths": "^3.3.1",
-    "webrtc-signaling-server": "^1.0.0",
-    "y-webrtc": "^10.2.2"
+    "typescript-transform-paths": "^3.3.1"
   },
   "cmmn": {
     "main": {
@@ -86,8 +82,7 @@
       "external": [
         "node_modules",
         "@cmmn"
-      ],
-      "port": 4002
+      ]
     }
   },
   "dependencies": {

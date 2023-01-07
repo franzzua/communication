@@ -15,7 +15,7 @@ export class WebrtcController extends BaseWebrtcController{
 
     @Get('', {webSocket: true})
     public async onConnection(connection: SocketStream, request: FastifyRequest) {
-        super.handleConnection(connection.socket);
+        super.handleConnection(connection.socket as any);
     }
 
 
