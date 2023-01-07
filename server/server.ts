@@ -1,7 +1,7 @@
 import {WebrtcController} from "./webrtc/webrtc.controller";
 import {Server} from "@cmmn/server";
 import fastify from "fastify";
-
+import wsPlugin from "fastify-websocket";
 import {ContextController} from "./controllers/context.controller";
 import {InhauthContainer} from "./inhauth";
 import {ServerContainer} from "./container";
@@ -10,7 +10,7 @@ import {PublicKeyController} from "./controllers/public-key.controller";
 async function run() {
     const server = await Server
         // @ts-ignore
-        .withFastify(fastify)
+        .withFastify(getFastify)
         .with(InhauthContainer)
         .withControllers(ContextController, WebrtcController, PublicKeyController)
         .with(ServerContainer)
@@ -18,6 +18,11 @@ async function run() {
     // const server = new http.Server();
 }
 
+function getFastify(opts){
+    const instance = fastify(opts);
+    instance.register(wsPlugin);
+    return instance;
+}
 
 run();
 

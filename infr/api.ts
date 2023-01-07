@@ -1,4 +1,5 @@
 import {Fn, Injectable} from "@cmmn/core";
+import {IAccountInfo} from "@services";
 
 @Injectable()
 export class Api {
@@ -18,8 +19,18 @@ export class Api {
     private id = Fn.ulid();
 
     public GetUserInfo() {
-        const acc = JSON.parse(localStorage.getItem('account'));
-        acc.title = acc.title + '.' + this.id;
+        let acc = JSON.parse(localStorage.getItem('account'));
+        if (!acc){
+            const name = prompt('Tell me your name, pls');
+            const acc = {
+                type: 'fake',
+                title: name,
+                session: {},
+                defaultStorage: `fake://${name}/`,
+                id: Fn.ulid()
+            } as IAccountInfo;
+            localStorage.setItem('account', JSON.stringify(acc));
+        }
         return acc;
     }
 

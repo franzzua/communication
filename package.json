@@ -21,7 +21,7 @@
     "@cmmn/cell": "1.6.x",
     "@cmmn/core": "1.6.x",
     "@cmmn/domain": "1.6.x",
-    "@cmmn/infr": "^1.6.23",
+    "@cmmn/infr": "1.6.x",
     "@cmmn/server": "1.6.x",
     "@cmmn/sync": "1.6.x",
     "@cmmn/tools": "1.6.x",

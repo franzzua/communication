@@ -1,5 +1,5 @@
 import {ContextJSON, MessageJSON} from "@domain";
-import {SyncStore} from "@cmmn/sync";
+import {LocalSyncProvider, SyncStore} from "@cmmn/sync";
 import {WebRtcProvider} from "@cmmn/sync/webrtc/client";
 import {cell, Cell} from "@cmmn/cell";
 import {compare, ResolvablePromise, utc} from "@cmmn/core";
@@ -7,9 +7,7 @@ import {Context, Message} from "@model";
 import {Permutation} from "@domain/helpers/permutation";
 import {ResourceTokenApi} from "@infr/resource-token-api.service";
 
-export class ContextStore {
-
-    private messageStore = new SyncStore<MessageJSON>(this.URI);
+export class ContextStore extends SyncStore<MessageJSON>{
 
     // private static provider = new WebRtcProvider([`${location.origin.replace(/^http/, 'ws')}/api`])
     public Sync = new ResolvablePromise();
@@ -17,8 +15,8 @@ export class ContextStore {
     public IsSynced = false;
 
     constructor(protected URI: string,
-                private api: ResourceTokenApi,
-                private contextMap: SyncStore<ContextJSON>) {
+                private api: ResourceTokenApi) {
+        super(URI);
         this.Join();
     }
 
@@ -27,17 +25,17 @@ export class ContextStore {
     );
 
     async Join() {
-        await this.contextMap.useIndexedDB();
-        await this.messageStore.useIndexedDB();
+        await this.syncWith(new LocalSyncProvider(this.URI));
         const token = await this.api.GetToken(this.URI);
-
-        await ContextStore.provider.joinRoom(this.URI, {
+        const room = await ContextStore.provider.joinRoom(this.URI, {
             token: token,
             user: this.api.GetUserInfo().id
-        }).addAdapter(this.contextMap.adapter);
+        });
+        await this.syncWith(room);
+
         const state = this.GetState();
-        if (!state.Context) {
-            this.UpdateContext({
+        if (!state.Context.URI) {
+            this.contextJSONCell.set({
                 CreatedAt: utc().toISO(),
                 id: this.URI,
                 URI: this.URI,
@@ -61,39 +59,35 @@ export class ContextStore {
     //     return room;
     // }
 
-    UpdateContext(item: Partial<ContextJSON>) {
-        this.contextMap.Items.set(this.URI, {
-            ...this.contextMap.Items.get(this.URI),
-            ...item
-        });
-    }
+    private contextMap = this.adapter.doc.getMap('context');
+
 
     UpdateMessage(item: Partial<MessageJSON>) {
-        const existed = this.messageStore.Items.get(item.id);
-        this.messageStore.Items.set(item.id, {
+        const existed = this.Items.get(item.id);
+        this.Items.set(item.id, {
             ...existed,
             ...item
         });
     }
 
     DeleteMessage(item: Pick<MessageJSON, "id">) {
-        this.messageStore.Items.delete(item.id);
+        this.Items.delete(item.id);
     }
 
     AddMessage(item: MessageJSON) {
-        this.messageStore.Items.set(item.id, item);
+        this.Items.set(item.id, item);
     }
 
     static clear() {
     }
 
+    private contextJSONCell = this.getObjectCell<ContextJSON>('context');
     GetState(): IState {
         return {
-            Context: this.contextMap.Items.get(this.URI),
-            Messages: new Set(this.messageStore.Items.keys())
+            Context: this.contextJSONCell.get(),
+            Messages: new Set(this.Items.keys())
         };
     }
-
     public $state = new Cell(() => {
         const state = this.GetState();
         if (!state.Context)
@@ -106,8 +100,9 @@ export class ContextStore {
         compare,
         onExternal: value => {
             value.Permutation = Permutation.Diff(value.Messages.orderBy(x => x), value.Messages);
-            this.contextMap.Items.set(value.URI, Context.ToJSON(value));
-            const existed = new Set(this.messageStore.Items.keys());
+            this.contextJSONCell.set(Context.ToJSON(value));
+            console.log('update context', Context.ToJSON(value));
+            const existed = new Set(this.Items.keys());
             for (let id of value.Messages) {
                 if (existed.has(id)) {
                     existed.delete(id);
@@ -134,12 +129,12 @@ export class ContextStore {
             if (!this.IsSynced){
                 return null;
             }
-            const result = this.messageStore.Items.get(id);
+            const result = this.Items.get(id);
             return result && Message.FromJSON(result);
         }, {
             compare,
             onExternal: value => {
-                this.messageStore.Items.set(value.id, Message.ToJSON(value));
+                this.Items.set(value.id, Message.ToJSON(value));
             }
         });
     }
