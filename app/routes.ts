@@ -26,7 +26,9 @@ export const Routes: (Route & {
         name: 'context',
         path: '/context/*uri',
         template: (html, params) => html`
-            <ctx-editor style="flex: 1" uri=${params.uri ? atob(decodeURIComponent(params.uri)) : null}/>
+            <page-wrapper>
+                <ctx-editor style="flex: 1" uri=${params.uri ? atob(decodeURIComponent(params.uri)) : null}/>
+            </page-wrapper>
         `
     },
     {

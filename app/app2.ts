@@ -16,6 +16,7 @@ import {InfrContainer} from "@infr/infr.container";
 import {AppInitComponent} from "./init/app-init.component";
 import {DomainLocator} from "@domain/model/domain-locator.service";
 import { UIContainer } from "../ui/container";
+import {WrapperComponent} from "./pages/wrapper/wrapper.component";
 
 @Injectable()
 export class App2 extends Application {
@@ -34,7 +35,7 @@ export class App2 extends Application {
                 DomainLocator,
                 RouterService, TreeReducers, TreePresenter, DomainProxy, AccountManager
             ))
-            .withUI([AppRootComponent, AppInitComponent])
+            .withUI([AppRootComponent, AppInitComponent, WrapperComponent])
             .withUI(UIContainer)
             .withRoutes({
                 options: null,

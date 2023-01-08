@@ -34,7 +34,8 @@ export class DomainModel implements ModelLike<DomainState, IDomainActions>, IDom
     public get State(): DomainState {
         return {
             Contexts: Array.from(this.Contexts.keys()),
-            Selection: this.Selection
+            Selection: this.Selection,
+            Servers: this.repository.Provider.ServerState
             // Messages: (this.factory as Factory).MessageMap.map(x => x.State),
         };
     }

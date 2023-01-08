@@ -1,5 +1,6 @@
 import {Context} from "./context";
 import {Message} from "./message";
+import type {ConnectionState} from "@cmmn/sync/webrtc/client";
 
 export class Storage {
     public Root: Context;
@@ -14,6 +15,7 @@ export class Storage {
 export class DomainState {
     public Contexts: string[];
     public Selection: SelectionState;
+    public Servers: Record<string, ConnectionState>;
 }
 
 export class SelectionState {

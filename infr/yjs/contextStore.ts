@@ -1,5 +1,5 @@
 import {ContextJSON, MessageJSON} from "@domain";
-import {LocalSyncProvider, SyncStore} from "@cmmn/sync";
+import {ISyncProvider, LocalSyncProvider, SyncStore} from "@cmmn/sync";
 import {WebRtcProvider} from "@cmmn/sync/webrtc/client";
 import {cell, Cell} from "@cmmn/cell";
 import {compare, ResolvablePromise, utc} from "@cmmn/core";
@@ -15,19 +15,17 @@ export class ContextStore extends SyncStore<MessageJSON>{
     public IsSynced = false;
 
     constructor(protected URI: string,
-                private api: ResourceTokenApi) {
+                private api: ResourceTokenApi,
+                private provider: WebRtcProvider) {
         super(URI);
         this.Join();
     }
 
-    private static provider = new WebRtcProvider(
-        [`${location.origin.replace(/^http/, 'ws')}/api`],
-    );
 
     async Join() {
         await this.syncWith(new LocalSyncProvider(this.URI));
         const token = await this.api.GetToken(this.URI);
-        const room = await ContextStore.provider.joinRoom(this.URI, {
+        const room = await this.provider.joinRoom(this.URI, {
             token: token,
             user: this.api.GetUserInfo().id
         });
