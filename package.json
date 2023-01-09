@@ -25,7 +25,7 @@
     "@cmmn/infr": "1.7.0",
     "@cmmn/server": "1.7.0",
     "@cmmn/sync": "1.7.0",
-    "@cmmn/tools": "1.7.0",
+    "@cmmn/tools": "1.7.1",
     "@cmmn/ui": "1.7.0",
     "@fastify/websocket": "5",
     "@jest/globals": "latest",
