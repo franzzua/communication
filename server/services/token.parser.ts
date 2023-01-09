@@ -1,5 +1,4 @@
 import {Injectable} from "@cmmn/core";
-import {ResourceToken} from "@inhauth/core";
 import {jwtVerify, SignJWT} from "jose";
 import decode from "jwt-decode";
 import {CryptoKeyStorage} from "./crypto-key-storage.service";
@@ -12,15 +11,18 @@ export class TokenParser {
 
     public async Parse<TokenType>(token: string): Promise<TokenType | null> {
         if (!token) return null;
-        const isValid = await jwtVerify(token, await this.storage.getPublicKey(), {
-            issuer: 'urn:example:issuer',
-            audience: 'urn:example:audience',
-
-        });
-        if (!isValid)
-            return null;
-        const decrypted = decode(token);
-        return decrypted as any as TokenType;
+        try {
+            const isValid = await jwtVerify(token, await this.storage.getPublicKey(), {
+                issuer: 'urn:example:issuer',
+                audience: 'urn:example:audience',
+            });
+            if (!isValid)
+                return null;
+            const decrypted = decode(token);
+            return decrypted as any as TokenType;
+        }catch (e){
+            throw new Error(`invalid token`)
+        }
     }
 
     public async stringify<Token>(resultToken: Token): Promise<string> {

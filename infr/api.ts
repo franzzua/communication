@@ -38,7 +38,7 @@ export class Api {
         return fetch(input, {
             ...init,
             headers: {
-                'authorization': JSON.stringify({user: this.GetUserInfo()?.title ?? 'unknown'}),
+                'authorization': JSON.stringify({user: this.GetUserInfo()?.id ?? 'unknown'}),
                 ...init?.headers,
                 ...(await this.headers)
             }

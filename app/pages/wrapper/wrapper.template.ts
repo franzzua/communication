@@ -7,6 +7,7 @@ export const template: ITemplate<IState, IEvents> = (html, state, events) => htm
         ${Object.entries(state.Servers).map(([url, state]) => html(url)`<div>
             ${url}:${state}
         </div>`)}
+        <a class="restart" href="/clear-site-data">restart</a>
     </div>
 `;
 
