@@ -1,9 +1,10 @@
 import {ContextJSON, StorageJSON} from "@domain";
 import {ContextStore} from "./contextStore";
 import {ResourceTokenStore} from "@infr/yjs/resource-token-store";
-import {Injectable} from "@cmmn/core";
+import {bind, Injectable} from "@cmmn/core";
 import {ResourceTokenApi} from "@infr/resource-token-api.service";
 import {WebRtcProvider} from "@cmmn/sync/webrtc/client";
+import { ISyncProvider, LocalSyncProvider } from "@cmmn/sync";
 
 @Injectable()
 export class YjsRepository {
@@ -29,12 +30,36 @@ export class YjsRepository {
     }
 
     GetOrAdd(uri: string, parentURI): ContextStore {
-        const api = this.api.withParentURI(parentURI);
-        return this.map.getOrAdd(uri, uri => new ContextStore(uri, api, this.Provider));
+        return this.map.getOrAdd(uri, uri => {
+            const store = new ContextStore(uri);
+            this.getProviders(uri, parentURI).then(async providers => {
+                for (let provider of providers) {
+                    await store.syncWith(provider);
+                }
+                await store.Init()
+            });
+            return store;
+        });
     }
 
     async Load(uri: string = null): Promise<StorageJSON> {
         return new Promise<StorageJSON>(r => ({}));
+    }
+
+    @bind
+    private createContextStore(uri){
+    }
+
+    private async getProviders(uri: string, parentURI: string): Promise<ISyncProvider[]>{
+        const token = await this.api.GetToken(uri, parentURI);
+        const room = this.Provider.joinRoom(uri, {
+            token: token,
+            user: this.api.GetUserInfo().id
+        });
+        return [
+            new LocalSyncProvider(uri),
+            room
+        ];
     }
 
 }

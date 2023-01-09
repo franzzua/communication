@@ -14,23 +14,12 @@ export class ContextStore extends SyncStore<MessageJSON>{
     @cell
     public IsSynced = false;
 
-    constructor(protected URI: string,
-                private api: ResourceTokenApi,
-                private provider: WebRtcProvider) {
+    constructor(protected URI: string) {
         super(URI);
-        this.Join();
     }
 
 
-    async Join() {
-        await this.syncWith(new LocalSyncProvider(this.URI));
-        const token = await this.api.GetToken(this.URI);
-        const room = await this.provider.joinRoom(this.URI, {
-            token: token,
-            user: this.api.GetUserInfo().id
-        });
-        await this.syncWith(room);
-
+    public Init() {
         const state = this.GetState();
         if (!state.Context.URI) {
             this.contextJSONCell.set({

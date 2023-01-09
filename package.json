@@ -4,6 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "all": "cmmn spawn compile --watch bundle -b --watch serve -b",
     "compile": "cmmn compile --watch",
     "web:bundle": "cmmn bundle main --watch",
     "serve": "cmmn serve -b",
@@ -17,15 +18,15 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "@cmmn/app": "1.6.29",
-    "@cmmn/cell": "1.6.29",
-    "@cmmn/core": "1.6.29",
-    "@cmmn/domain": "1.6.29",
-    "@cmmn/infr": "1.6.23",
-    "@cmmn/server": "1.6.29",
-    "@cmmn/sync": "1.6.29",
-    "@cmmn/tools": "1.6.27",
-    "@cmmn/ui": "1.6.29",
+    "@cmmn/app": "1.7.0",
+    "@cmmn/cell": "1.7.0",
+    "@cmmn/core": "1.7.0",
+    "@cmmn/domain": "1.7.0",
+    "@cmmn/infr": "1.7.0",
+    "@cmmn/server": "1.7.0",
+    "@cmmn/sync": "1.7.0",
+    "@cmmn/tools": "1.7.0",
+    "@cmmn/ui": "1.7.0",
     "@fastify/websocket": "5",
     "@jest/globals": "latest",
     "@swc/core": "^1.3.0",
@@ -69,13 +70,6 @@
       "browser": true,
       "port": 4001
     },
-    "worker": {
-      "dedupe": [
-        "lib0"
-      ],
-      "browser": true,
-      "input": "dist/esm/entry/worker.js"
-    },
     "server": {
       "input": "dist/esm/server/server.js",
       "module": "es,cjs",
@@ -83,6 +77,15 @@
         "node_modules",
         "@cmmn"
       ]
+    }
+  },
+
+  "peerDependenciesMeta": {
+    "ts-node": {
+      "optional": true
+    },
+    "postcss": {
+      "optional": true
     }
   },
   "dependencies": {

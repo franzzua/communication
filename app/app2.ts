@@ -35,6 +35,7 @@ export class App2 extends Application {
                 DomainLocator,
                 RouterService, TreeReducers, TreePresenter, DomainProxy, AccountManager
             ))
+
             .withUI([AppRootComponent, AppInitComponent, WrapperComponent])
             .withUI(UIContainer)
             .withRoutes({

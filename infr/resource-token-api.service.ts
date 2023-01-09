@@ -10,8 +10,13 @@ export class ResourceTokenApi extends Api {
     private passwords = new Map<string, { version; password; }>();
 
 
-    private async FetchToken(uri: string) {
-        const request = await this.fetch('/api/context?uri=' + uri);
+    private async FetchToken(uri: string, parentURI?: string) {
+        const parentToken = parentURI ? await this.GetToken(parentURI) : undefined;
+        const request = await this.fetch('/api/context?uri=' + uri, {
+            headers: parentURI ? {
+                "Resource-Token": parentToken
+            } : {}
+        });
         if (!request.ok)
             return null;
         const token = request.headers.get('ResourceToken');
@@ -19,17 +24,17 @@ export class ResourceTokenApi extends Api {
         return token;
     }
 
-    public async GetToken(uri: string) {
-        const token = await this.tokens.getOrAdd(uri, () => this.FetchToken(uri));
+    public async GetToken(uri: string, parentURI?: string) {
+        const token = await this.tokens.getOrAdd(uri, () => this.FetchToken(uri, parentURI));
         return token;
     }
-
-    public withParentURI(parentURI: string): ResourceTokenApi {
-        const token = this.GetToken(parentURI);
-        return super.withHeaders(token.then(t => ({
-            "Resource-Token": t
-        })));
-    }
+    //
+    // public withParentURI(parentURI: string): ResourceTokenApi {
+    //     const token = this.GetToken(parentURI);
+    //     return super.withHeaders(token.then(t => ({
+    //         "Resource-Token": t
+    //     })));
+    // }
 
 
     public getCryptor(URI: string) {
