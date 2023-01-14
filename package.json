@@ -1,6 +1,6 @@
 {
   "name": "@franzzua/communication",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "",
   "main": "index.js",
   "scripts": {
@@ -77,10 +77,12 @@
     "server": {
       "input": "dist/esm/server/server.js",
       "module": "es",
-      "external": ["fastify", "@fastify/.*"]
+      "external": [
+        "fastify",
+        "@fastify/.*"
+      ]
     }
   },
-
   "peerDependenciesMeta": {
     "ts-node": {
       "optional": true
