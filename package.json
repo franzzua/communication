@@ -1,6 +1,6 @@
 {
   "name": "@franzzua/communication",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "",
   "main": "index.js",
   "scripts": {
@@ -14,6 +14,9 @@
     "server:watch": "nodemon dist/bundle/server.js",
     "ci": "cmmn compile -b && cmmn bundle main --prod && cmmn bundle server --prod && cp -r ./assets ./dist/bundle"
   },
+  "files": [
+    "dist/bundle"
+  ],
   "type": "module",
   "author": "",
   "license": "ISC",
