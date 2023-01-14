@@ -21,6 +21,9 @@ jobs:
         with:
           node-version: 16
           registry-url: https://npm.pkg.github.com/
+      - uses: pnpm/action-setup@v2
+        with:
+          version: 6.0.2
       - run: pnpm ci
       - run: pnpm publish
         env:
