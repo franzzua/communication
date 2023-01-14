@@ -26,6 +26,10 @@ export class App2 extends Application {
     }
 
     public static async Build() {
+        const version = await fetch('/.version').then(r => r.text())
+            .then(x => 'v'+x)
+            .catch(() => '');
+        document.title = 'Context ' + version;
         return new Builder()
             .with(InfrContainer())
             .with(DomainContainer())
