@@ -1,11 +1,11 @@
-import {ItemSelection} from "./itemSelection";
+import {EditorSelection} from "./editor-selection";
 import {EditorCollection} from "./editor-collection";
 import {IMessageProxy} from "@proxy";
 import { Message } from "@model";
 
 export type ContentEditableState = {
     Items: EditorCollection;
-    Selection: ItemSelection;
+    Selection: EditorSelection;
 }
 
 export type EditorItem = {

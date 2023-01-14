@@ -1,7 +1,6 @@
 import {ModelLike} from "@cmmn/domain/worker";
 import {IDomainActions} from "@domain";
-import {Context, DomainState} from "@model";
-import {ContextModel} from "@domain/model/context-model";
+import {DomainState} from "@model";
 import {cell} from "@cmmn/cell";
 import {DomainLocator} from "@domain/model/domain-locator.service";
 import {YjsRepository} from "@infr/yjs/yjsRepository";
@@ -35,7 +34,9 @@ export class DomainModel implements ModelLike<DomainState, IDomainActions>, IDom
         return {
             Contexts: Array.from(this.Contexts.keys()),
             Selection: this.Selection,
-            Servers: this.repository.Provider.ServerState
+            Servers: this.repository.Provider.ServerState,
+            Networks: new Map(Array.from(this.repository.Networks.toMap().entries())
+                .map(([key, network]) => [key, network.map])),
             // Messages: (this.factory as Factory).MessageMap.map(x => x.State),
         };
     }

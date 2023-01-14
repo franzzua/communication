@@ -3,8 +3,10 @@ import {ContextStore} from "./contextStore";
 import {ResourceTokenStore} from "@infr/yjs/resource-token-store";
 import {bind, Injectable} from "@cmmn/core";
 import {ResourceTokenApi} from "@infr/resource-token-api.service";
-import {WebRtcProvider} from "@cmmn/sync/webrtc/client";
+// @ts-ignore
+import {WebRtcProvider, Network} from "@cmmn/sync/webrtc/client";
 import { ISyncProvider, LocalSyncProvider } from "@cmmn/sync";
+import {cell, ObservableMap} from "@cmmn/cell";
 
 @Injectable()
 export class YjsRepository {
@@ -50,12 +52,19 @@ export class YjsRepository {
     private createContextStore(uri){
     }
 
+    @cell
+    public Networks = new ObservableMap<string, Network>();
+
     private async getProviders(uri: string, parentURI: string): Promise<ISyncProvider[]>{
         const token = await this.api.GetToken(uri, parentURI);
         const room = this.Provider.joinRoom(uri, {
             token: token,
             user: this.api.GetUserInfo().id
         });
+// @ts-ignore
+        room.on('network', network => {
+            this.Networks.set(uri, network);
+        })
         return [
             new LocalSyncProvider(uri),
             room

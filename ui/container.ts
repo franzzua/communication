@@ -4,6 +4,7 @@ import {MobileToolbarComponent} from "./mobile-toolbar/mobile-toolbar.component"
 import {Container} from "@cmmn/core";
 import {TextContentComponent} from "./content/text-content.component";
 import {EditorComponent} from "./editor/editor.component";
+import {EditorControls} from "./editor/controls/editor-controls";
 
 export const UIContainer = Container.withProviders(
     TreeComponent,
@@ -11,5 +12,6 @@ export const UIContainer = Container.withProviders(
     TextContentComponent,
     MobileToolbarComponent,
     EditorComponent,
+    EditorControls
 );
 

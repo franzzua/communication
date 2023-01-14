@@ -56,6 +56,7 @@ export class EditorReducers {
                     state.Selection?.Focus?.item.item.Message.AddMessage({
                         id: Fn.ulid(),
                         Content: paragraph,
+                        ContextURI: undefined,
                         CreatedAt: utc(),
                         UpdatedAt: utc(),
                     });
@@ -106,16 +107,22 @@ export class EditorReducers {
     @onKeyPress('Tab')
     async MoveRight(event: KeyboardEvent): Promise<Reducer<ContentEditableState>> {
         return (state: ContentEditableState) => {
-            const selectedItem = state.Selection?.Focus.item.item;
-            const message = selectedItem.Message;
-            const messageIndex = message.Context.Messages.indexOf(message);
-            if (messageIndex == 0)
-                return state;
-            const prevMessage = message.Context.Messages[messageIndex - 1];
+            if (state.Selection?.Type === 'Caret') {
+                const selectedItem = state.Selection?.Focus.item.item;
+                const message = selectedItem.Message;
+                const messageIndex = message.Context.Messages.indexOf(message);
+                if (messageIndex == 0)
+                    return state;
+                const prevMessage = message.Context.Messages[messageIndex - 1];
 
-            const subContext = prevMessage.GetOrCreateSubContext();
-            message.MoveTo(subContext, subContext.Messages.length);
-            return state;
+                const subContext = prevMessage.GetOrCreateSubContext();
+                message.MoveTo(subContext, subContext.Messages.length);
+                return state;
+            }
+            if (state.Selection?.Type === 'Range') {
+
+                return state;
+            }
         }
     }
 

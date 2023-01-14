@@ -7,8 +7,7 @@ export class DiffApply {
 
     }
 
-
-    apply(diff: { ui: Diff<EditorItem, Node>, model: Diff<EditorItem, Node> }) {
+    apply(diff: { ui: Diff, model: Diff }) {
         if (diff.ui.isEmpty() && diff.model.isEmpty()) {
             return;
         }
@@ -30,7 +29,7 @@ export class DiffApply {
                     this.addMessageBefore(selected.item, child);
                 }
             } else {
-                const lastNextChild = diff.ui.added[diff.ui.added.length - 1].child.nextSibling;
+                const lastNextChild = diff.ui.added[diff.ui.added.length - 1].child.nextElementSibling as Element;
                 const item = this.component.elementCache.get(lastNextChild)?.item;
                 for (let {child} of diff.ui.added) {
                     this.addMessageBefore(item, child);
@@ -45,7 +44,7 @@ export class DiffApply {
             this.insert(item);
         }
         for (let {child, item} of diff.model.deleted) {
-            this.component.element.removeChild(child);
+            this.component.contentEditable.removeChild(child);
             this.component.elementCache.remove(child);
         }
         for (let {child, item} of diff.model.updated) {
@@ -54,7 +53,7 @@ export class DiffApply {
 
     }
 
-    private addMessageBefore(item: EditorItem, child: Node) {
+    private addMessageBefore(item: EditorItem, child: Element) {
         const context = item?.Message.Context ?? this.component.ContextProxy;
         const index = item ? context.Messages.indexOf(item?.Message) : context.Messages.length;
         const newMessage = context.CreateMessage({
@@ -74,12 +73,12 @@ export class DiffApply {
         return newItem;
     }
 
-    private setChildItem(child: Node, item: EditorItem) {
+    private setChildItem(child: Element, item: EditorItem) {
         if (child.textContent != item.Message.State.Content)
             child.textContent = item.Message.State.Content;
         const info = this.component.elementCache.get(child)
         if (info && info.item.Index !== item.Index) {
-            this.component.element.insertBefore(child, this.component.element.childNodes[item.Index]);
+            this.component.contentEditable.insertBefore(child, this.component.contentEditable.childNodes[item.Index]);
         }
         if (child instanceof HTMLSpanElement || child instanceof HTMLElement && child.localName === 'span') {
             const id = item.Path.join(':');
@@ -94,17 +93,33 @@ export class DiffApply {
     private insert(item: EditorItem) {
         const newNode = document.createElement('span');
         this.setChildItem(newNode, item);
-        const child = this.component.element.childNodes[item.Index];
+        const child = this.component.contentEditable.childNodes[item.Index];
         if (child) {
-            this.component.element.insertBefore(newNode, child);
+            this.component.contentEditable.insertBefore(newNode, child);
         } else {
-            this.component.element.appendChild(newNode);
+            this.component.contentEditable.appendChild(newNode);
         }
         return newNode;
     }
+
+    fixChildren() {
+        for (let child of Array.from(this.component.contentEditable.childNodes)) {
+            if (child instanceof Comment)
+                continue;
+            const text = recursiveGetText(child);
+            if (child instanceof HTMLSpanElement || (child as Element).localName === 'span')
+                child.textContent = text;
+            else {
+                child.remove();
+                const span = document.createElement('span')
+                span.textContent = text;
+                this.component.contentEditable.appendChild(span);
+            }
+        }
+    }
 }
 
-export class Diff<TItem = EditorItem, TElement = Node> {
+export class Diff<TItem = EditorItem, TElement = Element> {
     deleted: { child?: TElement; item?: TItem }[] = [];
     added: { child?: TElement; item?: TItem }[] = [];
     updated: { child?: TElement; item?: TItem }[] = [];
@@ -116,4 +131,18 @@ export class Diff<TItem = EditorItem, TElement = Node> {
     equals(diff: Diff<TItem,TElement>) {
         return diff === this;
     }
+}
+
+function recursiveGetText(node: Node) {
+    if (node instanceof HTMLBRElement)
+        return '';
+    if (node instanceof Text)
+        return node.textContent;
+    if (node instanceof Comment)
+        return '';
+    const texts = [];
+    for (let childNode of Array.from(node.childNodes)) {
+        texts.push(recursiveGetText(childNode));
+    }
+    return texts.join('');
 }

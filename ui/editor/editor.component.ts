@@ -1,29 +1,39 @@
-import {action, component, effect, HtmlComponent, KeyboardListener, property} from "@cmmn/ui";
+import {action, component, effect, ExtendedElement, HtmlComponent, KeyboardListener, property} from "@cmmn/ui";
 import style from "./editor.style.less";
 import {Fn, Injectable} from "@cmmn/core";
-import {ItemSelection} from "./itemSelection";
+import {EditorSelection} from "./editor-selection";
 import {cell} from "@cmmn/cell";
 import {ContextProxy, DomainProxy, IContextProxy} from "@proxy";
-import {Context} from "@model";
+import {Context, DomainState} from "@model";
 import {EditorReducers} from "./editor.reducers";
 import {DiffApply} from "./diff-apply";
 import {Reducer} from "../reducers";
 import {ContentEditableState, EditorItem} from "./types";
-import {DateTime} from "luxon";
 import {ElementCache} from "./element-cache";
 import {EditorCollection} from "./editor-collection";
+import {IEvents, IState, template} from "./editor.template";
 
-@Injectable(true) @component({name: 'ctx-editor', template: () => void 0, style})
-export class EditorComponent extends HtmlComponent<void> {
+@Injectable(true)
+@component({name: 'ctx-editor', template, style})
+export class EditorComponent extends HtmlComponent<IState, IEvents> {
     public static DebounceTime = 40;
     @property()
     private uri!: string;
     @property()
     private id: string = Fn.ulid();
-    public elementCache = new ElementCache<EditorItem, Node>();
+    public elementCache = new ElementCache<EditorItem>();
+
+    @cell
+    public get contentEditable(): HTMLElement{
+        if (this.$render.get() == 0)
+            return null;
+        const element = this.element.querySelector('[contenteditable]') as HTMLDivElement;
+        element.focus();
+        return element;
+    }
     private diffApply = new DiffApply(this);
     @cell
-    Selection: ItemSelection = ItemSelection.GetCurrent(this.elementCache);
+    Selection: EditorSelection = EditorSelection.GetCurrent(this.elementCache);
 
     constructor(private root: DomainProxy, private reducers: EditorReducers) {
         super();
@@ -39,21 +49,37 @@ export class EditorComponent extends HtmlComponent<void> {
     }
 
     @cell get Diff() {
-        return this.elementCache.getMergeDiff(this.ItemsCollection, this.element.firstChild,false);
+        if (!this.contentEditable)
+            return null;
+        return this.elementCache.getMergeDiff(this.ItemsCollection, this.contentEditable.firstElementChild,false);
+    }
+
+    @action(function (this: EditorComponent) {
+        return this.root.State.Networks;
+    })
+    private OnNetworkChanged(networks: DomainState["Networks"]) {
+        for (let [uri, network] of networks.entries()) {
+            const elements = this.elementCache.find(uri);
+            for (let element of elements ?? []) {
+                (element.element as Element).setAttribute('size', network.size.toString());
+            }
+        }
     }
 
     @action(function (this: EditorComponent) {
         return this.Diff;
     })
     private DiffAction(diff: any) {
+        if (!diff)
+            return;
         this.diffApply.apply(diff);
         this.onSelectionChange();
     }
 
     @event('input') onInputEvent(e: Event) {
         // const selected = this.Selection?.Focus.item;
-        this.fixChildren();
-        const diff = this.elementCache.getMergeDiff(this.ItemsCollection, this.element.firstChild, true);
+        this.diffApply.fixChildren();
+        const diff = this.elementCache.getMergeDiff(this.ItemsCollection, this.contentEditable.firstElementChild, true);
         this.diffApply.apply(diff);
         // if (selected){
         //     const newSelected = this.diffApply.cache.get(selected.Message);
@@ -62,33 +88,14 @@ export class EditorComponent extends HtmlComponent<void> {
         this.onSelectionChange();
     }
 
-    fixChildren() {
-        for (let child of Array.from(this.element.childNodes)) {
-            if (child instanceof Comment)
-                continue;
-            const text = recursiveGetText(child);
-            if (child instanceof HTMLSpanElement || (child as HTMLElement).localName === 'span')
-                child.textContent = text;
-            else {
-                child.remove();
-                const span = document.createElement('span')
-                span.textContent = text;
-                this.element.appendChild(span);
-            }
-        }
-    }
-
 
 
     @effect() initElement() {
-        this.element.setAttribute('contenteditable', '')
-        this.element.setAttribute('autofocus', '')
-        this.element.setAttribute('tabindex', '0');
         this.element.setAttribute('id', this.id);
-        this.element.focus();
+        this.contentEditable.focus();
     }
 
-    private keyboardListener = new KeyboardListener(this.element);
+    private keyboardListener = new KeyboardListener(this.contentEditable);
 
     @effect()
     private listenKeyboard() {
@@ -108,7 +115,7 @@ export class EditorComponent extends HtmlComponent<void> {
         if (this.Selection?.Focus.item?.element instanceof HTMLElement){
             this.Selection.Focus.item.element.style.color = null;
         }
-        let selection = ItemSelection.GetCurrent(this.elementCache)
+        let selection = EditorSelection.GetCurrent(this.elementCache)
             ?? this.Selection?.Update(this.elementCache);
         if (!selection)
             return;
@@ -132,7 +139,9 @@ export class EditorComponent extends HtmlComponent<void> {
     }
 
     get State() {
-        return null;
+        return {
+            Items: [...this.ItemsCollection]
+        };
     }
 }
 
@@ -157,17 +166,3 @@ export function event(nameOrTarget: keyof HTMLElementEventMap | EventTarget, opt
     }
 }
 
-
-function recursiveGetText(node: Node) {
-    if (node instanceof HTMLBRElement)
-        return '';
-    if (node instanceof Text)
-        return node.textContent;
-    if (node instanceof Comment)
-        return '';
-    const texts = [];
-    for (let childNode of Array.from(node.childNodes)) {
-        texts.push(recursiveGetText(childNode));
-    }
-    return texts.join('');
-}

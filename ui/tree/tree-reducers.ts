@@ -90,6 +90,7 @@ export class TreeReducers {
                     state.Selected.Message.AddMessage({
                         id: Fn.ulid(),
                         Content: paragraph,
+                        ContextURI: undefined,
                         CreatedAt: utc(),
                         UpdatedAt: utc(),
                     });
@@ -116,6 +117,7 @@ export class TreeReducers {
             const parentPath = getParentPath(state);
             const newMessage: Message = {
                 id: Fn.ulid(),
+                ContextURI: undefined,
                 CreatedAt: utc(),
                 UpdatedAt: utc(),
                 Content: text,

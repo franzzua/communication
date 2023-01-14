@@ -2,7 +2,7 @@ import {EventEmitter} from "@cmmn/core";
 import {IContextProxy} from "@proxy";
 import {EditorItem} from "./types";
 
-export class EditorCollection extends EventEmitter<any> {
+export class EditorCollection extends EventEmitter<any> implements Iterable<EditorItem>{
     static MaxDepth = 5;
     constructor(private root: IContextProxy) {
         super();

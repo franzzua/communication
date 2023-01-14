@@ -6,17 +6,17 @@ const Separator = ':';
 export class ElementCache<TItem extends {
     Index?: number;
     Path: string[];
-    State?: {
-        Content: string;
-        UpdatedAt: DateTime;
+    Message: {
+        State?: {
+            Content: string;
+            ContextURI: string;
+            SubContextURI?: string;
+            UpdatedAt: DateTime;
+        }
     }
-}, TElement extends {
-    textContent: string;
-    parentElement: TElement;
-    id?: string;
-    nextSibling: TElement;
-}> {
+}, TElement extends Element = Element> {
     private cache = new Map<string, ElementInfo<TItem, TElement>>();
+    private uriCache = new Map<string, Set<ElementInfo<TItem, TElement>>>();
     private nodeCache = new Map<TElement, ElementInfo<TItem, TElement>>();
 
     public get(item: TItem | TElement): ElementInfo<TItem, TElement> {
@@ -51,7 +51,7 @@ export class ElementCache<TItem extends {
             }
         }
 
-        for (let current = firstChild; current != undefined; current = current.nextSibling) {
+        for (let current = firstChild; current != undefined; current = current.nextElementSibling as TElement) {
             if (checked.has(current))
                 continue;
             const element = this.nodeCache.get(current)
@@ -75,7 +75,7 @@ export class ElementCache<TItem extends {
             }
             // match by content
             for (let added of model.added.slice()) {
-                const deleted = model.deleted.find(x => x.item.State.Content == added.item.State.Content);
+                const deleted = model.deleted.find(x => x.item.Message.State.Content == added.item.Message.State.Content);
                 if (deleted) {
                     model.added.remove(added);
                     model.deleted.remove(deleted);
@@ -97,19 +97,18 @@ export class ElementCache<TItem extends {
             console.table({
                 ui: {
                     updated: ui.updated.map(x => x.child.textContent || '-').join(', '),
-                    deleted: ui.deleted.map(x => x.item.State.Content || '-').join(', '),
+                    deleted: ui.deleted.map(x => x.item.Message.State.Content || '-').join(', '),
                     added: ui.added.map(x => x.child.textContent || '-').join(', '),
                 },
                 model: {
-                    updated: model.updated.map(x => x.item.State.Content || '-').join(', '),
+                    updated: model.updated.map(x => x.item.Message.State.Content || '-').join(', '),
                     deleted: model.deleted.map(x => x.child.textContent || '-').join(', '),
-                    added: model.added.map(x => x.item.State.Content || '-').join(', '),
+                    added: model.added.map(x => x.item.Message.State.Content || '-').join(', '),
                 }
             })
         }
         return {ui, model};
     }
-
 
     private getKey(item: TItem | TElement) {
         if ('Path' in item) {
@@ -119,17 +118,25 @@ export class ElementCache<TItem extends {
     }
 
     public set(id: string, item: TItem, element: TElement){
-        this.cache.set(id, new ElementInfo<TItem, TElement>(
+        const info = new ElementInfo<TItem, TElement>(
             id, element, item
-        ));
-        this.nodeCache.set(element, new ElementInfo<TItem, TElement>(
-            id, element, item
-        ));
+        );
+        this.cache.set(id, info);
+        this.nodeCache.set(element, info);
+        const uri = item.Message.State.SubContextURI;
+        this.uriCache.getOrAdd(uri, () => new Set()).add(info);
     }
 
     remove(child: TElement) {
         this.cache.delete(child.id);
+        const element = this.nodeCache.get(child);
         this.nodeCache.delete(child);
+        const uri = element.item.Message.State.SubContextURI;
+        this.uriCache.get(uri)?.delete(element);
+    }
+
+    find(uri: string) {
+        return this.uriCache.get(uri);
     }
 }
 
@@ -141,11 +148,7 @@ export class ElementInfo<TItem extends {
         Content: string;
         UpdatedAt: DateTime;
     }
-}, TElement extends {
-    textContent: string;
-    id?: string;
-    nextSibling: TElement;
-}> {
+}, TElement extends Element = Element> {
     constructor(public readonly id: string,
                 public readonly element: TElement,
                 public readonly item: TItem) {
