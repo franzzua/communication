@@ -1,33 +1,23 @@
 import {controller, Get} from "@cmmn/server";
-import {YWebrtcHandler} from "./y-webrtc.handler";
-import {SocketStream} from "fastify-websocket";
+import {SocketStream} from "@fastify/websocket";
 import {FastifyRequest} from "fastify";
 import {bind, Injectable} from "@cmmn/core";
+import {WebrtcController as BaseWebrtcController} from "@cmmn/sync/webrtc/server";
 import {TokenParser} from "../services/token.parser";
-import {Authorizer} from "../services/authorizer.service";
-import {ResourceToken} from "@inhauth/core";
 
 @Injectable()
 @controller('/api')
-export class WebrtcController {
+export class WebrtcController extends BaseWebrtcController{
 
-    constructor(private authorizer: Authorizer,
-                private tokenParser: TokenParser) {
+    constructor(parser: TokenParser) {
+        super(parser)
     }
 
     @Get('', {webSocket: true})
     public async onConnection(connection: SocketStream, request: FastifyRequest) {
-        const handler = new YWebrtcHandler(connection.socket, this.auth);
+        super.handleConnection(connection.socket as any);
     }
 
-    @bind
-    private async auth(uri, tokenStr): Promise<boolean> {
-        const token = await this.tokenParser.Parse<ResourceToken>(tokenStr);
-        if (!token)
-            return false;
-        const result = await this.authorizer.Authorize({uri, token}).catch();
-        return result != null;
-    }
 
 }
 

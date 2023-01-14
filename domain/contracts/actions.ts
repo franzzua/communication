@@ -7,6 +7,7 @@ export type IMessageActions = {
     Reorder(newOrder: number): Promise<void>;
     Move(fromURI: string, toURI: string, toIndex: number): Promise<void>;
 
+    CreateSubContext(uri: string, parentURI: string): Promise<void>;
     Remove(): Promise<void>;
 }
 
@@ -19,7 +20,6 @@ export type IContextActions = {
 export type IDomainActions = {
     // LoadContext(uri: string): Promise<void>;
     //
-    // CreateContext(context: Context): Promise<void>;
 }
 
 export interface IStorageActions {

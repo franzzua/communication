@@ -26,7 +26,10 @@ export const Routes: (Route & {
         name: 'context',
         path: '/context/*uri',
         template: (html, params) => html`
-            <ctx-tree uri=${params.uri ? atob(decodeURIComponent(params.uri)) : null}></ctx-tree>`
+            <page-wrapper>
+                <ctx-editor style="flex: 1" uri=${params.uri ? atob(decodeURIComponent(params.uri)) : null}/>
+            </page-wrapper>
+        `
     },
     {
         name: 'concord',

@@ -1,43 +1,37 @@
 import {IMessageActions} from "@domain/contracts/actions";
 import {Context, Message} from "@model";
-import {Factory} from "./factory";
-import {Model} from "@cmmn/domain/worker";
+import {ModelLike} from "@cmmn/domain/worker";
 import {ContextStore} from "@infr/yjs/contextStore";
 import {utc} from "@cmmn/core";
 import {ContextModel} from "./context-model";
+import {DomainLocator} from "@domain/model/domain-locator.service";
 
-export class MessageModel extends Model<Message, IMessageActions> implements IMessageActions {
+export class MessageModel implements ModelLike<Message, IMessageActions>, IMessageActions {
+
+    Actions = this;
+    private $state = this.contextStore.GetMessageCell(this.id)
 
     public get Context(): ContextModel {
-        return this.factory.GetOrCreateContext(this.$state.get().ContextURI);
+        return this.locator.GetContext(this.$state.get().ContextURI);
     }
 
     public get SubContext() {
-        return this.$state.get().SubContextURI && this.factory.GetOrCreateContext(this.$state.get().SubContextURI);
+        return this.$state.get()?.SubContextURI && this.locator.GetOrCreateContext(this.$state.get().SubContextURI, this.Context.URI);
     }
 
-    constructor(private readonly factory: Factory, private contextStore: ContextStore, public id: string) {
-        super();
+
+    constructor(private readonly locator: DomainLocator,
+                private contextStore: ContextStore,
+                public id: string) {
+
     }
 
     public get State() {
-        const json = this.contextStore.State.get().Messages.get(this.id);
-        return json && Message.FromJSON(json);
+        return this.$state.get();
     }
 
     public set State(value: Readonly<Message>) {
-        if (Message.equals(this.State, value))
-            return;
-        const cur = this.contextStore.State.get();
-        const messages = new Map(cur.Messages);
-        messages.set(value.id, Message.ToJSON({
-            ...value,
-            UpdatedAt: utc(),
-        }));
-        this.contextStore.State.set({
-            Context: cur.Context,
-            Messages: messages
-        });
+        this.$state.set(value);
     }
 
 
@@ -68,13 +62,14 @@ export class MessageModel extends Model<Message, IMessageActions> implements IMe
                 URI: toURI
             } as Context
         };
-        const oldContext = this.factory.GetOrCreateContext(fromURI);
+        const oldContext = this.locator.GetOrCreateContext(fromURI, null);
         if (oldContext) {
             await oldContext.Actions.RemoveMessage(this.id);
         }
-        const newContext = this.factory.GetOrCreateContext(toURI);
+        const newContext = this.locator.GetOrCreateContext(toURI, null);
         await newContext.Actions.CreateMessage(state, toIndex);
     }
+
 
     async Reorder(newOrder: number): Promise<void> {
         if (!this.Context)
@@ -86,8 +81,12 @@ export class MessageModel extends Model<Message, IMessageActions> implements IMe
         await this.Context.RemoveMessage(this.id);
     }
 
-    public ToServer() {
-        return Message.ToJSON(this.State);
+    async CreateSubContext(uri: string, parentURI: string): Promise<void>{
+        this.State = {
+            ...this.State,
+            SubContextURI: uri
+        };
+        await this.locator.Root.CreateContext(uri, parentURI);
     }
 }
 

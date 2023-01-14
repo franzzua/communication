@@ -8,7 +8,7 @@ export class Message {
     public Author?: User;
     public CreatedAt: DateTime;
     public UpdatedAt: DateTime;
-    public ContextURI?: string;
+    public ContextURI: string;
     public SubContextURI?: string;
     public Action?: string;
     public id: string;

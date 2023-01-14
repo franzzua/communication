@@ -1,5 +1,6 @@
 import {Application, Builder} from "@cmmn/app";
 import {Locator, useStreamDomain} from "@cmmn/domain/proxy";
+import {Locator as WorkerLocator} from "@cmmn/domain/worker";
 import {Routes} from "./routes";
 import {Container, Injectable} from "@cmmn/core";
 import {AppRootComponent} from "./app-root.component";
@@ -10,10 +11,12 @@ import {AccountManager, DomainProxy} from "@services";
 import {TreeReducers} from "../ui/tree/tree-reducers";
 import {TreePresenter} from "../presentors/tree.presentor";
 import {MobileToolbarComponent} from "../ui/mobile-toolbar/mobile-toolbar.component";
-import {Factory} from "@domain/model/factory";
 import {DomainContainer} from "@domain";
 import {InfrContainer} from "@infr/infr.container";
 import {AppInitComponent} from "./init/app-init.component";
+import {DomainLocator} from "@domain/model/domain-locator.service";
+import { UIContainer } from "../ui/container";
+import {WrapperComponent} from "./pages/wrapper/wrapper.component";
 
 @Injectable()
 export class App2 extends Application {
@@ -24,16 +27,17 @@ export class App2 extends Application {
 
     public static async Build() {
         return new Builder()
-            .with(InfrContainer)
-            .with(DomainContainer)
+            .with(InfrContainer())
+            .with(DomainContainer())
             .with(useStreamDomain())
             .with(Container.withProviders(
-                RouterService,  TreeReducers, TreePresenter, DomainProxy, AccountManager,
-                {provide: Locator, useClass: Factory}
+                {provide: Locator, useFactory: cont => cont.get(DomainLocator)},
+                DomainLocator,
+                RouterService, TreeReducers, TreePresenter, DomainProxy, AccountManager
             ))
-            .withUI([
-                AppRootComponent, TextContentComponent, TreeComponent, MobileToolbarComponent, AppInitComponent
-            ])
+
+            .withUI([AppRootComponent, AppInitComponent, WrapperComponent])
+            .withUI(UIContainer)
             .withRoutes({
                 options: null,
                 routes: Routes

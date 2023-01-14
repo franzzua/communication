@@ -8,6 +8,7 @@ export class Context {
     public URI: string;
 
     public Messages: Array<string> = [];
+    public Parents: Array<string> = [];
     // public Access?: Array<AccessRule> = [];
     // public Sorting?: Sorting;
     public Permutation?: Permutation;
@@ -21,6 +22,7 @@ export class Context {
 
 
     static FromJSON(c: ContextJSON): Context {
+        const permutation = c.Permutation ? Permutation.Parse(c.Permutation) : null;
         return Object.assign(new Context(), {
             URI: c.URI,
             id: c.id,
@@ -29,7 +31,7 @@ export class Context {
             IsRoot: c.IsRoot,
             UpdatedAt: utc(c.UpdatedAt),
             CreatedAt: utc(c.CreatedAt),
-            Permutation: c.Permutation ? Permutation.Parse(c.Permutation) : null,
+            Permutation: permutation,
             Messages: [],
         });
     }

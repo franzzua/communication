@@ -1,26 +1,19 @@
-// jest.config.js
-const {pathsToModuleNameMapper} = require('ts-jest/utils');
-// In the following statement, replace `./tsconfig` with the path to your `tsconfig` file
-// which contains the path mapping (ie the `compilerOptions.paths` option):
-const {compilerOptions} = require('./tsconfig');
+import {pathsToModuleNameMapper} from "ts-jest/dist/config/paths-to-module-name-mapper.js";
+import "@cmmn/core";
+import config from "@cmmn/tools/test/config"
+import tsConfig from "./tsconfig.json" assert {type: 'json'}
 
 
-module.exports = {
+export default {
+    ...config,
     transform: {
-        "^.+\\.jsx?$": "babel-jest",
-        "^.+\\.tsx?$": "ts-jest"
+        ...config.transform,
+        "\.(html|less|style|svg)": "jest-text-transformer",
     },
-    testEnvironment: 'jest-environment-node',
-    globals: {
-        'ts-jest': {
-            compiler: 'typescript',
-            tsconfig: './specs/tsconfig.json'
-        }
-    },
-    transformIgnorePatterns: [],
+    moduleFileExtensions: ['ts', 'js', 'less'],
     moduleNameMapper: {
-        ...pathsToModuleNameMapper(compilerOptions.paths, {prefix: '<rootDir>/'}),
-        '^solidocity': '<rootDir>/node_modules/solidocity/dist/node.js',
-        '^@hypertype\/infr':'<rootDir>/node_modules/@hypertype/infr/dist/index.js',
-    }
+        ...pathsToModuleNameMapper(tsConfig.compilerOptions.paths, {prefix: '<rootDir>/', useESM: true}),
+        '@cmmn/domain/proxy': '<rootDir>/node_modules/@cmmn/domain/dist/bundle/proxy.js'
+    },
+    setupFiles: ['<rootDir>/specs/ui/global.ts']
 };

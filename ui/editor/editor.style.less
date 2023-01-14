@@ -1,0 +1,70 @@
+ctx-editor {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  margin: 0 1em;
+
+  * {
+    box-sizing: border-box;
+  }
+
+  div[controls] {
+    position: absolute;
+    height: 100%;
+    width: 100%;
+    pointer-events: none;
+    display: flex;
+    z-index: -1;
+    flex-direction: column;
+  }
+
+  div[contenteditable] {
+    flex: 1;
+    overflow: hidden auto;
+    user-select: none;
+    display: flex;
+    flex-direction: column;
+
+    &:focus {
+      outline: none;
+    }
+
+    &.item{
+      position: relative;
+    }
+  }
+
+  .item {
+    user-select: none;
+    height: 1.4em;
+    //margin: 0.25em 0;
+    margin-left: calc(var(--level) * 10px + 20px);
+    display: flex;
+    align-items: center;
+    color: #888;
+    flex-flow: row nowrap;
+    box-sizing: border-box;
+    line-height: 1.4em;
+
+    &[selected] {
+      color: white;
+    }
+
+    &.level-1 {
+      font-size: 2rem;
+      margin-left: 0;
+    }
+
+    &.level-2 {
+      font-size: 1.4rem;
+      margin-left: 1em;
+    }
+
+    &.level-3 {
+      font-size: 1rem;
+      margin-left: 2em;
+    }
+
+  }
+}

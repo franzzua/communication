@@ -1,4 +1,4 @@
-import {component, HtmlComponent, property} from "@cmmn/ui";
+import {component, effect, HtmlComponent, property} from "@cmmn/ui";
 import {bind, Injectable} from "@cmmn/core";
 import {MessageProxy} from "@services";
 import style from "./text-content.style.less";
@@ -54,14 +54,19 @@ export class TextContentComponent extends HtmlComponent<string, IEvents> {
         return null;
     }
 
-    @bind
-    private setContent() {
+    @effect(function (this: TextContentComponent){
+        return this.message?.State?.Content;
+    })
+    private setContent(content) {
         const div = this.contentElement;
-        div.textContent = this.message?.State?.Content;
+        div.textContent = content;
     }
 
-    @bind
-    private async setSelection(rt) {
+    @effect(function (this: TextContentComponent){
+        return this.active;
+    })
+    private async setSelection(active) {
+        console.log('selection', active, this.message.State.Content);
         const div = this.contentElement;
         if (!this.active) {
             div.classList.remove('focus');
@@ -82,11 +87,6 @@ export class TextContentComponent extends HtmlComponent<string, IEvents> {
         selection.removeAllRanges();
         selection.addRange(range);
     }
-
-    public Effects = [
-        this.setContent,
-        this.setSelection
-    ]
 
 }
 

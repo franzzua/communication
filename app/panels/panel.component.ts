@@ -7,10 +7,9 @@ import style from "./panel.style.less";
     template: Template,
     style
 })
-export class PanelComponent extends HtmlComponent<IState, IEvents>{
-    get State(): IState {
+export class PanelComponent extends HtmlComponent<IState, IEvents> {
+
+    get State() {
         return null;
     }
-
-
 }

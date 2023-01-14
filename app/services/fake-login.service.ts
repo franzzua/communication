@@ -1,3 +1,4 @@
+import { Fn } from "@cmmn/core";
 import {IAccountInfo, IAccountProvider} from "@services";
 
 export class FakeLoginService implements IAccountProvider{
@@ -12,6 +13,7 @@ export class FakeLoginService implements IAccountProvider{
         const name = prompt('Tell me your name, pls');
         const acc = {
             type: 'fake',
+            id: Fn.ulid(),
             title: name,
             session: {},
             defaultStorage: `fake://${name}/`

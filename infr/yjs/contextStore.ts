@@ -1,140 +1,132 @@
-import {Map as YMap} from "yjs";
 import {ContextJSON, MessageJSON} from "@domain";
-import {YjsStore} from "@infr/yjs/yjsStore";
-import {Cell} from "@cmmn/cell";
+import {ISyncProvider, LocalSyncProvider, SyncStore} from "@cmmn/sync";
+import {WebRtcProvider} from "@cmmn/sync/webrtc/client";
+import {cell, Cell} from "@cmmn/cell";
+import {compare, ResolvablePromise, utc} from "@cmmn/core";
+import {Context, Message} from "@model";
+import {Permutation} from "@domain/helpers/permutation";
+import {ResourceTokenApi} from "@infr/resource-token-api.service";
 
-export class ContextStore extends YjsStore {
+export class ContextStore extends SyncStore<MessageJSON>{
 
-    private contextMap = this.doc.getMap('context');
+    // private static provider = new WebRtcProvider([`${location.origin.replace(/^http/, 'ws')}/api`])
+    public Sync = new ResolvablePromise();
+    @cell
+    public IsSynced = false;
 
-    private messageArray = this.doc.getArray<YMap<any>>('messages');
-
-    constructor(uri: string) {
-        super(uri);
-        this.contextMap.observeDeep(() => this.State.set(this.GetState()))
-        this.messageArray.observeDeep(() => this.State.set(this.GetState()));
-        this.IsLoaded$.then(() => this.State.set(this.GetState()));
-        this.IsSynced$.then(() => this.State.set(this.GetState()));
+    constructor(protected URI: string) {
+        super(URI);
     }
 
-    // public State$ = merge(
-    //     fromYjs(this.contextMap),
-    //     fromYjs(this.messageArray),
-    //     from(this.IsLoaded$),
-    //     from(this.IsSynced$),
-    // ).pipe(
-    //     map((event) => {
-    //         console.log(event);
-    //         return this.GetState();
-    //     }),
-    //     tap(state => this.State(state)),
-    //     tap(console.log),
-    //     shareReplay(1)
-    // )
 
-    // subscr2 = this.State$.subscribe();
+    public Init() {
+        const state = this.GetState();
+        if (!state.Context.URI) {
+            this.contextJSONCell.set({
+                CreatedAt: utc().toISO(),
+                id: this.URI,
+                URI: this.URI,
+                IsRoot: true,
+                UpdatedAt: utc().toISO(),
+            })
+        }
+        this.Sync.resolve();
+        this.IsSynced = true;
+    }
 
-    UpdateContext(item: Partial<ContextJSON>) {
-        this.doc.transact(() => {
+    // public async GetRemoteProvider() {
+    //     await Promise.resolve();
+    //     const token = await this.token;
+    //     const room = ContextStore.provider.joinRoom(this.URI, {
+    //         token: token,
+    //         useBroadcast: false,
+    //         user: '',
+    //         maxConnections: 70 + Math.floor(Math.random() * 70),
+    //     });
+    //     return room;
+    // }
 
-            for (let key in item) {
-                if (['URI', 'id'].includes(key))
-                    continue;
-                if (key == 'IsRoot') {
-                    this.contextMap.set('IsRoot', item.IsRoot ? 'true' : '');
-                }
-                this.contextMap.set(key, item[key])
-            }
+    private contextMap = this.adapter.doc.getMap('context');
+
+
+    UpdateMessage(item: Partial<MessageJSON>) {
+        const existed = this.Items.get(item.id);
+        this.Items.set(item.id, {
+            ...existed,
+            ...item
         });
     }
 
-    private readMessages(): Map<string, MessageJSON> {
-        return new Map(this.messageArray.toArray().map(yMap => yMap.toJSON()).map(x => [x.id, x]));
-    }
-
-    private readContext(): ContextJSON {
-        const json = this.contextMap.toJSON();
-        return {
-            ...json,
-            URI: this.URI,
-            id: this.URI.split('/').pop(),
-            IsRoot: !!json.IsRoot
-        };
-    }
-
-    UpdateMessage(item: Partial<MessageJSON>) {
-        for (let map of this.messageArray) {
-            if (map.get('id') != item.id)
-                continue;
-            this.doc.transact(tr => {
-                for (let key in item) {
-                    if (['id'].includes(key))
-                        continue;
-                    map.set(key, item[key]);
-                }
-            });
-        }
-    }
-
-    DeleteMessage(item: MessageJSON) {
-        const length = this.messageArray.length;
-        for (let i = 0; i < length; i++) {
-            if (this.messageArray.get(i).get('id') != item.id)
-                continue;
-            this.messageArray.delete(i, 1);
-            return;
-        }
+    DeleteMessage(item: Pick<MessageJSON, "id">) {
+        this.Items.delete(item.id);
     }
 
     AddMessage(item: MessageJSON) {
-        const messageMap = new YMap(Object.entries(item));
-        this.messageArray.push([messageMap]);
+        this.Items.set(item.id, item);
     }
 
     static clear() {
     }
 
-
-    State: Cell<IState> = new Cell(this.GetState());
-
-    subscr = this.State.on('change', (data) => {
-        const { value} = data;
-        this.doc.transact(() => {
-            const prevContext = this.readContext();
-            if (value.Context.UpdatedAt && prevContext.UpdatedAt !== value.Context.UpdatedAt) {
-                this.UpdateContext(value.Context);
-                console.log('update context', value.Context.id);
-            }
-            const prevMessages = this.readMessages();
-            for (let message of value.Messages.values()) {
-                const old = prevMessages.get(message.id)
-                if (old) {
-                    prevMessages.delete(message.id);
-                    if (message.UpdatedAt && message.UpdatedAt !== old.UpdatedAt) {
-                        this.UpdateMessage(message);
-                        console.log('update message', message.id, message.Content);
-                    }
-                } else {
-                    console.log('add message', message.id, message.Content);
-                    this.AddMessage(message);
-                }
-            }
-            for (let message of prevMessages.values()) {
-                this.DeleteMessage(message);
-                console.log('delete message', message.id, message.Content);
-            }
-        });
-    })
-
+    private contextJSONCell = this.getObjectCell<ContextJSON>('context');
     GetState(): IState {
         return {
-            Context: this.readContext(),
-            Messages: this.readMessages().cast<Readonly<MessageJSON>>()
+            Context: this.contextJSONCell.get(),
+            Messages: new Set(this.Items.keys())
         };
+    }
+    public $state = new Cell(() => {
+        const state = this.GetState();
+        if (!state.Context)
+            return Context.FromJSON({URI: this.URI} as any);
+        const context = Context.FromJSON(state.Context);
+        const ordered = Array.from(state.Messages).orderBy(x => x);
+        context.Messages = context.Permutation?.Invoke(ordered) ?? ordered;
+        return context;
+    }, {
+        compare,
+        onExternal: value => {
+            value.Permutation = Permutation.Diff(value.Messages.orderBy(x => x), value.Messages);
+            this.contextJSONCell.set(Context.ToJSON(value));
+            const existed = new Set(this.Items.keys());
+            for (let id of value.Messages) {
+                if (existed.has(id)) {
+                    existed.delete(id);
+                    continue;
+                }
+                this.AddMessage({
+                    id: id,
+                    UpdatedAt: utc().toISO(),
+                    CreatedAt: utc().toISO(),
+                    Content: '',
+                    ContextURI: this.URI
+                });
+            }
+            for (let id of existed){
+                this.DeleteMessage({
+                    id: id
+                })
+            }
+        }
+    })
+
+    GetMessageCell(id: string) {
+        return new Cell(() => {
+            if (!this.IsSynced){
+                return null;
+            }
+            const result = this.Items.get(id);
+            return result && Message.FromJSON(result);
+        }, {
+            compare,
+            onExternal: value => {
+                this.Items.set(value.id, Message.ToJSON(value));
+            }
+        });
     }
 }
 
 export type IState = {
     Context: Readonly<ContextJSON>;
-    Messages: ReadonlyMap<string, Readonly<MessageJSON>>;
+    Messages: ReadonlySet<string>;
 };
