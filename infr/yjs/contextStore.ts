@@ -88,7 +88,6 @@ export class ContextStore extends SyncStore<MessageJSON>{
         onExternal: value => {
             value.Permutation = Permutation.Diff(value.Messages.orderBy(x => x), value.Messages);
             this.contextJSONCell.set(Context.ToJSON(value));
-            console.log('update context', Context.ToJSON(value));
             const existed = new Set(this.Items.keys());
             for (let id of value.Messages) {
                 if (existed.has(id)) {

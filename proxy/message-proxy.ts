@@ -88,7 +88,6 @@ export class MessageProxy extends ModelProxy<Message, IMessageActions>
             };
             const result = context.MessageMap.get(newState.id);
             result.State = newState;
-            console.log(context.Messages.map(x => x.State.Content));
             return result;
         }else {
             this.Actions.Reorder(index);

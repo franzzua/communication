@@ -33,7 +33,6 @@ export class ContextProxy extends ModelProxy<Context, IContextActions>
         };
         const result = this.MessageMap.get(message.id);
         result.State = message;
-        console.log('add', this.Messages);
         return result;
     }
     public RemoveMessage(message: IMessageProxy): void{
