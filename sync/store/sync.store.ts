@@ -12,7 +12,6 @@ export class SyncStore {
 
 
     constructor(protected name) {
-        console.log(name)
     }
 
     @cell

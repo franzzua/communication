@@ -36,25 +36,25 @@ export class DataChannelProvider {
         const peerConnection = this.Connections.getOrAdd(user.user, () => this.factory(user));
 // Send any ice candidates to the other peer.
         peerConnection.addEventListener('datachannel', e => {
+            // console.log('datachannel', e.channel);
             e.channel.addEventListener('close', () => {
                 this.Connections.delete(user.user);
                 peerConnection.close();
             })
             onPeerConnection(new PeerConnection(e.channel, user, true), e.channel.label.split('-').pop());
-        })
-        // console.log('get offer', signal.sdp);
-        if (peerConnection.signalingState !== "stable"){
-            console.error('peer connection state not stable: ', peerConnection.signalingState);
-        }
-        await peerConnection.setRemoteDescription(signal);
-        await peerConnection.setLocalDescription();
-        const answer = peerConnection.localDescription;
-        // console.log('send answer', answer.sdp);
-        user.signaling.sendSignal({
-            type: "signal",
-            signal: answer,
-            to: user.user
         });
+        if (peerConnection.signalingState === "stable"){
+            // console.log('get offer', signal.sdp);
+            await peerConnection.setRemoteDescription(signal);
+            await peerConnection.setLocalDescription();
+            const answer = peerConnection.localDescription;
+            // console.log('send answer', answer.sdp);
+            user.signaling.sendSignal({
+                type: "signal",
+                signal: answer,
+                to: user.user
+            });
+        }
         return peerConnection;
         //
         // const event = await fromFirstEvent(peerConnection, 'datachannel') as RTCDataChannelEvent;
@@ -63,48 +63,31 @@ export class DataChannelProvider {
 
 
     public async initiate(user: UserInfo, room: string, currentUser) {
-        if (this.Connections.has(user.user)){
-            debugger;
-        }
-        const peerConnection = this.factory(user);
-        peerConnection.addEventListener('negotiationneeded', async e => {
-            // const offer = await peerConnection.createOffer();
-            await peerConnection.setLocalDescription();
-            const offer = peerConnection.localDescription;
-            // console.log('init offer', offer.sdp);
-            user.signaling.sendSignal({
-                type: "signal",
-                signal: offer,
-                to: user.user
+        const peerConnection = this.Connections.getOrAdd(user.user, () => {
+            const peerConnection = this.factory(user);
+            peerConnection.addEventListener('negotiationneeded', async e => {
+                // const offer = await peerConnection.createOffer();
+                await peerConnection.setLocalDescription();
+                const offer = peerConnection.localDescription;
+                // console.log('init offer', offer.sdp);
+                user.signaling.sendSignal({
+                    type: "signal",
+                    signal: offer,
+                    to: user.user
+                });
+                const answer = await user.signaling.onceAsync('signal');
+                if (!(answer.from.user == user.user && answer.signal.type == 'answer')) {
+                    throw new Error();
+                }
+                // console.log('get answer', answer.signal.sdp);
+                await peerConnection.setRemoteDescription(answer.signal);
+                // return peerConnection;
+            }, {
+                once: true
             });
-            const answer = await user.signaling.onceAsync('signal');
-            if (!(answer.from.user == user.user && answer.signal.type == 'answer')) {
-                throw new Error();
-            }
-            // console.log('get answer', answer.signal.sdp);
-            await peerConnection.setRemoteDescription(answer.signal);
-            // return peerConnection;
-        }, {
-            once: true
+            return peerConnection;
         });
-
-        // const id = Math.random();
-// Send any ice candidates to the other peer.
         const dataChannel = peerConnection.createDataChannel(`${user.user}-${room}`);
-        // await fromFirstEvent(peerConnection, 'negotiationneeded');
-        // console.log('create channel', id);
-        // user.signaling.sendSignal({
-        //     type: 'signal',
-        //     to: user.user,
-        //     signal: {
-        //         type: "datachannel",
-        //         room: room,
-        //         id: id,
-        //
-        //     }
-        // })
-        // if (peerConnection.)
-        //     return dataChannel;
         await fromFirstEvent(dataChannel, 'open');
         dataChannel.addEventListener('close', x => {
             this.Connections.delete(user.user);

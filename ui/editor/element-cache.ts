@@ -97,18 +97,18 @@ export class ElementCache<TItem extends {
 
         // console.table(state);
         if (!ui.isEmpty() || !model.isEmpty()) {
-            console.table({
-                ui: {
-                    updated: ui.updated.map(x => x.child.textContent || '-').join(', '),
-                    deleted: ui.deleted.map(x => x.item.Message.State.Content || '-').join(', '),
-                    added: ui.added.map(x => x.child.textContent || '-').join(', '),
-                },
-                model: {
-                    updated: model.updated.map(x => x.item.Message.State.Content || '-').join(', '),
-                    deleted: model.deleted.map(x => x.child.textContent || '-').join(', '),
-                    added: model.added.map(x => x.item.Message.State.Content || '-').join(', '),
-                }
-            })
+            // console.table({
+            //     ui: {
+            //         updated: ui.updated.map(x => x.child.textContent || '-').join(', '),
+            //         deleted: ui.deleted.map(x => x.item.Message.State.Content || '-').join(', '),
+            //         added: ui.added.map(x => x.child.textContent || '-').join(', '),
+            //     },
+            //     model: {
+            //         updated: model.updated.map(x => x.item.Message.State.Content || '-').join(', '),
+            //         deleted: model.deleted.map(x => x.child.textContent || '-').join(', '),
+            //         added: model.added.map(x => x.item.Message.State.Content || '-').join(', '),
+            //     }
+            // })
         }
         return {ui, model};
     }

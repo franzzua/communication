@@ -66,8 +66,8 @@ export class YjsRepository {
             this.Networks.set(uri, network);
         })
         return [
-            // new LocalSyncProvider(uri),
-            room
+            room,
+            new LocalSyncProvider(uri),
         ];
     }
 
