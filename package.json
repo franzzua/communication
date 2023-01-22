@@ -12,6 +12,7 @@
     "server:bundle": "cmmn bundle server",
     "server:run": "node dist/esm/server/server.js",
     "server:watch": "nodemon dist/bundle/server.js",
+    "publish": "npm version patch && git push",
     "ci": "cmmn compile -b && cmmn bundle main --prod && cmmn bundle server --prod && cp -r ./assets ./dist/bundle"
   },
   "files": [
