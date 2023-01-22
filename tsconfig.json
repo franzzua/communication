@@ -23,6 +23,15 @@
       ],
       "@yjs/webrtc": [
         "./yjsWebRTC"
+      ],
+      "@cmmn/sync": [
+        "./sync/index.ts"
+      ],
+      "@cmmn/sync/webrtc/client": [
+        "./sync/webrtc/client/index.ts"
+      ],
+      "@cmmn/sync/webrtc/server": [
+        "./sync/webrtc/server/index.ts"
       ]
     }
   },
