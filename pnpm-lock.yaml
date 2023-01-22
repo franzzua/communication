@@ -7,7 +7,6 @@ specifiers:
   '@cmmn/domain': 1.7.4
   '@cmmn/infr': 1.7.2
   '@cmmn/server': 1.7.4
-  '@cmmn/sync': link:./sync
   '@cmmn/tools': 1.7.3
   '@cmmn/ui': 1.7.4
   '@fastify/websocket': ^7.1.2
@@ -52,7 +51,6 @@ devDependencies:
   '@cmmn/domain': 1.7.4
   '@cmmn/infr': 1.7.2
   '@cmmn/server': 1.7.4
-  '@cmmn/sync': link:sync
   '@cmmn/tools': 1.7.3_gcyavtumiruyhryngwuzxaixue
   '@cmmn/ui': 1.7.4
   '@inhauth/core': 1.0.0
