@@ -1,5 +1,7 @@
 import {DateTime} from "luxon";
 import {Diff} from "./diff-apply";
+import {Disposable} from "@cmmn/core";
+import {Cell} from "@cmmn/cell";
 
 const Separator = ':';
 
@@ -92,21 +94,22 @@ export class ElementCache<TItem extends {
             model.added.splice(0, minLength);
             model.deleted.splice(0, minLength);
         }
+
         // console.table(state);
-        // if (!ui.isEmpty() || !model.isEmpty()) {
-        //     console.table({
-        //         ui: {
-        //             updated: ui.updated.map(x => x.child.textContent || '-').join(', '),
-        //             deleted: ui.deleted.map(x => x.item.Message.State.Content || '-').join(', '),
-        //             added: ui.added.map(x => x.child.textContent || '-').join(', '),
-        //         },
-        //         model: {
-        //             updated: model.updated.map(x => x.item.Message.State.Content || '-').join(', '),
-        //             deleted: model.deleted.map(x => x.child.textContent || '-').join(', '),
-        //             added: model.added.map(x => x.item.Message.State.Content || '-').join(', '),
-        //         }
-        //     })
-        // }
+        if (!ui.isEmpty() || !model.isEmpty()) {
+            console.table({
+                ui: {
+                    updated: ui.updated.map(x => x.child.textContent || '-').join(', '),
+                    deleted: ui.deleted.map(x => x.item.Message.State.Content || '-').join(', '),
+                    added: ui.added.map(x => x.child.textContent || '-').join(', '),
+                },
+                model: {
+                    updated: model.updated.map(x => x.item.Message.State.Content || '-').join(', '),
+                    deleted: model.deleted.map(x => x.child.textContent || '-').join(', '),
+                    added: model.added.map(x => x.item.Message.State.Content || '-').join(', '),
+                }
+            })
+        }
         return {ui, model};
     }
 
@@ -118,6 +121,7 @@ export class ElementCache<TItem extends {
     }
 
     public set(id: string, item: TItem, element: TElement){
+        this.cache.get(id)?.dispose();
         const info = new ElementInfo<TItem, TElement>(
             id, element, item
         );
@@ -132,6 +136,7 @@ export class ElementCache<TItem extends {
         const element = this.nodeCache.get(child);
         this.nodeCache.delete(child);
         const uri = element.item.Message.State.SubContextURI;
+        element.dispose();
         this.uriCache.get(uri)?.delete(element);
     }
 
@@ -148,10 +153,14 @@ export class ElementInfo<TItem extends {
         Content: string;
         UpdatedAt: DateTime;
     }
-}, TElement extends Element = Element> {
+}, TElement extends Element = Element> extends Disposable {
     constructor(public readonly id: string,
                 public readonly element: TElement,
                 public readonly item: TItem) {
+        super();
+        this.onDispose = Cell.OnChange(() => item.State.Content, e => {
+            element.textContent = e.value;
+        });
     }
 
 

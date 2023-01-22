@@ -164,12 +164,12 @@ export class TreeReducers {
     @logReducer
     async Down(event: KeyboardEvent): Promise<Reducer<TreeState>> {
         return (state: TreeState) => {
-            const selectedIndex = state.Items.toArray().indexOf(state.Selected);
+            const selectedIndex = state.Items.indexOf(state.Selected);
             if (selectedIndex >= state.Items.length - 1)
                 return state;
             return {
                 ...state,
-                Selected: state.Items.toArray()[selectedIndex + 1],
+                Selected: state.Items.at(selectedIndex + 1),
             };
         }
     }
@@ -177,12 +177,12 @@ export class TreeReducers {
     @logReducer
     async Up(event: KeyboardEvent): Promise<Reducer<TreeState>> {
         return (state: TreeState) => {
-            const selectedIndex = state.Items.toArray().indexOf(state.Selected);
+            const selectedIndex = state.Items.indexOf(state.Selected);
             if (selectedIndex < 0)
                 return state;
             return {
                 ...state,
-                Selected: state.Items.toArray()[selectedIndex - 1],
+                Selected: state.Items.at(selectedIndex - 1),
             };
         }
     }
@@ -191,9 +191,9 @@ export class TreeReducers {
     async Remove(event: KeyboardEvent): Promise<Reducer<TreeState>> {
         return (state: TreeState) => {
             const message = state.Selected.Message;
-            const selectedIndex = state.Items.toArray().indexOf(state.Selected);
-            const next = state.Items.toArray()[selectedIndex + 1];
-            state.Items.removeAt(state.Items.toArray().indexOf(state.Selected));
+            const selectedIndex = state.Items.indexOf(state.Selected);
+            const next = state.Items.at(selectedIndex + 1);
+            state.Items.remove(state.Selected);
             if (next && next.Message.Context == message.Context) {
                 message.Context.RemoveMessage(message);
                 return {
@@ -201,7 +201,7 @@ export class TreeReducers {
                     Selected: next,
                 };
             } else {
-                const prev = state.Items.toArray()[selectedIndex - 1];
+                const prev = state.Items.at(selectedIndex - 1);
                 message.Context.RemoveMessage(message);
                 return {
                     ...state,
@@ -253,9 +253,8 @@ export class TreeReducers {
             state.Selected.Path = newPath;
             state.ItemsMap.delete(state.Selected.Path.join(TreePresenter.Separator));
             state.ItemsMap.set(newPath.join(TreePresenter.Separator), state.Selected);
-            const parentItemIndex = state.Items.toArray().indexOf(parent);
-            const index = state.Items.toArray().indexOf(state.Selected);
-            state.Items.removeAt(state.Selected);
+            const parentItemIndex = state.Items.indexOf(parent);
+            state.Items.remove(state.Selected);
             state.Items.insert(parentItemIndex + parent.Length, state.Selected);
             parent.Length--;
             return {
@@ -272,8 +271,8 @@ export class TreeReducers {
             if (messageIndex == 0)
                 return state;
             message.MoveTo(message.Context, messageIndex - 1);
-            const itemIndex = state.Items.toArray().indexOf(state.Selected);
-            state.Items.removeAt(itemIndex);
+            const itemIndex = state.Items.indexOf(state.Selected);
+            state.Items.remove(state.Selected);
             state.Items.insert(itemIndex - 1, state.Selected)
             return {
                 ...state,
@@ -289,7 +288,7 @@ export class TreeReducers {
             if (messageIndex == message.Context.Messages.length - 1)
                 return state;
             message.MoveTo(message.Context, messageIndex + 1);
-            const itemIndex = state.Items.toArray().indexOf(state.Selected);
+            const itemIndex = state.Items.indexOf(state.Selected);
             state.Items.removeAt(itemIndex);
             state.Items.insert(itemIndex + 1, state.Selected)
             return {

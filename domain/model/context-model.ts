@@ -3,7 +3,7 @@ import {IContextActions} from "../contracts/actions";
 import {Permutation} from "@domain/helpers/permutation";
 import {Context, Message} from "@model";
 import {ModelLike} from "@cmmn/domain/worker";
-import {ContextStore} from "@infr/yjs/contextStore";
+import {MessageStore} from "@infr/yjs/messageStore";
 import {Fn, utc} from "@cmmn/core";
 import {DomainLocator} from "@domain/model/domain-locator.service";
 
@@ -12,7 +12,7 @@ export class ContextModel implements ModelLike<Context, IContextActions>, IConte
     Actions = this;
 
     constructor(public URI: string,
-                public contextStore: ContextStore,
+                public contextStore: MessageStore,
                 private locator: DomainLocator) {
     }
 

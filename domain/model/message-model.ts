@@ -1,7 +1,7 @@
 import {IMessageActions} from "@domain/contracts/actions";
 import {Context, Message} from "@model";
 import {ModelLike} from "@cmmn/domain/worker";
-import {ContextStore} from "@infr/yjs/contextStore";
+import {MessageStore} from "@infr/yjs/messageStore";
 import {utc} from "@cmmn/core";
 import {ContextModel} from "./context-model";
 import {DomainLocator} from "@domain/model/domain-locator.service";
@@ -21,7 +21,7 @@ export class MessageModel implements ModelLike<Message, IMessageActions>, IMessa
 
 
     constructor(private readonly locator: DomainLocator,
-                private contextStore: ContextStore,
+                private contextStore: MessageStore,
                 public id: string) {
 
     }

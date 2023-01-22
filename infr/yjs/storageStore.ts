@@ -1,4 +1,4 @@
-import {ContextStore} from "./contextStore";
+import {MessageStore} from "./messageStore";
 
 export class StorageStore {
 

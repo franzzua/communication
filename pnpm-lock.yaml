@@ -1,15 +1,15 @@
 lockfileVersion: 5.4
 
 specifiers:
-  '@cmmn/app': 1.7.3
-  '@cmmn/cell': 1.7.3
-  '@cmmn/core': 1.7.3
-  '@cmmn/domain': 1.7.3
+  '@cmmn/app': 1.7.4
+  '@cmmn/cell': 1.7.4
+  '@cmmn/core': 1.7.4
+  '@cmmn/domain': 1.7.4
   '@cmmn/infr': 1.7.2
-  '@cmmn/server': 1.7.3
-  '@cmmn/sync': 1.7.3
+  '@cmmn/server': 1.7.4
+  '@cmmn/sync': 1.7.4
   '@cmmn/tools': 1.7.3
-  '@cmmn/ui': 1.7.3
+  '@cmmn/ui': 1.7.4
   '@fastify/websocket': ^7.1.2
   '@inhauth/core': ^1.0.0
   '@jest/globals': latest
@@ -42,15 +42,15 @@ dependencies:
   fastify: 3.29.4
 
 devDependencies:
-  '@cmmn/app': 1.7.3
-  '@cmmn/cell': 1.7.3
-  '@cmmn/core': 1.7.3
-  '@cmmn/domain': 1.7.3
+  '@cmmn/app': 1.7.4
+  '@cmmn/cell': 1.7.4
+  '@cmmn/core': 1.7.4
+  '@cmmn/domain': 1.7.4
   '@cmmn/infr': 1.7.2
-  '@cmmn/server': 1.7.3
-  '@cmmn/sync': 1.7.3
+  '@cmmn/server': 1.7.4
+  '@cmmn/sync': 1.7.4
   '@cmmn/tools': 1.7.3_@swc+core@1.3.25
-  '@cmmn/ui': 1.7.3
+  '@cmmn/ui': 1.7.4
   '@inhauth/core': 1.0.0
   '@jest/globals': 29.3.1
   '@swc/core': 1.3.25
@@ -427,24 +427,24 @@ packages:
     resolution: {integrity: sha512-0hYQ8SB4Db5zvZB4axdMHGwEaQjkZzFjQiN9LVYvIFB2nSUHW9tYpxWriPrWDASIxiaXax83REcLxuSdnGPZtw==}
     dev: true
 
-  /@cmmn/app/1.7.3:
-    resolution: {integrity: sha512-oGySDe0nN9Qc78I3/x4K3w24ao+ruVAMA5PiXUoCrCqRkfFMzrK3O3sLH1R1ViYeVkE0YrAHGsQlvauxTBwOWQ==}
+  /@cmmn/app/1.7.4:
+    resolution: {integrity: sha512-kj5/i3m4KKwTifbyxjRmyVnvONfl72DQT9lX3z0kJ95ataV9EQgEQ6TK7JqzRUcNmE9N0rN4PBoFVOPlZId2qw==}
     dependencies:
-      '@cmmn/cell': 1.7.3
-      '@cmmn/core': 1.7.3
-      '@cmmn/ui': 1.7.3
+      '@cmmn/cell': 1.7.4
+      '@cmmn/core': 1.7.4
+      '@cmmn/ui': 1.7.4
       router5: 8.0.1
       router5-plugin-browser: 8.0.1_router5@8.0.1
     dev: true
 
-  /@cmmn/cell/1.7.3:
-    resolution: {integrity: sha512-NPYGTHOBix5sYC4bQfk7AOIVkIcTFQSXCxjmLtUAH3iC+pTk7hsuHgE/LszZraN/y8quQ5K57YZn25WH2XSedw==}
+  /@cmmn/cell/1.7.4:
+    resolution: {integrity: sha512-I/11ZVzIq4KofhC67AxLvJmu/FED08FWH8v5H8k/vpVMaX7ZMUTIMsS4FknpOugsw50HgcZs04MgZfCqcgcfPg==}
     dependencies:
-      '@cmmn/core': 1.7.3
+      '@cmmn/core': 1.7.4
     dev: true
 
-  /@cmmn/core/1.7.3:
-    resolution: {integrity: sha512-nA9Kef2WuPRUN0ysudp2OX79KNGa36ZASqrtrhXvAhQLLdkipg3KcL3lMqubHS76BBQYzRhE7ExcZxsMHvKq3g==}
+  /@cmmn/core/1.7.4:
+    resolution: {integrity: sha512-eJ8e516TmRvW8Tgw3GzYwIDDgHzNLGkLC5GQR4WnsMwZgiBYgzMnA6CeMG5dc8qQR6de7tnky/QKxbkqsmJOHQ==}
     dependencies:
       '@types/luxon': 2.4.0
       bind-decorator: 1.0.11
@@ -452,26 +452,26 @@ packages:
       msgpackr: 1.8.1
     dev: true
 
-  /@cmmn/domain/1.7.3:
-    resolution: {integrity: sha512-WP4hp2oqeFkNv50uOoTd1cDQa8frArQ/6AByGIwj0SxYXdOCQ3Ncb2TaHhMwSPMTA5iWovUe5vHphZEQw60HMA==}
+  /@cmmn/domain/1.7.4:
+    resolution: {integrity: sha512-0Kq9CN2Kg0/oMfCtIrN/MZ/nvR+9fpDHtN8DY4ywE7CRW7R8daGLb7GdkNcnu/SkrZ6wuxu7IiTT3g97x6vE1g==}
     dependencies:
-      '@cmmn/cell': 1.7.3
-      '@cmmn/core': 1.7.3
+      '@cmmn/cell': 1.7.4
+      '@cmmn/core': 1.7.4
     dev: true
 
   /@cmmn/infr/1.7.2:
     resolution: {integrity: sha512-zGJZ3r32ARml2vNA59f/JmGBkP0WdvbW9NrYE/Fyx7TMFyaFybStBV6XCBVH3c/2HSoZqhlTiOoarQQ11i5fpw==}
     dev: true
 
-  /@cmmn/server/1.7.3:
-    resolution: {integrity: sha512-CctKmes6c/qiGCo5MY/nxs4zliM/vhULAflPksJA32cT3g5FAHAGaYACTvcfuaUOQAy61XSC4hmf2T4FgIaslQ==}
+  /@cmmn/server/1.7.4:
+    resolution: {integrity: sha512-f/rWOcT7pB2kQkS9U2XDwgWQ8R52hgu7C20TWmQ784rL6cPE/XUElGfKL8sKoI3GeTGMMK7pxcV4LN65vDJI1w==}
     dev: true
 
-  /@cmmn/sync/1.7.3:
-    resolution: {integrity: sha512-s5vvBlxXivmccSQNxGLpQsuGiw1YSZEZep8hnzgQbhlsyiXNqveqUcj0o4R/MPzsV55kNfgPIPY4JW97MeGKIA==}
+  /@cmmn/sync/1.7.4:
+    resolution: {integrity: sha512-wtwXU7QKlnaQ/q5FH7ZjEJ/ipMU1oG7dLPg+kfOKWqlv3vj8J5sHvW8eKYtx/lc8P2a44CBc5WGLvxpjYYB9pw==}
     dependencies:
-      '@cmmn/cell': 1.7.3
-      '@cmmn/core': 1.7.3
+      '@cmmn/cell': 1.7.4
+      '@cmmn/core': 1.7.4
       y-indexeddb: 9.0.9_yjs@13.5.44
       y-protocols: 1.0.5
       yjs: 13.5.44
@@ -551,11 +551,11 @@ packages:
       uwire: 1.1.0
     dev: true
 
-  /@cmmn/ui/1.7.3:
-    resolution: {integrity: sha512-0ZCMYKsZmZ5wegsdAemtFWECW3cd7oEt3zOmFYvO6g4WIYbYHFMEuJu6Ht/tdoAzTnjdLupErqVJCfx3rHx1rg==}
+  /@cmmn/ui/1.7.4:
+    resolution: {integrity: sha512-W6HpofoddD7IJOS9Uo4vmdCl/MbDFQuqG9AkewT1DkbnkzncvN1bHfYuYc7HER2//pTqwVGEtWiJpARHpkj2mQ==}
     dependencies:
-      '@cmmn/cell': 1.7.3
-      '@cmmn/core': 1.7.3
+      '@cmmn/cell': 1.7.4
+      '@cmmn/core': 1.7.4
       '@cmmn/uhtml': 1.5.11
     dev: true
 
@@ -1173,9 +1173,9 @@ packages:
       arrify: 2.0.1
       browserslist: 4.21.4
       chokidar: 3.5.3
-      clean-css: 5.3.1
+      clean-css: 5.3.2
       clone: 2.1.2
-      core-js-bundle: 3.27.1
+      core-js-bundle: 3.27.2
       deepmerge: 4.2.2
       es-module-shims: 1.6.3
       html-minifier-terser: 5.1.1
@@ -2521,8 +2521,8 @@ packages:
       source-map: 0.6.1
     dev: true
 
-  /clean-css/5.3.1:
-    resolution: {integrity: sha512-lCr8OHhiWCTw4v8POJovCoh4T7I9U11yVsPjMWWnnMmp9ZowCxyad1Pathle/9HjaDp+fdQKjO9fQydE6RHTZg==}
+  /clean-css/5.3.2:
+    resolution: {integrity: sha512-JVJbM+f3d3Q704rF4bqQ5UUyTtuJ0JRKNbTKVEeujCCBoMdkEi+V+e8oktO9qGQNSvHrFTM6JZRXrUvGR1czww==}
     engines: {node: '>= 10.0'}
     dependencies:
       source-map: 0.6.1
@@ -2694,8 +2694,8 @@ packages:
     engines: {node: '>=0.10.0'}
     dev: true
 
-  /core-js-bundle/3.27.1:
-    resolution: {integrity: sha512-CqdCVLIOGQH15hyGdLsRCC0zKjdUEFKoODKbO6yxx2Z3f+mE4Sm29VNAZm6yKJdMW3rAfPjPt9Imt8ssafTuXQ==}
+  /core-js-bundle/3.27.2:
+    resolution: {integrity: sha512-tFneTtwettzFntMIv4+p+E7SB0pgSWeuLSad9gp27MvSRxckGOGlx5EFIvS8JXODqVeaYKWqUAwQhyDZ8VqLnA==}
     requiresBuild: true
     dev: true
 
@@ -3887,7 +3887,7 @@ packages:
     hasBin: true
     dependencies:
       camel-case: 4.1.2
-      clean-css: 5.3.1
+      clean-css: 5.3.2
       commander: 8.3.0
       he: 1.2.0
       param-case: 3.0.4
@@ -5533,7 +5533,7 @@ packages:
     dependencies:
       level-peek: 1.0.6
       once: 1.4.0
-      readable-stream: 1.0.34
+      readable-stream: 1.1.14
     dev: true
 
   /level-filesystem/1.2.0:
@@ -5624,8 +5624,8 @@ packages:
       isomorphic.js: 0.2.5
     dev: true
 
-  /lib0/0.2.58:
-    resolution: {integrity: sha512-6ovqPaYfOKU7GkkVxz/wjMR0zsqmNsISLvH+h9Lx5YNtWDZey69aYsTGXaSVpUPpJ+ZFtIvcZHsTGL3MbwOM8A==}
+  /lib0/0.2.60:
+    resolution: {integrity: sha512-vzhtdUXBV8HyJnJWIZxUSH/aUVo1U4jUFRFDPVY245zFtzCl9Gld/EgvA8Jhnrio7Jn0HmGswErbPjsabYd7ow==}
     engines: {node: '>=14'}
     dependencies:
       isomorphic.js: 0.2.5
@@ -7049,6 +7049,15 @@ packages:
 
   /readable-stream/1.0.34:
     resolution: {integrity: sha512-ok1qVCJuRkNmvebYikljxJA/UEsKwLl2nI1OmaqAu4/UE+h0wKCHok4XkL/gvi39OacXvw59RJUOFUkDib2rHg==}
+    dependencies:
+      core-util-is: 1.0.3
+      inherits: 2.0.4
+      isarray: 0.0.1
+      string_decoder: 0.10.31
+    dev: true
+
+  /readable-stream/1.1.14:
+    resolution: {integrity: sha512-+MeVjFf4L44XUkhM1eYbD8fyEsxcV81pqMSR5gblfcLCHfZvbrqy4/qYHE+/R5HoBUT11WV5O08Cr1n3YXkWVQ==}
     dependencies:
       core-util-is: 1.0.3
       inherits: 2.0.4
@@ -8605,7 +8614,7 @@ packages:
   /yjs/13.5.44:
     resolution: {integrity: sha512-UL+abIh2lQonqXfaJ+en7z9eGshpY11j1zNLc2kDYs0vrTjee4gZJUXC3ZsuhP6geQt0IRU04epCGRaVPQAVCA==}
     dependencies:
-      lib0: 0.2.58
+      lib0: 0.2.60
     dev: true
 
   /yocto-queue/0.1.0:

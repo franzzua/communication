@@ -1,13 +1,11 @@
 import {ContextJSON, MessageJSON} from "@domain";
-import {ISyncProvider, LocalSyncProvider, SyncStore} from "@cmmn/sync";
-import {WebRtcProvider} from "@cmmn/sync/webrtc/client";
+import {SyncStore} from "@cmmn/sync";
 import {cell, Cell} from "@cmmn/cell";
 import {compare, ResolvablePromise, utc} from "@cmmn/core";
 import {Context, Message} from "@model";
 import {Permutation} from "@domain/helpers/permutation";
-import {ResourceTokenApi} from "@infr/resource-token-api.service";
 
-export class ContextStore extends SyncStore<MessageJSON>{
+export class MessageStore extends SyncStore{
 
     // private static provider = new WebRtcProvider([`${location.origin.replace(/^http/, 'ws')}/api`])
     public Sync = new ResolvablePromise();
@@ -17,12 +15,17 @@ export class ContextStore extends SyncStore<MessageJSON>{
     constructor(protected URI: string) {
         super(URI);
     }
+    @cell
+    private messages = this.getSet<string>('messages');
+
+    @cell
+    private context = this.getObjectCell<ContextJSON>('context');
 
 
     public Init() {
         const state = this.GetState();
         if (!state.Context.URI) {
-            this.contextJSONCell.set({
+            this.context.Diff({
                 CreatedAt: utc().toISO(),
                 id: this.URI,
                 URI: this.URI,
@@ -45,34 +48,34 @@ export class ContextStore extends SyncStore<MessageJSON>{
     //     });
     //     return room;
     // }
+    //
+    // private contextMap = this.adapter.doc.getMap('context');
+    //
+    //
+    // UpdateMessage(item: Partial<MessageJSON>) {
+    //     const existed = this.Items.get(item.id);
+    //     this.Items.set(item.id, {
+    //         ...existed,
+    //         ...item
+    //     });
+    // }
 
-    private contextMap = this.adapter.doc.getMap('context');
-
-
-    UpdateMessage(item: Partial<MessageJSON>) {
-        const existed = this.Items.get(item.id);
-        this.Items.set(item.id, {
-            ...existed,
-            ...item
-        });
+    DeleteMessage(item: Pick<Message, "id">) {
+        this.messages.delete(item.id);
     }
 
-    DeleteMessage(item: Pick<MessageJSON, "id">) {
-        this.Items.delete(item.id);
-    }
-
-    AddMessage(item: MessageJSON) {
-        this.Items.set(item.id, item);
+    AddMessage(item: Message) {
+        this.messages.add(item.id);
+        this.GetMessageCell(item.id).set(item)
     }
 
     static clear() {
     }
 
-    private contextJSONCell = this.getObjectCell<ContextJSON>('context');
     GetState(): IState {
         return {
-            Context: this.contextJSONCell.get(),
-            Messages: new Set(this.Items.keys())
+            Context: this.context.Value,
+            Messages: this.messages
         };
     }
     public $state = new Cell(() => {
@@ -87,8 +90,8 @@ export class ContextStore extends SyncStore<MessageJSON>{
         compare,
         onExternal: value => {
             value.Permutation = Permutation.Diff(value.Messages.orderBy(x => x), value.Messages);
-            this.contextJSONCell.set(Context.ToJSON(value));
-            const existed = new Set(this.Items.keys());
+            this.context.Diff(Context.ToJSON(value));
+            const existed = new Set(this.messages);
             for (let id of value.Messages) {
                 if (existed.has(id)) {
                     existed.delete(id);
@@ -96,8 +99,8 @@ export class ContextStore extends SyncStore<MessageJSON>{
                 }
                 this.AddMessage({
                     id: id,
-                    UpdatedAt: utc().toISO(),
-                    CreatedAt: utc().toISO(),
+                    UpdatedAt: utc(),
+                    CreatedAt: utc(),
                     Content: '',
                     ContextURI: this.URI
                 });
@@ -111,18 +114,23 @@ export class ContextStore extends SyncStore<MessageJSON>{
     })
 
     GetMessageCell(id: string) {
-        return new Cell(() => {
+        const obj = this.getObjectCell<MessageJSON>(id);
+        obj.on('change', e => {
+            cell.set(Message.FromJSON(e.value));
+        });
+        const cell = new Cell(() => {
             if (!this.IsSynced){
                 return null;
             }
-            const result = this.Items.get(id);
+            const result = obj.Value;
             return result && Message.FromJSON(result);
         }, {
             compare,
             onExternal: value => {
-                this.Items.set(value.id, Message.ToJSON(value));
+                obj.Diff(Message.ToJSON(value));
             }
         });
+        return cell;
     }
 }
 

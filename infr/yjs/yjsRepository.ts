@@ -1,5 +1,5 @@
 import {ContextJSON, StorageJSON} from "@domain";
-import {ContextStore} from "./contextStore";
+import {MessageStore} from "./messageStore";
 import {ResourceTokenStore} from "@infr/yjs/resource-token-store";
 import {bind, Injectable} from "@cmmn/core";
 import {ResourceTokenApi} from "@infr/resource-token-api.service";
@@ -11,7 +11,7 @@ import {cell, ObservableMap} from "@cmmn/cell";
 @Injectable()
 export class YjsRepository {
 
-    private map = new Map<string, ContextStore>();
+    private map = new Map<string, MessageStore>();
 
     public Provider = new WebRtcProvider(
         [`${location.origin.replace(/^http/, 'ws')}/api`],
@@ -24,19 +24,19 @@ export class YjsRepository {
     State$ = null;
 
     async Clear(): Promise<void> {
-        ContextStore.clear()
+        MessageStore.clear()
     }
 
-    LoadContext(uri: string, parentURI: string): ContextStore {
+    LoadContext(uri: string, parentURI: string): MessageStore {
         return this.GetOrAdd(uri, parentURI);
     }
 
-    GetOrAdd(uri: string, parentURI): ContextStore {
+    GetOrAdd(uri: string, parentURI): MessageStore {
         return this.map.getOrAdd(uri, uri => {
-            const store = new ContextStore(uri);
+            const store = new MessageStore(uri);
             this.getProviders(uri, parentURI).then(async providers => {
                 for (let provider of providers) {
-                    await store.syncWith(provider);
+                    await provider.addAdapter(store.adapter);
                 }
                 await store.Init()
             });
@@ -66,7 +66,7 @@ export class YjsRepository {
             this.Networks.set(uri, network);
         })
         return [
-            new LocalSyncProvider(uri),
+            // new LocalSyncProvider(uri),
             room
         ];
     }

@@ -1,6 +1,7 @@
 import {Fn, utc} from "@cmmn/core";
 import {EditorComponent} from "./editor.component";
 import {EditorItem} from "./types";
+import {Cell} from "@cmmn/cell";
 
 export class DiffApply {
     constructor(private component: EditorComponent) {
