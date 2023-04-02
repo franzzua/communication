@@ -148,7 +148,7 @@ describe('ui', () => {
         app.destroy();
     })
 
-    test('add-selection', async () => {
+    test('add-subitem', async () => {
         const {ce, context, app} = await getContext('add');
         global.setSelection({
             type: 'Caret',
@@ -171,19 +171,6 @@ describe('ui', () => {
         ce.remove();
         app.destroy();
     })
-    // test('add-br', async () => {
-    //     const {ce, context, app} = await getContext('add-br');
-    //     global.setSelection(getCaretSelection(null));
-    //     const child = document.createElement('span');
-    //     child.innerHTML = '<br>'
-    //     child.style.order = '1.2'
-    //     ce.insertBefore(child, ce.children[2]);
-    //     ce.dispatchEvent(new Event('input'));
-    //     await wait();
-    //     checkContent(ce, context,[1, 2, 0, 3]);
-    //     ce.remove();
-    //     app.destroy();
-    // })
     test('add-first', async () => {
         const {ce, context, app} = await getContext('add-first');
         const child = document.createElement('span');
