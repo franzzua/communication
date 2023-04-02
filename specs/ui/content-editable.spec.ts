@@ -154,18 +154,20 @@ describe('ui', () => {
             type: 'Caret',
             anchorNode: ce.children[0]
         });
+        const item2 = ce.children[1];
+        const item3 = ce.children[2];
         const child = document.createElement('span');
         child.innerHTML = '5';
         child.style.order = '3';
-        ce.insertBefore(child, ce.children[1]);
+        ce.insertBefore(child, item2);
         const child2 = document.createElement('span');
         child2.innerHTML = '6';
         child2.style.order = '3';
-        ce.insertBefore(child2, ce.children[1]);
-        checkUI(ce, [1, 6, 5, 2, 3]);
+        ce.insertBefore(child2, item3);
+        checkUI(ce, [1, 5, 2, 6, [3]]);
         ce.dispatchEvent(new Event('input', {bubbles: true}));
         await wait();
-        checkContent(ce, context, [1, 6, 5, 2, 3]);
+        checkContent(ce, context, [1, 5, 2, [6, 3]]);
         ce.remove();
         app.destroy();
     })

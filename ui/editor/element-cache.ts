@@ -1,6 +1,5 @@
 import {Diff} from "./diff-apply";
 import {ElementBind} from "./element-bind";
-import {EditorSelection} from "./editor-selection";
 import {EditorItem} from "./types";
 
 const Separator = ':';
@@ -22,7 +21,7 @@ export class ElementCache {
         return this.cache.get(this.getKey(item));
     }
 
-    getMergeDiff(items: Iterable<EditorItem>, firstChild: Element, fromUI: boolean, selection: EditorSelection) {
+    getMergeDiff(items: Iterable<EditorItem>, firstChild: Element, fromUI: boolean) {
         const ui = new Diff();
         const model = new Diff();
 
@@ -57,13 +56,6 @@ export class ElementCache {
                 //model deleted
                 model.deleted.push({child: current, item: element.item});
             } else {
-                // TODO: fix
-                // const prev = current.previousElementSibling as Element;
-                // if (prev && prev == selection?.Anchor?.item.element){
-                //     ui.updated.push({child: current, item: selection.Anchor.item.item})
-                //     ui.added.push({child: prev});
-                //     continue;
-                // }
                 ui.added.push({child: current});
             }
         }

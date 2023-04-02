@@ -1,7 +1,6 @@
 import {Fn, utc} from "@cmmn/core";
 import {EditorComponent} from "./editor.component";
 import {EditorItem} from "./types";
-import {Cell} from "@cmmn/cell";
 
 export class DiffApply {
     constructor(private component: EditorComponent) {
@@ -16,21 +15,6 @@ export class DiffApply {
             item.Message.UpdateContent(child.textContent);
         }
         if (diff.ui.added.length) {
-            // if (this.component.Selection) {
-            //     const selected = this.component.Selection?.Focus.item;
-            //     // children could be added before or after selected item
-            //     const lastAdded = diff.ui.added[diff.ui.added.length - 1];
-            //     if (lastAdded.child.nextSibling !== selected.element) {
-            //         diff.ui.added.pop();
-            //         selected.item.Message.UpdateContent(lastAdded.child.textContent);
-            //         this.setChildItem(lastAdded.child, selected.item);
-            //         diff.ui.added.unshift({child: selected.element, item: null});
-            //     }
-            //     for (let {child} of diff.ui.added) {
-            //         this.addMessageBefore(selected.item, child);
-            //     }
-            // } else {
-            //     throw new Error(`Not implemented carefully`)
             for (let {child} of diff.ui.added) {
                 this.addMessage(child);
             }
@@ -55,15 +39,15 @@ export class DiffApply {
     private addMessage(child: Element) {
         const prev = child.previousElementSibling;
         const item = this.component.elementCache.get(prev)?.item;
-        const context = item?.Message.Context ?? this.component.ContextProxy;
-        const index = item ? context.Messages.indexOf(item?.Message) : -1;
+        const context = item?.Message.SubContext ?? item?.Message.Context ?? this.component.ContextProxy;
+        const index = item ? (item.Message.SubContext ? 0 : context.Messages.indexOf(item?.Message) + 1) : 0;
         const newMessage = context.CreateMessage({
             Content: child.textContent,
             id: Fn.ulid(),
             CreatedAt: utc(),
             UpdatedAt: utc(),
             ContextURI: context.State.URI,
-        }, index + 1);
+        }, index);
         const newItem = {
             Message: newMessage,
             IsOpened: false,
