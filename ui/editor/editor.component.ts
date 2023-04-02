@@ -51,7 +51,7 @@ export class EditorComponent extends HtmlComponent<IState, IEvents> {
     @cell get Diff() {
         if (!this.contentEditable)
             return null;
-        return this.elementCache.getMergeDiff(this.ItemsCollection, this.contentEditable.firstElementChild,false, this.Selection);
+        return this.elementCache.getMergeDiff(this.ItemsCollection, this.contentEditable.firstElementChild,false);
     }
 
     @action(function (this: EditorComponent) {
@@ -81,7 +81,7 @@ export class EditorComponent extends HtmlComponent<IState, IEvents> {
     @event('input') onInputEvent(e: Event) {
         // const selected = this.Selection?.Focus.item;
         this.diffApply.fixChildren();
-        const diff = this.elementCache.getMergeDiff(this.ItemsCollection, this.contentEditable.firstElementChild, true, this.Selection);
+        const diff = this.elementCache.getMergeDiff(this.ItemsCollection, this.contentEditable.firstElementChild, true);
         this.diffApply.apply(diff);
         // if (selected){
         //     const newSelected = this.diffApply.cache.get(selected.Message);
