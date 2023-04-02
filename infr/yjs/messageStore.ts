@@ -16,7 +16,7 @@ export class MessageStore extends SyncStore{
         super(URI);
     }
     @cell
-    private messages = this.getSet<string>('messages');
+    private messages = this.getSet('messages');
 
     @cell
     private context = this.getObjectCell<ContextJSON>('context');
@@ -37,31 +37,8 @@ export class MessageStore extends SyncStore{
         this.IsSynced = true;
     }
 
-    // public async GetRemoteProvider() {
-    //     await Promise.resolve();
-    //     const token = await this.token;
-    //     const room = ContextStore.provider.joinRoom(this.URI, {
-    //         token: token,
-    //         useBroadcast: false,
-    //         user: '',
-    //         maxConnections: 70 + Math.floor(Math.random() * 70),
-    //     });
-    //     return room;
-    // }
-    //
-    // private contextMap = this.adapter.doc.getMap('context');
-    //
-    //
-    // UpdateMessage(item: Partial<MessageJSON>) {
-    //     const existed = this.Items.get(item.id);
-    //     this.Items.set(item.id, {
-    //         ...existed,
-    //         ...item
-    //     });
-    // }
-
     DeleteMessage(item: Pick<Message, "id">) {
-        this.messages.delete(item.id);
+        this.messages.delete(item.id)
     }
 
     AddMessage(item: Message) {
@@ -119,9 +96,6 @@ export class MessageStore extends SyncStore{
             cell.set(Message.FromJSON(e.value));
         });
         const cell = new Cell(() => {
-            if (!this.IsSynced){
-                return null;
-            }
             const result = obj.Value;
             return result && Message.FromJSON(result);
         }, {

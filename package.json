@@ -52,6 +52,7 @@
     "lib0": "0.2.47",
     "linkedom": "^0.14.21",
     "luxon": "2.4.*",
+    "msgpackr": "^1.8.5",
     "node-fetch": "^3.2.10",
     "ts-jest": "latest",
     "typescript": "4.6.x",

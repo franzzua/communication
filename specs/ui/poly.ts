@@ -21,13 +21,16 @@ export class KeyboardEvent extends Event{
 
 }
 
-const selection = new Cell<Selection>(null);
+let selection: Selection = null;
 
 export const Poly = {
     IntersectionObserver,
     KeyboardEvent,
-    getSelection: () => selection.get(),
-    setSelection: (value: Selection) => selection.set(value),
+    getSelection: () => selection,
+    setSelection: (value: Selection) => {
+        selection = value;
+        document.dispatchEvent(new Event('selectionchange') as any)
+    },
     requestAnimationFrame: (handler) => {
         Promise.resolve().then(handler)
     }

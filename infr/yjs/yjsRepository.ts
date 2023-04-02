@@ -36,7 +36,7 @@ export class YjsRepository {
             const store = new MessageStore(uri);
             this.getProviders(uri, parentURI).then(async providers => {
                 for (let provider of providers) {
-                    await provider.addAdapter(store.adapter);
+                    provider.addAdapter(store.adapter);
                 }
                 await store.Init()
             });

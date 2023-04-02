@@ -1,45 +1,20 @@
-import {Map as YMap} from "yjs";
-import {EventEmitter} from "@cmmn/core";
+import {ObservableYMapBase} from "./observable-y-map-base";
 
-export class ObservableYMap<TValue> extends EventEmitter<{
+export class ObservableYMap<TValue> extends ObservableYMapBase<TValue, {
     change: { oldValue: TValue, value: TValue, key: string, type: 'add' | 'delete' | 'update' },
-}> {
-    constructor(private yMap: YMap<TValue>) {
-        super();
-    }
-
-    public subscribe() {
-        this.yMap.observe((event, transaction) => {
-            if (event.transaction.local)
-                return;
-            console.log(event);
-            for (let [id, change] of event.changes.keys) {
-                switch (change.action) {
-                    case "add":
-                        this.emitChange('add', id, this.yMap.get(id), change.oldValue)
-                        break;
-                    case "delete":
-                        this.emitChange('delete', id, null, change.oldValue)
-                        break;
-                    case "update":
-                        this.emitChange('update', id, this.yMap.get(id), change.oldValue)
-                        break;
-                }
-            }
-        });
-    }
-
+}> implements Map<string, TValue> {
     get size(): number {
         return this.yMap.size;
     }
 
     clear(): this {
         this.yMap.clear();
+        this.emit('change', null);
         return this;
     }
 
-    private emitChange(type: 'add' | 'update' | 'delete', key, value, prev) {
-        super.emit('change', {
+    protected emitChange(type: 'add' | 'update' | 'delete', key, value, prev) {
+        this.emit('change', {
             type,
             key,
             oldValue: prev,
@@ -71,12 +46,6 @@ export class ObservableYMap<TValue> extends EventEmitter<{
         return this;
     }
 
-    forEach(cb: (value: TValue, key: string, map: this) => void) {
-        for (let x of this.yMap) {
-            cb(x[1], x[0], this);
-        }
-    }
-
     keys() {
         return this.yMap.keys();
     }
@@ -97,5 +66,16 @@ export class ObservableYMap<TValue> extends EventEmitter<{
         return new Map(this.entries());
     }
 
+    readonly [Symbol.toStringTag]: string = 'ObservableYMap'
+
+    forEach(callbackfn: (value: TValue, key: string, map: Map<string, TValue>) => void, thisArg?: any): void {
+        this.yMap.forEach((value, key) => {
+            callbackfn(value,key, this as Map<string, TValue>);
+        })
+    }
+
+    getOrAdd = Map.prototype.getOrAdd;
+    map = Map.prototype.map;
+    cast = Map.prototype.cast;
 }
 

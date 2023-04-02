@@ -51,6 +51,7 @@ export class MessageProxy extends ModelProxy<Message, IMessageActions>
     }
 
     public AddMessage(message: Message): IMessageProxy {
+        console.log(message.id, message.Content);
         this.GetOrCreateSubContext();
         this.SubContext.CreateMessage(message, 0);
         this.SubContext.State = {

@@ -1,36 +1,32 @@
-import {DateTime} from "luxon";
 import {Diff} from "./diff-apply";
-import {Disposable} from "@cmmn/core";
-import {Cell} from "@cmmn/cell";
+import {ElementBind} from "./element-bind";
+import {EditorSelection} from "./editor-selection";
+import {EditorItem} from "./types";
 
 const Separator = ':';
 
-export class ElementCache<TItem extends {
-    Index?: number;
-    Path: string[];
-    Message: {
-        State?: {
-            Content: string;
-            ContextURI: string;
-            SubContextURI?: string;
-            UpdatedAt: DateTime;
-        }
-    }
-}, TElement extends Element = Element> {
-    private cache = new Map<string, ElementInfo<TItem, TElement>>();
-    private uriCache = new Map<string, Set<ElementInfo<TItem, TElement>>>();
-    private nodeCache = new Map<TElement, ElementInfo<TItem, TElement>>();
+export class ElementCache {
+    private cache = new Map<string, ElementBind>();
+    private uriCache = new Map<string, Set<ElementBind>>();
+    private nodeCache = new Map<Element, ElementBind>();
 
-    public get(item: TItem | TElement): ElementInfo<TItem, TElement> {
+    private getKey(item: EditorItem | Element) {
+        if ('Path' in item) {
+            return item.Path.join(Separator)
+        }
+        return item.id;
+    }
+    public get(item: EditorItem | Element): ElementBind {
         if (!item)
             return undefined;
         return this.cache.get(this.getKey(item));
     }
-    getMergeDiff(items: Iterable<TItem>, firstChild: TElement, fromUI: boolean) {
-        const ui = new Diff<TItem, TElement>();
-        const model = new Diff<TItem, TElement>();
 
-        const checked = new Set<TElement>();
+    getMergeDiff(items: Iterable<EditorItem>, firstChild: Element, fromUI: boolean, selection: EditorSelection) {
+        const ui = new Diff();
+        const model = new Diff();
+
+        const checked = new Set<Element>();
         // console.log('_____________');
         for (let item of items) {
             const currentChild = this.get(item);
@@ -53,7 +49,7 @@ export class ElementCache<TItem extends {
             }
         }
 
-        for (let current = firstChild; current != undefined; current = current.nextElementSibling as TElement) {
+        for (let current = firstChild; current != undefined; current = current.nextElementSibling as Element) {
             if (checked.has(current))
                 continue;
             const element = this.nodeCache.get(current)
@@ -61,6 +57,13 @@ export class ElementCache<TItem extends {
                 //model deleted
                 model.deleted.push({child: current, item: element.item});
             } else {
+                // TODO: fix
+                // const prev = current.previousElementSibling as Element;
+                // if (prev && prev == selection?.Anchor?.item.element){
+                //     ui.updated.push({child: current, item: selection.Anchor.item.item})
+                //     ui.added.push({child: prev});
+                //     continue;
+                // }
                 ui.added.push({child: current});
             }
         }
@@ -97,32 +100,30 @@ export class ElementCache<TItem extends {
 
         // console.table(state);
         if (!ui.isEmpty() || !model.isEmpty()) {
-            // console.table({
-            //     ui: {
-            //         updated: ui.updated.map(x => x.child.textContent || '-').join(', '),
-            //         deleted: ui.deleted.map(x => x.item.Message.State.Content || '-').join(', '),
-            //         added: ui.added.map(x => x.child.textContent || '-').join(', '),
-            //     },
-            //     model: {
-            //         updated: model.updated.map(x => x.item.Message.State.Content || '-').join(', '),
-            //         deleted: model.deleted.map(x => x.child.textContent || '-').join(', '),
-            //         added: model.added.map(x => x.item.Message.State.Content || '-').join(', '),
-            //     }
-            // })
+            console.table({
+                ui: {
+                    updated: ui.updated.map(x => x.child.textContent || '-').join(', '),
+                    deleted: ui.deleted.map(x => x.item.Message.State.Content || '-').join(', '),
+                    added: ui.added.map(x => x.child.textContent || '-').join(', '),
+                },
+                model: {
+                    updated: model.updated.map(x => x.item.Message.State.Content || '-').join(', '),
+                    deleted: model.deleted.map(x => x.child.textContent || '-').join(', '),
+                    added: model.added.map(x => x.item.Message.State.Content || '-').join(', '),
+                }
+            })
         }
         return {ui, model};
     }
 
-    private getKey(item: TItem | TElement) {
-        if ('Path' in item) {
-            return item.Path.join(Separator)
-        }
-        return item.id;
-    }
 
-    public set(id: string, item: TItem, element: TElement){
-        this.cache.get(id)?.dispose();
-        const info = new ElementInfo<TItem, TElement>(
+    public set(id: string, item: EditorItem, element: Element){
+        const existed = this.cache.get(id);
+        if (existed) {
+            existed.update(item, element);
+            return;
+        }
+        const info = new ElementBind(
             id, element, item
         );
         this.cache.set(id, info);
@@ -131,7 +132,7 @@ export class ElementCache<TItem extends {
         this.uriCache.getOrAdd(uri, () => new Set()).add(info);
     }
 
-    remove(child: TElement) {
+    remove(child: Element) {
         this.cache.delete(child.id);
         const element = this.nodeCache.get(child);
         this.nodeCache.delete(child);
@@ -145,30 +146,4 @@ export class ElementCache<TItem extends {
     }
 }
 
-
-export class ElementInfo<TItem extends {
-    Index?: number;
-    Path: string[];
-    State?: {
-        Content: string;
-        UpdatedAt: DateTime;
-    }
-}, TElement extends Element = Element> extends Disposable {
-    constructor(public readonly id: string,
-                public readonly element: TElement,
-                public readonly item: TItem) {
-        super();
-        this.onDispose = Cell.OnChange(() => item.State.Content, e => {
-            element.textContent = e.value;
-        });
-    }
-
-
-    public hasChanges(item: TItem) {
-        return !this.item.State?.UpdatedAt.equals(item.State.UpdatedAt) ||
-            this.item.Index !== item.Index ||
-            this.id !== item.Path.join(':') ||
-            this.element.textContent !== item.State.Content;
-    }
-}
 
