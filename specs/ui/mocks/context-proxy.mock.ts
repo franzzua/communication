@@ -4,7 +4,7 @@ import {cell, ObservableList} from "@cmmn/cell";
 import {IContextProxy, IMessageProxy, MessageProxy} from "@proxy";
 
 export class ContextProxyMock implements IContextProxy {
-    constructor(private content: number[]) {
+    constructor(private id: string, private content: number[]) {
     }
 
     @cell
@@ -19,9 +19,9 @@ export class ContextProxyMock implements IContextProxy {
 
     get State() {
         return {
-            id: 'test',
-            URI: 'test',
-            Messages: ['1', '2', '3'],
+            id: this.id,
+            URI: this.id,
+            Messages: this.messages.map(x => x.id),
         } as Context;
     }
 
@@ -41,5 +41,11 @@ export class ContextProxyMock implements IContextProxy {
 
     RemoveMessage(message: IMessageProxy) {
         this.messages.removeAt(this.Messages.indexOf(message));
+    }
+
+    serialize(maxLevel = undefined){
+        if (!maxLevel)
+            return this.Messages.map(x => x.State.Content);
+        return this.Messages.flatMap(x => [x.State.Content, (x.SubContext as ContextProxyMock)?.serialize(maxLevel - 1)].filter(x => x))
     }
 }

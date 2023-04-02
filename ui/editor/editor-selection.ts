@@ -1,11 +1,12 @@
-import {ElementCache, ElementInfo} from "./element-cache";
+import {ElementCache} from "./element-cache";
 import {EditorItem} from "./types";
+import {ElementBind} from "./element-bind";
 
 export abstract class EditorSelection {
     public Type: 'Caret' | 'Range';
 
-    public static GetCurrent(cache: ElementCache<EditorItem>): EditorSelection {
-        function getSpan(node: Node, offset: number): SelectionItem<ElementInfo<EditorItem, Element>>{
+    public static GetCurrent(cache: ElementCache): EditorSelection {
+        function getSpan(node: Node, offset: number): SelectionItem<ElementBind>{
             if (node instanceof Text) {
                 node = node.parentElement;
             }
@@ -43,12 +44,12 @@ export abstract class EditorSelection {
     }
 
 
-    public Anchor: SelectionItem<ElementInfo<EditorItem, Element>>;
-    public Focus: SelectionItem<ElementInfo<EditorItem, Element>>;
+    public Anchor: SelectionItem<ElementBind>;
+    public Focus: SelectionItem<ElementBind>;
     public Direction: 'ltr' | 'rtl';
 
 
-    public abstract GetItemSelection(item: ElementInfo<EditorItem, Element>, index: number): { from?; to?; at?; } | null;
+    public abstract GetItemSelection(item: ElementBind, index: number): { from?; to?; at?; } | null;
 
     static set(node: HTMLElement) {
         const selection = window.getSelection();
@@ -58,7 +59,7 @@ export abstract class EditorSelection {
         }
     }
 
-    public Update(elementCache: ElementCache<EditorItem, Element>) {
+    public Update(elementCache: ElementCache) {
         if (!this.Focus.item || !this.Anchor.item)
             return null;
         this.Focus.item = elementCache.get(this.Focus.item.element);
@@ -76,14 +77,14 @@ export abstract class EditorSelection {
 export class CaretSelection extends EditorSelection {
     public Type: 'Caret' = 'Caret';
 
-    constructor(item: SelectionItem<ElementInfo<EditorItem, Element>>) {
+    constructor(item: SelectionItem<ElementBind>) {
         super();
         this.Anchor = {...item};
         this.Focus = {...item};
         this.Direction = 'ltr';
     }
 
-    GetItemSelection(item: ElementInfo<EditorItem, Element>, index: number) {
+    GetItemSelection(item: ElementBind, index: number) {
         if (item === this.Focus?.item)
             return {at: this.Focus.offset};
         return null;
@@ -100,7 +101,7 @@ export class RangeSelection extends EditorSelection {
         this.Direction = (this.Anchor.index < this.Focus.index) ? 'ltr' : 'rtl';
     }
 
-    GetItemSelection(item: ElementInfo<EditorItem, Element>, index: number) {
+    GetItemSelection(item: ElementBind, index: number) {
         if (this.Direction == 'ltr') {
             if (this.Anchor.index == index) {
                 return {from: this.Anchor.offset};
@@ -125,7 +126,7 @@ export class RangeSelection extends EditorSelection {
     }
 }
 
-export type SelectionItem<T = ElementInfo<EditorItem>> = {
+export type SelectionItem<T = ElementBind> = {
     offset: number;
     item: T;
     index: number;

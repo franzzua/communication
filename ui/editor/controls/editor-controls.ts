@@ -1,5 +1,5 @@
 import {component, HtmlComponent, property } from "@cmmn/ui";
-import {EditorItem} from "../types";
+import type {EditorItem} from "../types";
 import style from "./editor-controls.style.less";
 import { template, IState, IEvents } from "./editor-controls.template";
 import {Injectable} from "@cmmn/core";

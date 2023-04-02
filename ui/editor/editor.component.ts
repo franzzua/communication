@@ -6,7 +6,7 @@ import {cell} from "@cmmn/cell";
 import {ContextProxy, DomainProxy, IContextProxy} from "@proxy";
 import {Context, DomainState} from "@model";
 import {EditorReducers} from "./editor.reducers";
-import {DiffApply} from "./diff-apply";
+import {Diff, DiffApply} from "./diff-apply";
 import {Reducer} from "../reducers";
 import {ContentEditableState, EditorItem} from "./types";
 import {ElementCache} from "./element-cache";
@@ -21,7 +21,7 @@ export class EditorComponent extends HtmlComponent<IState, IEvents> {
     private uri!: string;
     @property()
     private id: string = Fn.ulid();
-    public elementCache = new ElementCache<EditorItem>();
+    public elementCache = new ElementCache();
 
     @cell
     public get contentEditable(): HTMLElement{
@@ -51,13 +51,15 @@ export class EditorComponent extends HtmlComponent<IState, IEvents> {
     @cell get Diff() {
         if (!this.contentEditable)
             return null;
-        return this.elementCache.getMergeDiff(this.ItemsCollection, this.contentEditable.firstElementChild,false);
+        return this.elementCache.getMergeDiff(this.ItemsCollection, this.contentEditable.firstElementChild,false, this.Selection);
     }
 
     @action(function (this: EditorComponent) {
-        return this.root.State.Networks;
+        return this.root.State?.Networks;
     })
     private OnNetworkChanged(networks: DomainState["Networks"]) {
+        if (!networks)
+            return;
         for (let [uri, network] of networks.entries()) {
             const elements = this.elementCache.find(uri);
             for (let element of elements ?? []) {
@@ -69,8 +71,8 @@ export class EditorComponent extends HtmlComponent<IState, IEvents> {
     @action(function (this: EditorComponent) {
         return this.Diff;
     })
-    private DiffAction(diff: any) {
-        if (!diff)
+    private DiffAction(diff: {ui: Diff, model: Diff}) {
+        if (!diff || (diff.ui.isEmpty() && diff.model.isEmpty()))
             return;
         this.diffApply.apply(diff);
         this.onSelectionChange();
@@ -79,7 +81,7 @@ export class EditorComponent extends HtmlComponent<IState, IEvents> {
     @event('input') onInputEvent(e: Event) {
         // const selected = this.Selection?.Focus.item;
         this.diffApply.fixChildren();
-        const diff = this.elementCache.getMergeDiff(this.ItemsCollection, this.contentEditable.firstElementChild, true);
+        const diff = this.elementCache.getMergeDiff(this.ItemsCollection, this.contentEditable.firstElementChild, true, this.Selection);
         this.diffApply.apply(diff);
         // if (selected){
         //     const newSelected = this.diffApply.cache.get(selected.Message);
@@ -117,6 +119,7 @@ export class EditorComponent extends HtmlComponent<IState, IEvents> {
         }
         let selection = EditorSelection.GetCurrent(this.elementCache)
             ?? this.Selection?.Update(this.elementCache);
+
         if (!selection)
             return;
         this.Selection = selection;
