@@ -1,7 +1,6 @@
 import {Fn, utc} from "@cmmn/core";
 import {EditorComponent} from "./editor.component";
 import {EditorItem} from "./types";
-import {Cell} from "@cmmn/cell";
 
 export class DiffApply {
     constructor(private component: EditorComponent) {
@@ -16,26 +15,10 @@ export class DiffApply {
             item.Message.UpdateContent(child.textContent);
         }
         if (diff.ui.added.length) {
-            if (this.component.Selection) {
-                const selected = this.component.Selection?.Focus.item;
-                // selected element children belongs to last element
-                const lastAdded = diff.ui.added[diff.ui.added.length - 1];
-                if (lastAdded.child.nextSibling !== selected.element) {
-                    diff.ui.added.pop();
-                    selected.item.Message.UpdateContent(lastAdded.child.textContent);
-                    this.setChildItem(lastAdded.child, selected.item);
-                    diff.ui.added.unshift({child: selected.element, item: null});
-                }
-                for (let {child} of diff.ui.added) {
-                    this.addMessageBefore(selected.item, child);
-                }
-            } else {
-                const lastNextChild = diff.ui.added[diff.ui.added.length - 1].child.nextElementSibling as Element;
-                const item = this.component.elementCache.get(lastNextChild)?.item;
-                for (let {child} of diff.ui.added) {
-                    this.addMessageBefore(item, child);
-                }
+            for (let {child} of diff.ui.added) {
+                this.addMessage(child);
             }
+            // }
         }
         for (let {item, child} of diff.ui.deleted) {
             item.Message.Context.RemoveMessage(item.Message);
@@ -51,12 +34,13 @@ export class DiffApply {
         for (let {child, item} of diff.model.updated) {
             this.setChildItem(child, item);
         }
-
     }
 
-    private addMessageBefore(item: EditorItem, child: Element) {
-        const context = item?.Message.Context ?? this.component.ContextProxy;
-        const index = item ? context.Messages.indexOf(item?.Message) : context.Messages.length;
+    private addMessage(child: Element) {
+        const prev = child.previousElementSibling;
+        const item = this.component.elementCache.get(prev)?.item;
+        const context = item?.Message.SubContext ?? item?.Message.Context ?? this.component.ContextProxy;
+        const index = item ? (item.Message.SubContext ? 0 : context.Messages.indexOf(item?.Message) + 1) : 0;
         const newMessage = context.CreateMessage({
             Content: child.textContent,
             id: Fn.ulid(),
@@ -68,8 +52,13 @@ export class DiffApply {
             Message: newMessage,
             IsOpened: false,
             Path: (item?.Path.slice(0, -1) ?? []).concat([newMessage.State.id]),
-            Length: 0
-        };
+            Length: 0,
+            get State(){
+                return this.Message.State;
+            },
+            Index: (item?.Index ?? 0) + 1,
+            Parent: item?.Parent
+        } as EditorItem;
         this.setChildItem(child, newItem);
         return newItem;
     }

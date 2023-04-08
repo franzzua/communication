@@ -1,8 +1,8 @@
 import {ContextProxyMock} from "./context-proxy.mock";
 import {Message} from "@model";
 import {Cell, cell} from "@cmmn/cell";
-import {utc} from "@cmmn/core";
-import { IContextProxy, IMessageProxy} from "@proxy";
+import {Fn, utc} from "@cmmn/core";
+import type { IContextProxy, IMessageProxy} from "@proxy";
 
 export class MessageProxyMock implements IMessageProxy {
     constructor(private context: ContextProxyMock,
@@ -23,15 +23,19 @@ export class MessageProxyMock implements IMessageProxy {
     set State(value) {
         this.stateCell.set(value);
     }
+
     @cell
+    private _subContext: IContextProxy;
+
     get SubContext(): IContextProxy {
-        return null;
+        return this._subContext;
     }
     set SubContext(value: IContextProxy) {
+        this._subContext = value;
     }
 
     GetOrCreateSubContext() {
-        return this.SubContext = new ContextProxyMock([]);
+        return this.SubContext = new ContextProxyMock(Fn.ulid(), []);
     }
 
     public UpdateContent(content: string) {
@@ -48,7 +52,8 @@ export class MessageProxyMock implements IMessageProxy {
     }
 
     AddMessage(message: Message): IMessageProxy {
-        return undefined;
+        this.SubContext = new ContextProxyMock(Fn.ulid(), [+message.Content]);
+        return this.SubContext?.Messages[0];
     }
 
     MoveTo(context: IContextProxy, index: number): IMessageProxy {

@@ -1,4 +1,4 @@
-import {ContentEditableState} from "./types";
+import {ContentEditableState, EditorItem} from "./types";
 import {Message} from "@model";
 import type {Reducer} from "../reducers";
 import {Fn, Injectable, utc} from "@cmmn/core";
@@ -35,25 +35,21 @@ export class EditorReducers {
     async Paste(event: ClipboardEvent): Promise<Reducer<ContentEditableState>> {
         const clipboard = event.clipboardData?.getData("text/plain")
             ?? await navigator.clipboard.readText();
+        event.preventDefault();
         return (state: ContentEditableState) => {
             try {
                 const parsed = JSON.parse(clipboard) as Message;
                 if (parsed.Content) {
-                    // if (parsed.SubContext) {
-                    //     // await this.persistanceService.Load(parsed.SubContext.URI)
-                    //     parsed.SubContext = state.Items.map(x => x.Message.Context)
-                    //
-                    //         .find(x => x.URI == parsed.SubContext.URI);
-                    // }
                     parsed.id = Fn.ulid();
                     parsed.CreatedAt = utc();
                     parsed.UpdatedAt = utc();
                     state.Selection?.Focus?.item.item.Message.Context.CreateMessage(parsed);
                 }
             } catch (e) {
-                const paragraphs = clipboard.split('\n');
+                const paragraphs = clipboard.split('\n').map(x => x.trim());
+                const target = (state.Selection?.Focus?.item.item ?? state.Items[Symbol.iterator]().next().value) as EditorItem;
                 for (let paragraph of paragraphs) {
-                    state.Selection?.Focus?.item.item.Message.AddMessage({
+                    target.Message.AddMessage({
                         id: Fn.ulid(),
                         Content: paragraph,
                         ContextURI: undefined,
