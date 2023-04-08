@@ -59,7 +59,7 @@ export class EditorReducers {
                         ContextURI: undefined,
                         CreatedAt: utc(),
                         UpdatedAt: utc(),
-                    });
+                    }, state.Selection?.Focus?.item.item.Message.SubContext?.Messages.length ?? 0);
                 }
             }
             return state;

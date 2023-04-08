@@ -93,7 +93,7 @@ export class TreeReducers {
                         ContextURI: undefined,
                         CreatedAt: utc(),
                         UpdatedAt: utc(),
-                    });
+                    }, state.Selected.Message.SubContext?.Messages.length ?? 0);
                 }
             }
             return state;

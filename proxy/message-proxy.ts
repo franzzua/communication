@@ -50,12 +50,15 @@ export class MessageProxy extends ModelProxy<Message, IMessageActions>
         return this.SubContext;
     }
 
-    public AddMessage(message: Message): IMessageProxy {
+    public AddMessage(message: Message, index = this.SubContext?.Messages.length): IMessageProxy {
+        console.log('add', message.Content, index);
         this.GetOrCreateSubContext();
-        this.SubContext.CreateMessage(message, 0);
+        const messages = [...this.SubContext.State.Messages];
+        messages.push(message.id);
+        this.SubContext.CreateMessage(message, index);
         this.SubContext.State = {
            ...this.SubContext.State,
-           Messages: [...this.SubContext.State.Messages, message.id]
+           Messages: messages
         };
         message.ContextURI = this.SubContext.State.URI;
         const result = this.SubContext.MessageMap.get(message.id);
@@ -111,7 +114,7 @@ export interface IMessageProxy {
 
     GetOrCreateSubContext(): IContextProxy;
 
-    AddMessage(message: Message): IMessageProxy;
+    AddMessage(message: Message, index?: number): IMessageProxy;
 
     MoveTo(context: IContextProxy, index: number): IMessageProxy;
 

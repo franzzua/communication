@@ -60,9 +60,11 @@ export class SyncStore {
     }
     public getSet<T>(name: string): ObservableSet<T>{
         const array = this.doc.getArray<T>(name);
+        let remoteChange = false;
         array.observe((events, transaction) => {
             if (transaction.local)
                 return;
+            remoteChange = true;
             for (let added of events.changes.added) {
                 if (events.changes.deleted.delete(added)){
                     continue;
@@ -78,15 +80,23 @@ export class SyncStore {
                     arr.delete(x)
                 }
             }
+            remoteChange = false;
         });
         const arr = new ObservableSet<T>(array.toArray());
         arr.on('change', e => {
+            if (remoteChange)
+                return;
             if (e.add) {
                 array.push(e.add);
             }
             if (e.delete) {
                 for (let t of e.delete) {
-                    array.delete(array.toArray().indexOf(t));
+                    while (true) {
+                        let index = array.toArray().indexOf(t);
+                        if (index == -1)
+                            break;
+                        array.delete(index, 1);
+                    }
                 }
             }
         })
