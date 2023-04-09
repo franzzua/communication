@@ -70,18 +70,19 @@ export class DiffApply {
         if (info && info.item.Index !== item.Index) {
             this.component.contentEditable.insertBefore(child, this.component.contentEditable.childNodes[item.Index]);
         }
-        if (child instanceof HTMLSpanElement || child instanceof HTMLElement && child.localName === 'span') {
+        if (child instanceof HTMLAnchorElement || child instanceof HTMLElement && child.localName === 'a') {
             const id = item.Path.join(':');
             child.id = id;
             child.className = `item level-${item.Path.length}`
             child.style.setProperty('--level', item.Path.length.toString());
+            (child as HTMLAnchorElement).href = '/context/'+encodeURIComponent(btoa(item.Message.Context.State.URI));
             this.component.elementCache.set(id, item, child);
             // this.cache.set(item.Message, child);
         }
     }
 
     private insert(item: EditorItem) {
-        const newNode = document.createElement('span');
+        const newNode = document.createElement('a');
         this.setChildItem(newNode, item);
         const child = this.component.contentEditable.childNodes[item.Index];
         if (child) {
@@ -97,11 +98,12 @@ export class DiffApply {
             if (child instanceof Comment)
                 continue;
             const text = recursiveGetText(child);
-            if (child instanceof HTMLSpanElement || (child as Element).localName === 'span')
-                child.textContent = text;
-            else {
+            if (child instanceof HTMLAnchorElement || (child as Element).localName === 'a') {
+                if (child.textContent !== text)
+                    child.textContent = text;
+            } else {
                 child.remove();
-                const span = document.createElement('span')
+                const span = document.createElement('a')
                 span.textContent = text;
                 this.component.contentEditable.appendChild(span);
             }
@@ -124,8 +126,10 @@ export class Diff<TItem = EditorItem, TElement = Element> {
 }
 
 function recursiveGetText(node: Node) {
-    if (node instanceof HTMLBRElement)
+    if (node instanceof HTMLBRElement) {
+        node.remove();
         return '';
+    }
     if (node instanceof Text)
         return node.textContent;
     if (node instanceof Comment)

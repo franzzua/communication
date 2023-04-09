@@ -78,7 +78,8 @@ export class EditorComponent extends HtmlComponent<IState, IEvents> {
         this.onSelectionChange();
     }
 
-    @event('input') onInputEvent(e: Event) {
+    @event('input')
+    onInputEvent(e: Event) {
         // const selected = this.Selection?.Focus.item;
         this.diffApply.fixChildren();
         const diff = this.elementCache.getMergeDiff(this.ItemsCollection, this.contentEditable.firstElementChild, true);
@@ -113,7 +114,8 @@ export class EditorComponent extends HtmlComponent<IState, IEvents> {
         })
     }
 
-    @event(document, 'selectionchange') onSelectionChange() {
+    @event(document, 'selectionchange')
+    onSelectionChange() {
         if (this.Selection?.Focus.item?.element instanceof HTMLElement){
             this.Selection.Focus.item.element.style.color = null;
         }
