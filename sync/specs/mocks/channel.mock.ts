@@ -1,11 +1,10 @@
-import {PeerDataChannel} from "../../shared/peer-data-channel";
-import {MessageType} from "../../webrtc/shared/types";
+import {PeerConnection, MessageType} from "../../shared";
 
-export class ChannelMock extends PeerDataChannel {
+export class ChannelMock extends PeerConnection {
     private static instances = new Set<ChannelMock>();
 
     constructor() {
-        super('write');
+        super({accessMode: "write", user: "Bob"}, true);
         ChannelMock.instances.add(this);
     }
 

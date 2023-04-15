@@ -1,11 +1,10 @@
-import {PeerDataChannel} from "../../shared/peer-data-channel";
+import {PeerConnection, MessageType} from "../../shared";
 import {WebsocketConnection} from "./websocket-connection";
-import {MessageType} from "../../webrtc/shared/types";
 
-export class DataConnection extends PeerDataChannel {
+export class DataConnection extends PeerConnection {
     constructor(private connection: WebsocketConnection,
                 private roomName: string) {
-        super("write");
+        super({accessMode: "write", user: "Bob"}, false);
         this.connection.on('message', message => {
             this.emit(message.type, message.data);
         })

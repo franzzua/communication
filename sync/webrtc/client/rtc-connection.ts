@@ -1,11 +1,10 @@
 import {UserInfo} from "./signaling-connection";
-import {PeerDataChannel} from "../../shared/peer-data-channel";
-import { MessageType } from "../shared/types";
+import {MessageType, PeerConnection} from "../../shared";
 
-export class PeerConnection extends PeerDataChannel {
+export class RTCConnection extends PeerConnection {
 
-    public constructor(private dataChannel: RTCDataChannel, public user: UserInfo, public incoming: boolean) {
-        super(user.accessMode);
+    public constructor(private dataChannel: RTCDataChannel, user: UserInfo, incoming: boolean) {
+        super(user, incoming);
         // console.log('connected', user.user, user.accessMode, dataChannel.label);
         let type: MessageType = null;
         this.dataChannel.addEventListener('close', () => this.dispose());

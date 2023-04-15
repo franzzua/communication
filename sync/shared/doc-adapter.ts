@@ -1,16 +1,14 @@
 import * as Y from "yjs";
 import {applyUpdate, Doc} from "yjs";
-import {PeerDataChannel} from "./peer-data-channel";
+import {MessageType, PeerConnection} from "./peer-connection";
 import * as awarenessProtocol from 'y-protocols/awareness'
 import {Awareness} from 'y-protocols/awareness'
 import {bind, EventEmitter, Fn} from "@cmmn/core";
-import {MessageType} from "../webrtc/shared/types";
-import { PeerConnection } from "../webrtc/client/peer-connection";
 type UnsubscribeFunction = () => void;
 export class DocAdapter extends EventEmitter<{
     dispose: void;
 }>{
-    private connections = new Map<PeerDataChannel, UnsubscribeFunction>();
+    private connections = new Map<PeerConnection, UnsubscribeFunction>();
 
     constructor(public doc: Doc, private awareness: Awareness) {
         super();
@@ -20,8 +18,8 @@ export class DocAdapter extends EventEmitter<{
         });
     }
 
-    public connect(connection: PeerDataChannel) {
-        console.log('doc connected to', connection.accessMode);
+    public connect(connection: PeerConnection) {
+        console.log('doc connected to', connection.user.accessMode);
         const onDispose = Fn.pipe(
             connection.on(MessageType.UpdateRequest, stateVector => {
                 connection.send(MessageType.Update, Y.encodeStateAsUpdate(this.doc, stateVector));

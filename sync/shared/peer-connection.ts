@@ -1,22 +1,19 @@
 import {EventEmitter} from "@cmmn/core";
-import {MessageType} from "../webrtc/shared/types";
+import {UserInfo} from "./token-parser";
 
-export abstract class PeerDataChannel extends EventEmitter<{
+export abstract class PeerConnection extends EventEmitter<{
     [key in MessageType]: Uint8Array;
 } & {
     close: void;
 }> {
-    private decoder = new TextDecoder();
-    private encoder = new TextEncoder();
-
-    constructor(public accessMode: "read" | "write") {
+    constructor(public user: UserInfo, public incoming: boolean) {
         super();
     }
 
     public abstract send(type: MessageType, data: Uint8Array);
 
     public emit(type: MessageType | "close", data: Uint8Array | void) {
-        if (this.accessMode == "read" && type == MessageType.Update) {
+        if (this.user.accessMode == "read" && type == MessageType.Update) {
             console.warn(`User with read access should not update document`);
             return;
         }
@@ -29,3 +26,13 @@ export abstract class PeerDataChannel extends EventEmitter<{
 }
 
 export type PeerDataChannelMessage = {}
+
+export enum MessageType {
+    UpdateRequest = 0,
+    Update = 7,
+    AwarenessRequest = 3,
+    Awareness = 1,
+
+    AddPeer = 4,
+    RemovePeer = 5
+};

@@ -1,9 +1,10 @@
 import {UserInfo} from "./signaling-connection";
 import {EventEmitter} from "../shared/observable";
-import {PeerConnection} from "./peer-connection";
+import {RTCConnection} from "./rtc-connection";
 import { SignalData } from "../shared/types";
+import {ConnectionProvider} from "../../shared";
 
-export class DataChannelProvider {
+export class DataChannelProvider extends ConnectionProvider{
 
     private static defaultOptions: RTCConfiguration = {
         iceServers: [{
@@ -17,6 +18,7 @@ export class DataChannelProvider {
     private Connections = new Map<string, RTCPeerConnection>();
 
     constructor(private options: RTCConfiguration) {
+        super();
         globalThis.addEventListener('beforeunload', () => this.dispose());
     }
 
@@ -30,7 +32,7 @@ export class DataChannelProvider {
         return connection;
     }
 
-    public async withOffer(user: UserInfo, signal: SignalData, onPeerConnection: (c: PeerConnection, room: string) => void) {
+    public async withOffer(user: UserInfo, signal: SignalData, onPeerConnection: (c: RTCConnection, room: string) => void) {
         if (signal.type !== 'offer')
             return;
         const peerConnection = this.Connections.getOrAdd(user.user, () => this.factory(user));
@@ -41,7 +43,7 @@ export class DataChannelProvider {
                 this.Connections.delete(user.user);
                 peerConnection.close();
             })
-            onPeerConnection(new PeerConnection(e.channel, user, true), e.channel.label.split('-').pop());
+            onPeerConnection(new RTCConnection(e.channel, user, true), e.channel.label.split('-').pop());
         });
         if (peerConnection.signalingState === "stable"){
             // console.log('get offer', signal.sdp);
@@ -121,11 +123,11 @@ export class DataChannelProvider {
         });
     }
 
-    public async getConnection(user: UserInfo, room: string, currentUser: string): Promise<PeerConnection> {
+    public async connectTo(user: UserInfo, room: string, currentUser: string): Promise<RTCConnection> {
         const dc = await this.initiate(user, room, currentUser);
         if (!dc)
             debugger;
-        return new PeerConnection(dc, user, false);
+        return new RTCConnection(dc, user, false);
     }
 
     public dispose() {

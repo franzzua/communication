@@ -1,14 +1,5 @@
 import type {UserInfo} from "../../shared/token-parser";
 
-export enum MessageType {
-    UpdateRequest = 0,
-    Update = 7,
-    AwarenessRequest = 3,
-    Awareness = 1,
-
-    AddPeer = 4,
-    RemovePeer = 5
-};
 
 export type SignalClientMessage = {
     to: string;

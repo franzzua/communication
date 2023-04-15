@@ -1,15 +1,19 @@
-import {SignalingRegistrationInfo} from "../shared/types";
-import {SignalingConnection, UserInfo} from "./signaling-connection";
-import {DocAdapter} from "../../shared";
-import {DataChannelProvider} from "./data-channel-provider";
-import {PeerConnection} from "./peer-connection";
-import {Network, networkFactory} from "../networks";
+import {
+    DocAdapter,
+    Network,
+    networkFactory,
+    ConnectionDirection,
+    PeerConnection,
+    ConnectionProvider,
+    ISyncProvider
+} from "../../shared";
 import {EventEmitter} from "@cmmn/core";
-import {ConnectionDirection} from "../networks/network";
+import {SignalingRegistrationInfo, UserInfo} from "../shared/types";
+import {SignalingConnection} from "./signaling-connection";
 
 export class Room extends EventEmitter<{
     network: Network
-}> {
+}> implements ISyncProvider {
     private signalConnections = new Set<SignalingConnection>();
     private connections = new Set<PeerConnection>();
     private adapters = new Set<DocAdapter>();
@@ -17,9 +21,7 @@ export class Room extends EventEmitter<{
     public network: Network;
     private users: UserInfo[] = [];
 
-    constructor(private roomName: string,
-                private options: RoomOptions,
-                private peerFactory: DataChannelProvider) {
+    constructor(private roomName: string, private options: RoomOptions, private peerFactory: ConnectionProvider) {
         super();
     }
 
@@ -42,8 +44,7 @@ export class Room extends EventEmitter<{
 
     private getRegistrationInfo(): SignalingRegistrationInfo {
         return {
-            room: this.roomName,
-            token: this.options.token
+            room: this.roomName, token: this.options.token
         }
     }
 
@@ -74,7 +75,7 @@ export class Room extends EventEmitter<{
     }
 
     private async connectTo(user: UserInfo) {
-        const connection = await this.peerFactory.getConnection(user, this.roomName, this.options.user)
+        const connection = await this.peerFactory.connectTo(user, this.roomName, this.options.user)
         return this.addConnection(connection);
     }
 
@@ -125,9 +126,5 @@ export class Room extends EventEmitter<{
 
 
 export type RoomOptions = {
-    token?: string;
-    user: string;
-    maxConnections?: number;
-    useBroadcast?: boolean;
-    peerOpts?: RTCConfiguration;
+    token?: string; user: string; maxConnections?: number; useBroadcast?: boolean; peerOpts?: RTCConfiguration;
 }

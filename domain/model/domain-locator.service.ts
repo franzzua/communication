@@ -7,8 +7,7 @@ import {DomainModel} from "@domain/model/domain-model";
 @Injectable()
 export class DomainLocator extends RootLocator {
 
-    constructor(private container: Container,
-                private repository: YjsRepository) {
+    constructor(private container: Container) {
         super(null);
         // @ts-ignore
         this.root = container.get<DomainModel>(DomainModel, [

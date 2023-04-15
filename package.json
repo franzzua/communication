@@ -7,6 +7,7 @@
     "all": "cmmn spawn compile --watch bundle -b --watch serve -b",
     "compile": "cmmn compile --watch",
     "web:bundle": "cmmn bundle main --watch",
+    "worker:bundle": "cmmn bundle worker --watch",
     "serve": "cmmn serve -b",
     "web:prod": "cmmn bundle main --prod",
     "server:bundle": "cmmn bundle server",
@@ -22,15 +23,15 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "@cmmn/app": "1.7.17",
-    "@cmmn/cell": "1.7.17",
+    "@cmmn/app": "1.7.18",
+    "@cmmn/cell": "1.7.18",
     "@cmmn/core": "1.7.17",
-    "@cmmn/domain": "1.7.17",
+    "@cmmn/domain": "1.7.18",
     "@cmmn/infr": "1.7.2",
     "@cmmn/server": "1.7.17",
-    "@cmmn/sync": "1.7.17",
+    "@cmmn/sync": "1.7.18",
     "@cmmn/tools": "1.7.12",
-    "@cmmn/ui": "1.7.17",
+    "@cmmn/ui": "1.7.18",
     "@inhauth/core": "^1.0.0",
     "@jest/globals": "latest",
     "@swc/core": "^1.3.0",
@@ -88,6 +89,11 @@
         "fastify",
         "@fastify/.*"
       ]
+    },
+    "worker": {
+      "input": "dist/esm/entry/worker.js",
+      "module": "es",
+      "browser": true
     }
   },
   "peerDependenciesMeta": {
