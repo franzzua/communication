@@ -18,6 +18,7 @@ export class MultiCircleNetwork extends BaseNetwork{
             if (user < this.me)
                 index = i;
             this.users.set(user, {
+                username: user,
                 direction: ConnectionDirection.none,
                 connected: false
             });

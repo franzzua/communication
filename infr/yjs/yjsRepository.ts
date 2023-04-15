@@ -4,8 +4,8 @@ import {ResourceTokenStore} from "@infr/yjs/resource-token-store";
 import {bind, Injectable} from "@cmmn/core";
 import {ResourceTokenApi} from "@infr/resource-token-api.service";
 // @ts-ignore
-import {WebRtcProvider, Network} from "@cmmn/sync/webrtc/client";
-import { ISyncProvider, LocalSyncProvider } from "@cmmn/sync";
+import {WebRtcProvider} from "@cmmn/sync/webrtc/client";
+import { ISyncProvider, LocalSyncProvider, Network } from "@cmmn/sync";
 import {cell, ObservableMap} from "@cmmn/cell";
 
 @Injectable()

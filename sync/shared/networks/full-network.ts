@@ -12,6 +12,7 @@ export class FullNetwork extends BaseNetwork {
             if (this.users.has(user))
                 continue;
             this.users.set(user, {
+                username: user,
                 direction: (user > this.me) ? ConnectionDirection.out : ConnectionDirection.in,
                 connected: false
             });

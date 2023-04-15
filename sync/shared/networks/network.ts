@@ -7,6 +7,7 @@ export interface Network {
 }
 
 export type Connection = {
+    username: string;
     direction: ConnectionDirection;
     connected: boolean;
 }

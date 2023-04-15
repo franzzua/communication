@@ -4,10 +4,17 @@ import style from "./editor-controls.style.less";
 import { template, IState, IEvents } from "./editor-controls.template";
 import {Injectable} from "@cmmn/core";
 import {measureTest} from "./text-measure";
+import {DomainProxy} from "@proxy";
 
 @Injectable(true)
 @component({name: 'editor-controls', template, style})
 export class EditorControls extends HtmlComponent<IState, IEvents>{
+
+    constructor(private rootProxy: DomainProxy) {
+        super();
+    }
+
+
     @property()
     public item: EditorItem;
 
@@ -28,10 +35,14 @@ export class EditorControls extends HtmlComponent<IState, IEvents>{
         }
     }
 
+    get Connections(){
+        return Array.from(this.rootProxy.State.Networks.get(this.item.State.ContextURI).values())
+    }
+
     get State(){
         return {
             Size: this.getSizeInfo(),
-            Text: ''
+            Text: this.Connections.map(x => x.username).join(' ')
         };
     }
 }

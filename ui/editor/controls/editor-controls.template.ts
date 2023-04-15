@@ -8,7 +8,7 @@ export const template: ITemplate<IState, IEvents> = (html, state, events) => htm
     }}>
         <div class="outline" style=${{
             top: state.Size.Top+'px',
-            background: '#23AA',
+            // background: '#23AA',
             height: state.Size.SmallLetterTop - state.Size.Top+'px',
             width: state.Size.Width + 'px'
         }}></div>
@@ -16,9 +16,12 @@ export const template: ITemplate<IState, IEvents> = (html, state, events) => htm
             top:  state.Size.Baseline+'px',
             height: (state.Size.Down - state.Size.Baseline)+'px',
             left: 0,
-            background: '#2A3A',
+            // background: '#2A3A',
             width: state.Size.Width + 'px'
-        }}></div>
+        }}>
+            
+        </div>
+        <div class="right">${state.Text}</div>
     </div>
 `
 

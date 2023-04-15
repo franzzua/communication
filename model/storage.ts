@@ -17,6 +17,7 @@ export class DomainState {
     public Selection: SelectionState;
     public Servers: Record<string, ConnectionState>;
     public Networks: ReadonlyMap<string, ReadonlyMap<string, {
+        username: string;
         connected: boolean;
         direction: 'in' | 'out' | 'none';
     }>>
