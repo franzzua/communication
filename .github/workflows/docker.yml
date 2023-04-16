@@ -1,0 +1,39 @@
+name: docker
+# Only trigger, when the build workflow succeeded
+on:
+  workflow_run:
+    workflows: ["npm"]
+    types:
+      - completed
+
+jobs:
+  publish-gpr:
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write
+    steps:
+      - name: Log in to the Container registry
+        uses: docker/login-action
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action
+        with:
+          context: .
+          push: true
+          file: front.Dockerfile
+          images: |
+            ghcr.io/franzzua/communication_front
+
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action
+        with:
+          context: .
+          push: true
+          file: backend.Dockerfile
+          images: |
+            ghcr.io/franzzua/communication_backend
