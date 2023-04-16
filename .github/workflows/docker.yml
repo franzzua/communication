@@ -24,18 +24,17 @@ jobs:
       - name: Check
         run: cat ./.docker/.npmrc
 
-      - name: Build image
-        uses: NyuB/self-docker-action@1.0
-        with:
-          build-dir: ./.docker # relative to root of repository
-          image-name: communication-front
-          image-tag: latest
-          dockerfile-path: front.Dockerfile
+      - name: Build front
+        working-directory: ./.docker
+        run: docker build . -t ghcr.io/franzzua/communication_front:latest -f front.Dockerfile
 
-      - name: Build image
-        uses: NyuB/self-docker-action@1.0
-        with:
-          build-dir: ./.docker # relative to root of repository
-          image-name: communication-backend
-          image-tag: latest
-          dockerfile-path: backend.Dockerfile
+      - name: push
+        run: docker push ghcr.io/franzzua/communication_front:latest
+
+      - name: Build backend
+        working-directory: ./.docker
+        run: docker build . -t ghcr.io/franzzua/communication_backend:latest -f backend.Dockerfile
+
+      - name: push
+        run: docker push ghcr.io/franzzua/communication_backend:latest
+
