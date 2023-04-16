@@ -1,7 +1,14 @@
 import {controller, Get} from "@cmmn/server";
-import config from "./google.app.secret.json" assert {type: "json"};
 import {FastifyReply, FastifyRequest} from "fastify";
 import fetch from "node-fetch";
+
+const config ={
+    web: {
+        client_id: '',
+        client_secret: ''
+    }
+};
+
 @controller("/api/auth/google")
 export class GoogleCtrl{
     private redirectUrl = 'https://context.app/api/auth/google/onsuccess';
