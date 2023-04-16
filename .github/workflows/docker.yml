@@ -21,9 +21,6 @@ jobs:
       - name: Authenticate with private NPM package
         run: echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" >> ./.docker/.npmrc
 
-      - name: Check
-        run: cat ./.docker/.npmrc
-
       - name: Build front
         working-directory: ./.docker
         run: docker build . -t ghcr.io/franzzua/communication_front:latest -f front.Dockerfile
