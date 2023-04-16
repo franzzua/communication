@@ -1,9 +1,9 @@
 import {Fn, Injectable} from "@cmmn/core";
-import {IAccountInfo} from "@services";
+import {AccountManager} from "@infr/account.manager";
 
 @Injectable()
 export class Api {
-    constructor() {
+    constructor(private accManager: AccountManager) {
     }
 
     private headers: Promise<object> | object = {};
@@ -18,27 +18,21 @@ export class Api {
 
     private id = Fn.ulid();
 
-    public GetUserInfo() {
-        let acc = JSON.parse(localStorage.getItem('account'));
-        if (!acc){
-            const name = prompt('Tell me your name, pls');
-            const acc = {
-                type: 'fake',
-                title: name,
-                session: {},
-                defaultStorage: `fake://${name}/`,
-                id: Fn.ulid()
-            } as IAccountInfo;
-            localStorage.setItem('account', JSON.stringify(acc));
+    public async GetUserInfo() {
+        await this.accManager.init;
+        const accs = this.accManager.$accounts.get();
+        if (!accs.length){
+            return undefined;
         }
-        return acc;
+        return accs[0];
     }
 
     public async fetch(input: string, init?: RequestInit): Promise<Response> {
+        const user = await  this.GetUserInfo();
         return fetch(input, {
             ...init,
             headers: {
-                'authorization': JSON.stringify({user: this.GetUserInfo()?.id ?? 'unknown'}),
+                'authorization': JSON.stringify({user: user?.id ?? 'unknown'}),
                 ...init?.headers,
                 ...(await this.headers)
             }

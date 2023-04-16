@@ -12,7 +12,7 @@
     "web:prod": "cmmn bundle main --prod",
     "server:bundle": "cmmn bundle server",
     "server:run": "node dist/esm/server/server.js",
-    "server:watch": "nodemon dist/bundle/server.js",
+    "server:watch": "nodemon dist/esm/server/server.js",
     "update": "npm version patch && git push",
     "ci": "cmmn compile -b && cmmn bundle main --prod && cmmn bundle server --prod && cp -r ./assets ./dist/bundle"
   },
@@ -106,6 +106,7 @@
   },
   "dependencies": {
     "@fastify/websocket": "^7.1.2",
-    "fastify": "^3.29.4"
+    "@fastify/cookie": "8.3.0",
+    "fastify": "4"
   }
 }

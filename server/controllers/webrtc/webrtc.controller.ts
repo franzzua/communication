@@ -3,7 +3,7 @@ import {SocketStream} from "@fastify/websocket";
 import {FastifyRequest} from "fastify";
 import {bind, Injectable} from "@cmmn/core";
 import {WebrtcController as BaseWebrtcController} from "@cmmn/sync/webrtc/server";
-import {TokenParser} from "../services/token.parser";
+import {TokenParser} from "../../services/token.parser";
 
 @Injectable()
 @controller('/api')

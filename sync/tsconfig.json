@@ -1,6 +1,7 @@
 {
   "extends": "@cmmn/tools/compile/tsconfig.json",
   "compilerOptions": {
+    "resolveJsonModule": true,
     "types": [
       "node"
     ],
@@ -8,6 +9,9 @@
       "@cmmn/sync": ["./index.ts"]
     }
   },
-  "include": [  "**/*.ts" ],
+  "include": [
+    "**/*.json",
+    "**/*.ts"
+  ],
   "exclude": ["dist", "node_modules"]
 }

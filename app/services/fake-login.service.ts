@@ -1,5 +1,5 @@
 import { Fn } from "@cmmn/core";
-import {IAccountInfo, IAccountProvider} from "@services";
+import {IAccountInfo, IAccountProvider} from "@infr/account.manager";
 
 export class FakeLoginService implements IAccountProvider{
     type: string = 'fake';
@@ -20,6 +20,9 @@ export class FakeLoginService implements IAccountProvider{
         } as IAccountInfo;
         localStorage.setItem('account', JSON.stringify(acc));
         return acc;
+    }
+    async Logout(){
+        localStorage.removeItem('account');
     }
 
 }
