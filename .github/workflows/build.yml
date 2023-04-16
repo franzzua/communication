@@ -3,11 +3,11 @@ name: npm
 on:
   push:
     branches:
-      - master2
+      - master
   pull_request:
     types: [opened, synchronize, reopened, closed]
     branches:
-      - master2
+      - master
 
 jobs:
   publish-gpr:
