@@ -31,7 +31,8 @@ jobs:
           push: true
           file: front.Dockerfile
           tags: ghcr.io/franzzua/communication_front:latest
-
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v4
@@ -40,3 +41,5 @@ jobs:
           push: true
           file: backend.Dockerfile
           tags: ghcr.io/franzzua/communication_backend:latest
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
