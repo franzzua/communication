@@ -16,33 +16,26 @@ jobs:
       packages: write
     steps:
 
+      - uses: actions/checkout@v3
+
       - name: Authenticate with private NPM package
-        run: echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" >> ~/.docker/.npmrc
+        run: echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" >> ./.docker/.npmrc
 
-      -
-        # Setting up Docker Buildx with docker-container driver is required
-        # at the moment to be able to use a subdirectory with Git context
-        name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
-      - name: Log in to the Container registry
-        uses: docker/login-action@v2
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Check
+        run: cat ./.docker/.npmrc
 
-      - name: Build and push Docker image
-        uses: docker/build-push-action@v4
+      - name: Build image
+        uses: NyuB/self-docker-action@1.0
         with:
-          context: "{{defaultContext}}:.docker"
-          push: true
-          file: front.Dockerfile
-          tags: ghcr.io/franzzua/communication_front:latest
+          build-dir: ./.docker # relative to root of repository
+          image-name: communication-front
+          image-tag: latest
+          dockerfile-path: ./.docker/front.Dockerfile
 
-      - name: Build and push Docker image
-        uses: docker/build-push-action@v4
+      - name: Build image
+        uses: NyuB/self-docker-action@1.0
         with:
-          context: "{{defaultContext}}:.docker"
-          push: true
-          file: backend.Dockerfile
-          tags: ghcr.io/franzzua/communication_backend:latest
+          build-dir: ./.docker # relative to root of repository
+          image-name: communication-front
+          image-tag: latest
+          dockerfile-path: ./.docker/front.Dockerfile
