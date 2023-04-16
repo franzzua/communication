@@ -12,4 +12,4 @@ LABEL authors="fransua"
 
 WORKDIR "/app"
 COPY --from=builder /app/node_modules/@franzzua/communication/dist/bundle/ /app
-COPY nginx.conf /etc/nginx/conf.d/
+COPY nginx.conf /etc/nginx/conf.d/default.conf
