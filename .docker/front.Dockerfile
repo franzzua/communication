@@ -4,6 +4,7 @@ WORKDIR /app
 
 COPY .npmrc /app
 
+RUN cat .npmrc
 RUN npm i @franzzua/communication@latest
 
 FROM nginx:alpine
