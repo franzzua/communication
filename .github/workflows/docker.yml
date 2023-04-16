@@ -30,12 +30,12 @@ jobs:
           build-dir: ./.docker # relative to root of repository
           image-name: communication-front
           image-tag: latest
-          dockerfile-path: ./.docker/front.Dockerfile
+          dockerfile-path: front.Dockerfile
 
       - name: Build image
         uses: NyuB/self-docker-action@1.0
         with:
           build-dir: ./.docker # relative to root of repository
-          image-name: communication-front
+          image-name: communication-backend
           image-tag: latest
-          dockerfile-path: ./.docker/front.Dockerfile
+          dockerfile-path: backend.Dockerfile
