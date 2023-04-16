@@ -32,13 +32,13 @@ jobs:
         working-directory: ./.docker
         run: docker build . -t ghcr.io/franzzua/communication_front:latest -f front.Dockerfile
 
-      - name: push
+      - name: Push font
         run: docker push ghcr.io/franzzua/communication_front:latest
 
       - name: Build backend
         working-directory: ./.docker
         run: docker build . -t ghcr.io/franzzua/communication_backend:latest -f backend.Dockerfile
 
-      - name: push
+      - name: Push backend
         run: docker push ghcr.io/franzzua/communication_backend:latest
 
