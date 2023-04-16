@@ -5,6 +5,9 @@ on:
     workflows: ["npm"]
     types:
       - completed
+  push:
+    branches:
+      - master
 
 jobs:
   publish-gpr:
@@ -25,7 +28,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Authenticate with private NPM package
-        run: echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" >> ./.docker/.npmrc
+        run: echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" >> ~/.docker/.npmrc
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v4
