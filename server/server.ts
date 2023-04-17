@@ -5,7 +5,6 @@ import cookiePlugin from "@fastify/cookie";
 import {InhauthContainer} from "./inhauth";
 import {ServerContainer} from "./container";
 import * as controllers from "./controllers";
-console.log(Object.values(controllers))
 async function run() {
     const server = await Server
         // @ts-ignore

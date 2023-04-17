@@ -1,13 +1,10 @@
 import {controller, Get} from "@cmmn/server";
 import {FastifyReply, FastifyRequest} from "fastify";
 import fetch from "node-fetch";
+import * as fs from "fs";
+import {rootDir} from "../../const";
 
-const config ={
-    web: {
-        client_id: '',
-        client_secret: ''
-    }
-};
+const config = JSON.parse(fs.readFileSync(`${rootDir}/credentials/google.app.json`, 'utf8'));
 
 @controller("/api/auth/google")
 export class GoogleCtrl{
