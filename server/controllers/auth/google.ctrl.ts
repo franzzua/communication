@@ -2,13 +2,13 @@ import {controller, Get} from "@cmmn/server";
 import {FastifyReply, FastifyRequest} from "fastify";
 import fetch from "node-fetch";
 import * as fs from "fs";
-import {rootDir} from "../../const";
+import {domain, rootDir} from "../../const";
 
 const config = JSON.parse(fs.readFileSync(`${rootDir}/credentials/google.app.json`, 'utf8'));
 
 @controller("/api/auth/google")
 export class GoogleCtrl{
-    private redirectUrl = 'https://context.app/api/auth/google/onsuccess';
+    private redirectUrl = `https://${domain}/api/auth/google/onsuccess`;
     private scopes = [
         'https://www.googleapis.com/auth/drive',
         'https://www.googleapis.com/auth/drive.file',
@@ -70,6 +70,6 @@ export class GoogleCtrl{
             secure: false,
             signed: false
         })
-        reply.redirect(request.query.state ?? `https://context.app`);
+        reply.redirect(request.query.state ?? `https://${domain}`);
     }
 }
