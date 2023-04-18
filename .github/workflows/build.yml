@@ -16,38 +16,33 @@ jobs:
       packages: write
       contents: read
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
-        with:
-          node-version: 16
-          registry-url: https://npm.pkg.github.com/
-      - uses: pnpm/action-setup@v2
-        with:
-          version: 6.0.2
-      - run: pnpm i
-      - run: pnpm ci
-      - run: pnpm publish
-        env:
-          NODE_AUTH_TOKEN: ${{secrets.GITHUB_TOKEN}}
+#      - uses: actions/checkout@v3
+#      - uses: actions/setup-node@v3
+#        with:
+#          node-version: 16
+#          registry-url: https://npm.pkg.github.com/
+#      - uses: pnpm/action-setup@v2
+#        with:
+#          version: 6.0.2
+#      - run: pnpm i
+#      - run: pnpm ci
+#      - run: pnpm publish
+#        env:
+#          NODE_AUTH_TOKEN: ${{secrets.GITHUB_TOKEN}}
       - name: webhook backend
-        uses: wei/curl@v1
-        with:
-          args: " 
-            -X POST \ 
-            -H \"application/json\" \
-            \"https://cloudbuild.googleapis.com/v1/projects/lyrical-mason-383913/triggers/git-backend:webhook?\
-            key=${{secrets.GCLOUD_BACKEND_KEY}}&\
-            secret=${{secrets.GCLOUD_WEBHOOK}}\" \
-            -d \"{}\" \
-            "
+        run: "curl \
+          -X POST \ 
+          -H \"application/json\" \
+          \"https://cloudbuild.googleapis.com/v1/projects/lyrical-mason-383913/triggers/git-backend:webhook?\
+          key=${{secrets.GCLOUD_BACKEND_KEY}}&\
+          secret=${{secrets.GCLOUD_WEBHOOK}}\" \
+          -d \"{}\""
+
       - name: webhook frontend
-        uses: wei/curl@v1
-        with:
-          args: " 
-            -X POST \ 
-            -H \"application/json\" \
-            \"https://cloudbuild.googleapis.com/v1/projects/lyrical-mason-383913/triggers/git-front:webhook?\
-            key=${{secrets.GCLOUD_BACKEND_KEY}}&\
-            secret=${{secrets.GCLOUD_WEBHOOK}}\" \
-            -d \"{}\" \
-            "
+        run: "curl \
+          -X POST \ 
+          -H \"application/json\" \
+          \"https://cloudbuild.googleapis.com/v1/projects/lyrical-mason-383913/triggers/git-front:webhook?\
+          key=${{secrets.GCLOUD_BACKEND_KEY}}&\
+          secret=${{secrets.GCLOUD_WEBHOOK}}\" \
+          -d \"{}\""
