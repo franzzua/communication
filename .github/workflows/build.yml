@@ -16,19 +16,19 @@ jobs:
       packages: write
       contents: read
     steps:
-#      - uses: actions/checkout@v3
-#      - uses: actions/setup-node@v3
-#        with:
-#          node-version: 16
-#          registry-url: https://npm.pkg.github.com/
-#      - uses: pnpm/action-setup@v2
-#        with:
-#          version: 6.0.2
-#      - run: pnpm i
-#      - run: pnpm ci
-#      - run: pnpm publish
-#        env:
-#          NODE_AUTH_TOKEN: ${{secrets.GITHUB_TOKEN}}
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 16
+          registry-url: https://npm.pkg.github.com/
+      - uses: pnpm/action-setup@v2
+        with:
+          version: 6.0.2
+      - run: pnpm i
+      - run: pnpm ci
+      - run: pnpm publish
+        env:
+          NODE_AUTH_TOKEN: ${{secrets.GITHUB_TOKEN}}
       - name: webhook backend
         run: "curl \
           -X POST \ 
