@@ -3,6 +3,7 @@ import {EventEmitter} from "../shared/observable";
 import {RTCConnection} from "./rtc-connection";
 import { SignalData } from "../shared/types";
 import {ConnectionProvider} from "../../shared";
+import {ResolvablePromise} from "@cmmn/core";
 
 export class DataChannelProvider extends ConnectionProvider{
 
@@ -65,6 +66,7 @@ export class DataChannelProvider extends ConnectionProvider{
 
 
     public async initiate(user: UserInfo, room: string, currentUser) {
+        const resPromise = new ResolvablePromise<void>();
         const peerConnection = this.Connections.getOrAdd(user.user, () => {
             const peerConnection = this.factory(user);
             peerConnection.addEventListener('negotiationneeded', async e => {
@@ -83,13 +85,17 @@ export class DataChannelProvider extends ConnectionProvider{
                 }
                 // console.log('get answer', answer.signal.sdp);
                 await peerConnection.setRemoteDescription(answer.signal);
+                resPromise.resolve();
                 // return peerConnection;
             }, {
                 once: true
             });
             return peerConnection;
         });
-        const dataChannel = peerConnection.createDataChannel(`${user.user}-${room}`);
+        await resPromise;
+        const dataChannel = peerConnection.createDataChannel(`${user.user}-${room}`, {
+            negotiated: true
+        });
         await fromFirstEvent(dataChannel, 'open');
         dataChannel.addEventListener('close', x => {
             this.Connections.delete(user.user);
