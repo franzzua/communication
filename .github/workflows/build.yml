@@ -29,14 +29,25 @@ jobs:
       - run: pnpm publish
         env:
           NODE_AUTH_TOKEN: ${{secrets.GITHUB_TOKEN}}
-      - name: curl
+      - name: webhook backend
         uses: wei/curl@v1
         with:
           args: " 
             -X POST \ 
             -H \"application/json\" \
             \"https://cloudbuild.googleapis.com/v1/projects/lyrical-mason-383913/triggers/git-backend:webhook?\
-            key=AIzaSyBKtH7gy90CRFqbIysv2uibc30s-N9pbMA&\
+            key=${{secrets.GCLOUD_BACKEND_KEY}}&\
+            secret=${{secrets.GCLOUD_WEBHOOK}}\" \
+            -d \"{}\" \
+            "
+      - name: webhook frontend
+        uses: wei/curl@v1
+        with:
+          args: " 
+            -X POST \ 
+            -H \"application/json\" \
+            \"https://cloudbuild.googleapis.com/v1/projects/lyrical-mason-383913/triggers/git-front:webhook?\
+            key=${{secrets.GCLOUD_BACKEND_KEY}}&\
             secret=${{secrets.GCLOUD_WEBHOOK}}\" \
             -d \"{}\" \
             "
