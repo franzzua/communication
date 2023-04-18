@@ -1,8 +1,8 @@
 import {Injectable} from "@cmmn/core";
-import {AccountManager, IAccountInfo} from "@services";
 import {AppInitTemplate, IEvents} from "./app-init.template";
 import {RouterService} from "../services/router.service";
 import {component, effect, HtmlComponent} from "@cmmn/ui";
+import {AccountManager, IAccountInfo} from "@infr/account.manager";
 import style from './app-init.style.less';
 
 @Injectable(true)

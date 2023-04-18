@@ -4,7 +4,7 @@ import {Routes} from "./routes";
 import {Container, Injectable} from "@cmmn/core";
 import {AppRootComponent} from "./app-root.component";
 import {RouterService} from "./services/router.service";
-import {AccountManager, DomainProxy} from "@services";
+import {DomainProxy} from "@services";
 import {TreeReducers} from "../ui/tree/tree-reducers";
 import {TreePresenter} from "../presentors/tree.presentor";
 import {DomainContainer} from "@domain";
@@ -33,7 +33,7 @@ export class App2 extends Application {
             .with(Container.withProviders(
                 {provide: Locator, useFactory: cont => cont.get(DomainLocator)},
                 DomainLocator,
-                RouterService, TreeReducers, TreePresenter, DomainProxy, AccountManager
+                RouterService, TreeReducers, TreePresenter, DomainProxy
             ))
 
             .withUI([AppRootComponent, AppInitComponent, WrapperComponent])

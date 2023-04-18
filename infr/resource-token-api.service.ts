@@ -4,7 +4,6 @@ import {TokenCryptor} from "@infr/yjs/token-cryptor";
 import {TokenVerifier} from "@infr/token-verifier.service";
 
 
-@Injectable()
 export class ResourceTokenApi extends Api {
     private tokens = new Map<string, Promise<string>>();
     private passwords = new Map<string, { version; password; }>();

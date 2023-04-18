@@ -1,12 +1,16 @@
 import { Cell } from "@cmmn/cell";
 import {Injectable} from "@cmmn/core";
 import {FakeLoginService} from "../app/services/fake-login.service";
+import {GoogleLoginService} from "../app/services/google-login.service";
+import {ResolvablePromise} from "@cmmn/core";
 
 @Injectable()
 export class AccountManager {
+    public init = new ResolvablePromise<void>();
 
     constructor() {
         this.Register(new FakeLoginService());
+        this.Register(new GoogleLoginService());
     }
 
     public $accounts = new Cell<IAccountInfo[]>([]);
@@ -15,7 +19,8 @@ export class AccountManager {
 
     public async Register(provider: IAccountProvider) {
         this.providers.set(provider.type, provider);
-        provider.Check().then(res => res && this.addAccount(res));
+        provider.Check().then(res => res && this.addAccount(res)).catch()
+            .then(x => this.init.resolve());
     }
 
     private async addAccount(info: IAccountInfo){
@@ -29,6 +34,12 @@ export class AccountManager {
         const acc = await this.providers.get(provider)?.Login();
         this.addAccount(acc);
     }
+
+    async Logout(acc: IAccountInfo) {
+        this.providers.get(acc.type).Logout(acc);
+        this.$accounts.set(this.$accounts.get().filter(x => x.id !== acc.id))
+    }
+
 }
 
 export interface IAccountProvider {
@@ -38,9 +49,11 @@ export interface IAccountProvider {
 
     Login(): Promise<IAccountInfo>;
 
+    Logout(acc: IAccountInfo): void;
 }
 
 export interface IAccountInfo {
+    id: string;
     type: string;
     title: string;
     session: any;

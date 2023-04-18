@@ -36,7 +36,7 @@ export class EditorControls extends HtmlComponent<IState, IEvents>{
     }
 
     get Connections(){
-        return Array.from(this.rootProxy.State.Networks.get(this.item.State.ContextURI).values())
+        return Array.from(this.rootProxy.State.Networks.get(this.item.State.ContextURI)?.values() ?? [])
     }
 
     get State(){

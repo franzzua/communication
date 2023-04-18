@@ -56,10 +56,11 @@ export class YjsRepository {
     public Networks = new ObservableMap<string, Network>();
 
     private async getProviders(uri: string, parentURI: string): Promise<ISyncProvider[]>{
+        const user = await this.api.GetUserInfo();
         const token = await this.api.GetToken(uri, parentURI);
         const room = this.Provider.joinRoom(uri, {
             token: token,
-            user: this.api.GetUserInfo().id
+            user: user?.id
         });
 // @ts-ignore
         room.on('network', network => {
