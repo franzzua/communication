@@ -4,7 +4,7 @@ import fetch from "node-fetch";
 import * as fs from "fs";
 import {domain, rootDir} from "../../const";
 
-const config = JSON.parse(fs.readFileSync(`${rootDir}/credentials/google.app.json`, 'utf8'));
+const config = {} as any;//JSON.parse(fs.readFileSync(`${rootDir}/credentials/google.app.json`, 'utf8'));
 
 @controller("/api/auth/google")
 export class GoogleCtrl{

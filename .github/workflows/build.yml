@@ -10,7 +10,7 @@ on:
       - master
 
 jobs:
-  publish-gpr:
+  build:
     runs-on: ubuntu-latest
     permissions:
       packages: write
@@ -26,23 +26,38 @@ jobs:
           version: 6.0.2
       - run: pnpm i
       - run: pnpm ci
-      - run: pnpm publish
-        env:
-          NODE_AUTH_TOKEN: ${{secrets.GITHUB_TOKEN}}
-      - name: webhook backend
-        run: "curl \
-          -X POST \ 
-          -H \"application/json\" \
-          \"https://cloudbuild.googleapis.com/v1/projects/lyrical-mason-383913/triggers/git-backend:webhook?\
-          key=${{secrets.GCLOUD_BACKEND_KEY}}&\
-          secret=${{secrets.GCLOUD_WEBHOOK}}\" \
-          -d \"{}\""
 
-      - name: webhook frontend
-        run: "curl \
-          -X POST \ 
-          -H \"application/json\" \
-          \"https://cloudbuild.googleapis.com/v1/projects/lyrical-mason-383913/triggers/git-front:webhook?\
-          key=${{secrets.GCLOUD_BACKEND_KEY}}&\
-          secret=${{secrets.GCLOUD_WEBHOOK}}\" \
-          -d \"{}\""
+      - name: Upload artifact for deployment job
+        uses: actions/upload-artifact@v3
+        with:
+          name: server
+          path: ./dist/bundle/server.min.js
+
+      - name: Upload artifact for deployment job
+        uses: actions/upload-artifact@v3
+        with:
+          name: client
+          path: ./dist/bundle
+
+  deploy-server:
+    permissions:
+      contents: none
+    runs-on: ubuntu-latest
+    needs: build
+    environment:
+      name: 'Development'
+      url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
+
+    steps:
+      - name: Download artifact from build job
+        uses: actions/download-artifact@v3
+        with:
+          name: server
+
+      - name: 'Deploy to Azure WebApp'
+        id: deploy-to-webapp
+        uses: azure/webapps-deploy@v2
+        with:
+          app-name: 'context-web'
+          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+          package: 'dist'
