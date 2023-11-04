@@ -1,4 +1,3 @@
-declare module '*.svg' {
-    const classNames: string;
-    export = classNames;
-}
+declare module '*.svg';
+declare module '*.less';
+declare module '*.html';

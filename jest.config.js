@@ -1,6 +1,6 @@
 import {pathsToModuleNameMapper} from "ts-jest/dist/config/paths-to-module-name-mapper.js";
 import "@cmmn/core";
-import config from "@cmmn/tools/test/config"
+import config from "@cmmn/tools/test/config.js"
 import tsConfig from "./tsconfig.json" assert {type: 'json'}
 
 

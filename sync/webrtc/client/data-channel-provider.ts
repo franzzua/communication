@@ -2,7 +2,7 @@ import {UserInfo} from "./signaling-connection";
 import {EventEmitter} from "../shared/observable";
 import {RTCConnection} from "./rtc-connection";
 import { SignalData } from "../shared/types";
-import {ConnectionProvider} from "../../shared";
+import {ConnectionProvider, PeerConnection} from "../../shared/index";
 import {ResolvablePromise} from "@cmmn/core";
 
 export class DataChannelProvider extends ConnectionProvider{
@@ -129,7 +129,7 @@ export class DataChannelProvider extends ConnectionProvider{
         });
     }
 
-    public async connectTo(user: UserInfo, room: string, currentUser: string): Promise<RTCConnection> {
+    public async connectTo(user: UserInfo, room: string, currentUser: string): Promise<PeerConnection> {
         const dc = await this.initiate(user, room, currentUser);
         if (!dc)
             debugger;

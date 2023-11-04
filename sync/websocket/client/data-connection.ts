@@ -1,4 +1,4 @@
-import {PeerConnection, MessageType} from "../../shared";
+import {PeerConnection, MessageType} from "../../shared/index";
 import {WebsocketConnection} from "./websocket-connection";
 
 export class DataConnection extends PeerConnection {

@@ -21,7 +21,7 @@ export class ContextProxyMock implements IContextProxy {
         return {
             id: this.id,
             URI: this.id,
-            Messages: this.messages.map(x => x.id),
+            Messages: this.messages.map(x => x.State.id),
         } as Context;
     }
 

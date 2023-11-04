@@ -5,34 +5,34 @@
     "resolveJsonModule": true,
     "paths": {
       "@model": [
-        "model"
+        "model/index.ts"
       ],
       "@proxy": [
-        "./proxy"
+        "proxy/index.ts"
       ],
       "@infr/*": [
         "infr/*"
       ],
       "@services": [
-        "services"
+        "services/index.ts"
       ],
       "@domain/*": [
         "domain/*"
       ],
       "@domain": [
-        "domain"
+        "domain/index.ts"
       ],
       "@yjs/webrtc": [
-        "./yjsWebRTC"
+        "yjsWebRTC/index.ts"
       ],
       "@cmmn/sync": [
-        "./sync/index.ts"
+        "sync/index.ts"
       ],
       "@cmmn/sync/webrtc/client": [
-        "./sync/webrtc/client/index.ts"
+        "sync/webrtc/client/index.ts"
       ],
       "@cmmn/sync/webrtc/server": [
-        "./sync/webrtc/server/index.ts"
+        "sync/webrtc/server/index.ts"
       ]
     }
   },

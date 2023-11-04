@@ -2,7 +2,7 @@ import {Injectable} from "@cmmn/core";
 import {WebSocket} from "ws";
 import {SignalingMessage, UserInfo} from "../shared/types";
 import {ServerRoom} from "./server-room";
-import {TokenParser} from "../../shared";
+import {TokenParser} from "../../shared/index";
 import {SignalingConnection} from "./signaling.connection";
 
 @Injectable()

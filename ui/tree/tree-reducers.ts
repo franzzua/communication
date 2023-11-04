@@ -2,7 +2,6 @@ import {Message} from "@model";
 import {TreeItem, TreePresenter} from "../../presentors/tree.presentor";
 import type {Reducer} from "../reducers";
 import {Fn, Injectable, utc} from "@cmmn/core";
-import {ContextProxy} from "@services";
 import {TreeState} from "./types";
 import {IContextProxy} from "@proxy";
 

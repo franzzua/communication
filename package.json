@@ -21,17 +21,20 @@
   ],
   "type": "module",
   "author": "",
+  "workspaces": [
+    "../cmmn"
+  ],
   "license": "ISC",
   "devDependencies": {
-    "@cmmn/app": "1.7.18",
-    "@cmmn/cell": "1.7.18",
-    "@cmmn/core": "1.7.17",
-    "@cmmn/domain": "1.7.18",
-    "@cmmn/infr": "1.7.2",
-    "@cmmn/server": "1.7.17",
-    "@cmmn/sync": "1.7.18",
-    "@cmmn/tools": "1.7.19",
-    "@cmmn/ui": "1.7.18",
+    "@cmmn/app": "file://../cmmn/app",
+    "@cmmn/cell": "file://../cmmn/cell",
+    "@cmmn/core": "file://../cmmn/core",
+    "@cmmn/domain": "file://../cmmn/domain",
+    "@cmmn/infr": "file://../cmmn/infr",
+    "@cmmn/server": "file://../cmmn/server",
+    "@cmmn/sync": "file://../cmmn/sync",
+    "@cmmn/tools": "file://../cmmn/tools",
+    "@cmmn/ui": "1.9.0",
     "@inhauth/core": "^1.0.0",
     "@jest/globals": "latest",
     "@swc/core": "^1.3.0",
@@ -56,8 +59,7 @@
     "msgpackr": "^1.8.5",
     "node-fetch": "^3.2.10",
     "ts-jest": "latest",
-    "typescript": "4.6.x",
-    "ttypescript": "1.5.15",
+    "typescript": "5.2.2",
     "typescript-transform-paths": "^3.3.1",
     "y-indexeddb": "9.x.x",
     "y-protocols": "1.x.x",
@@ -72,23 +74,29 @@
         "lib0"
       ],
       "external": [
-        "@cmmn.*",
+        "@cmmn/",
         "luxon",
         "msgpackr/pack"
       ],
       "alias": {
-        "luxon": "luxon/build/es6/luxon.js"
+        "luxon": "luxon/build/es6/luxon.js",
+        "router5": "router5/dist/index.es.js"
       },
-      "mount": {},
+      "mount": {
+        "/assets": "./assets"
+      },
       "browser": true,
-      "port": 4001
+      "port": 4001,
+      "proxy": {
+        "/api": "http://localhost:4004/api"
+      }
     },
     "server": {
       "input": "dist/esm/server/server.js",
       "module": "es",
       "external": [
         "fastify",
-        "@fastify/.*"
+        "@fastify"
       ]
     },
     "worker": {
@@ -106,8 +114,9 @@
     }
   },
   "dependencies": {
-    "@fastify/websocket": "^7.1.2",
     "@fastify/cookie": "8.3.0",
-    "fastify": "4"
+    "@fastify/websocket": "^7.1.2",
+    "fastify": "4",
+    "fix-esm-import-path": "^1.4.0"
   }
 }

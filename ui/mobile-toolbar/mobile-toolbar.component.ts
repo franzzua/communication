@@ -2,7 +2,7 @@ import {IEvents, IState, Template} from "./mobile-toolbar.template";
 import {TreeReducers} from "../tree/tree-reducers";
 import {component, HtmlComponent} from "@cmmn/ui";
 import {Injectable} from "@cmmn/core";
-import style from "./mobile-toolbar.style.less";
+import style from "./mobile-toolbar.style.less" assert {"type": "less"};
 
 @Injectable(true)
 @component({

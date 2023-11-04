@@ -1,4 +1,4 @@
-import {PeerConnection, MessageType} from "../../shared";
+import {PeerConnection, MessageType} from "../../shared/index";
 
 export class ChannelMock extends PeerConnection {
     private static instances = new Set<ChannelMock>();

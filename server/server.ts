@@ -1,10 +1,10 @@
 import {Server} from "@cmmn/server";
 import fastify from "fastify";
-import wsPlugin from "@fastify/websocket";
+import websocketPlugin from "@fastify/websocket";
 import cookiePlugin from "@fastify/cookie";
-import {InhauthContainer} from "./inhauth";
+import {InhauthContainer} from "./inhauth/index";
 import {ServerContainer} from "./container";
-import * as controllers from "./controllers";
+import * as controllers from "./controllers/index";
 async function run() {
     const server = await Server
         // @ts-ignore
@@ -18,7 +18,7 @@ async function run() {
 
 function getFastify(opts){
     const instance = fastify(opts);
-    instance.register(wsPlugin);
+    instance.register(websocketPlugin as any);
     instance.register(cookiePlugin);
     return instance;
 }

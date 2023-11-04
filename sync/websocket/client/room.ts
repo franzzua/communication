@@ -1,6 +1,6 @@
 import {WebsocketConnection} from "./websocket-connection";
 import {DataConnection} from "./data-connection";
-import {DocAdapter, ISyncProvider} from "../../shared";
+import {DocAdapter, ISyncProvider} from "../../shared/index";
 
 export class Room implements ISyncProvider{
     private adapters = new Set<DocAdapter>();

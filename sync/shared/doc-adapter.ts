@@ -1,8 +1,8 @@
 import * as Y from "yjs";
 import {applyUpdate, Doc} from "yjs";
 import {MessageType, PeerConnection} from "./peer-connection";
-import * as awarenessProtocol from 'y-protocols/awareness'
-import {Awareness} from 'y-protocols/awareness'
+import * as awarenessProtocol from 'y-protocols/awareness.js'
+import {Awareness} from 'y-protocols/awareness.js'
 import {bind, EventEmitter, Fn} from "@cmmn/core";
 type UnsubscribeFunction = () => void;
 export class DocAdapter extends EventEmitter<{

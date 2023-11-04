@@ -64,6 +64,7 @@ export class YjsRepository {
         });
 // @ts-ignore
         room.on('network', network => {
+            console.log(network);
             this.Networks.set(uri, network);
         })
         return [

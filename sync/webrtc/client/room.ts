@@ -96,6 +96,7 @@ export class Room extends EventEmitter<{
         this.connections.add(connection);
         for (let adapter of this.adapters) {
             adapter.connect(connection);
+            console.log('connect', connection);
         }
         this.network.setConnected(connection.user.user, connection.incoming);
         return connection;

@@ -27,8 +27,8 @@ export type IState = {
     Selected: TreeItem;
 }
 export type IEvents = {
-    setFocus({item: Item, index: number});
-    updateMessage({item: Item, content: string});
+    setFocus(options: {item: TreeItem, index: number});
+    updateMessage(options: {item: TreeItem, content: string});
     addMessage(text: string);
     reduce(reducer: Reducer<TreeState>);
 }

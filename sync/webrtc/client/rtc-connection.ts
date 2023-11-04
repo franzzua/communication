@@ -1,5 +1,5 @@
 import {UserInfo} from "./signaling-connection";
-import {MessageType, PeerConnection} from "../../shared";
+import {MessageType, PeerConnection} from "../../shared/index";
 
 export class RTCConnection extends PeerConnection {
 
